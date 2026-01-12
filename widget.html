@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>LongBlack Sense Clock Widget</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@100;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-blur: rgba(0, 0, 0, 0.3);
+            --accent: #ff4e00;
+            --text-main: #ffffff;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            width: 450px; height: 250px; /* 위젯 적정 사이즈 */
+            overflow: hidden;
+            background: transparent; /* 배경화면 투명 처리 */
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* 몬드리안 미니멀 위젯 보드 */
+        .widget-board {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            grid-template-rows: 1fr;
+            gap: 2px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 왼쪽: 시계 영역 */
+        .clock-zone {
+            background: var(--bg-blur);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-right: 2px solid var(--accent);
+        }
+
+        #time { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; }
+        #ampm { font-size: 0.7rem; opacity: 0.6; margin-top: 5px; }
+
+        /* 오른쪽: 문장 영역 */
+        .quote-zone {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        #quote-text {
+            font-family: 'Gowun Batang', serif;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+            word-break: keep-all;
+            display: -webkit-box;
+            -webkit-line-clamp: 4; /* 최대 4줄 제한 */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        #quote-source {
+            margin-top: 15px;
+            font-size: 0.7rem;
+            opacity: 0.4;
+            letter-spacing: 1px;
+        }
+
+        /* 정각 업데이트 효과 */
+        .update-flash { animation: flash 0.8s ease-out; }
+        @keyframes flash {
+            0% { background: var(--accent); opacity: 0.5; }
+            100% { background: transparent; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-board">
+        <div class="clock-zone">
+            <div id="time">00:00</div>
+            <div id="ampm">MORNING SENSE</div>
+        </div>
+        <div class="quote-zone" id="quote-zone">
+            <p id="quote-text">영감은 기다리는 것이 아니라 찾아내는 것입니다.</p>
+            <span id="quote-source">— LongBlack Archive</span>
+        </div>
+    </div>
+
+    <script src="quote_data.js"></script>
+    <script>
+        const timeEl = document.getElementById('time');
+        const quoteTextEl = document.getElementById('quote-text');
+        const quoteSourceEl = document.getElementById('quote-source');
+        const quoteZone = document.getElementById('quote-zone');
+
+        let lastHour = -1;
+
+        // 1. 문장 랜덤 업데이트 함수
+        function updateQuote() {
+            if (typeof quoteData !== 'undefined' && quoteData.length > 0) {
+                const randomIndex = Math.floor(Math.random() * quoteData.length);
+                const item = quoteData[randomIndex];
+                
+                // 애니메이션 효과
+                quoteZone.classList.add('update-flash');
+                setTimeout(() => quoteZone.classList.remove('update-flash'), 800);
+
+                quoteTextEl.innerText = item.text;
+                quoteSourceEl.innerText = `— ${item.source}`;
+            }
+        }
+
+        // 2. 시계 및 정각 체크 로직
+        function updateClock() {
+            const now = new Date();
+            const h = now.getHours();
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = now.getSeconds();
+
+            // 시간 표시
+            timeEl.innerText = `${String(h).padStart(2, '0')}:${m}`;
+
+            // 정각 체크 (시간이 바뀌는 순간)
+            if (h !== lastHour) {
+                updateQuote();
+                lastHour = h;
+            }
+        }
+
+        // 초기 실행
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
