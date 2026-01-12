@@ -1,41 +1,39 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <title>LongBlack Mini Widget</title>
+    <title>LongBlack Seoul Widget - Full Time</title>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #ff4e00;
             --text-main: #ffffff;
-            --bg-glass: rgba(0, 0, 0, 0.4);
+            --bg-glass: rgba(0, 0, 0, 0.3);
         }
 
         body {
             margin: 0; padding: 0;
-            width: 350px; height: 180px; 
+            width: 500px; height: 350px; 
             overflow: hidden;
-            background: transparent;
+            background: #000;
             font-family: 'Noto Sans KR', sans-serif;
             color: var(--text-main);
-            -webkit-app-region: drag; /* 창 드래그 가능 */
+            -webkit-app-region: drag;
         }
 
-        /* --- 기존 몬드리안 배경 (직선 두께 유지) --- */
+        /* 몬드리안 제너레이티브 배경 */
         #bg-grid {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            gap: 2px; /* 이전의 굵기 유지 */
+            gap: 1.5px;
             z-index: 1;
         }
-        .cell {
-            background-color: #050505;
-            transition: background-color 2s ease;
-        }
+        .cell { background-color: #050505; transition: background-color 2s ease; }
 
-        /* --- 기존 블러 박스 스타일 복구 --- */
+        /* 콘텐츠 레이어 */
         .content {
             position: relative;
             z-index: 10;
@@ -43,70 +41,99 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-glass);
-            backdrop-filter: blur(8px); /* 이전의 블러 수치 유지 */
+            backdrop-filter: blur(5px);
             border: 1px solid rgba(255,255,255,0.1);
         }
 
+        /* 상단: 볼륨감 있는 시분초 시계와 날씨 */
         .top-bar {
-            padding: 12px 15px;
+            padding: 20px 25px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            align-items: flex-end;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
         }
-        #time { font-size: 1.2rem; font-weight: 900; color: var(--accent); }
-        #date { font-size: 0.75rem; opacity: 0.7; font-weight: 400; }
 
+        .time-wrap { display: flex; flex-direction: column; }
+        #time { 
+            font-size: 2.8rem; 
+            font-weight: 900; 
+            color: var(--accent); 
+            line-height: 1;
+            letter-spacing: -1.5px;
+            font-variant-numeric: tabular-nums; 
+            text-shadow: 2px 2px 15px rgba(255, 78, 0, 0.3);
+        }
+        #date { 
+            font-size: 0.85rem; 
+            opacity: 0.8; 
+            margin-top: 8px; 
+            letter-spacing: 1px;
+        }
+
+        .weather-wrap { text-align: right; }
+        #weather-temp { font-size: 1.8rem; font-weight: 900; }
+        #weather-desc { 
+            font-size: 0.8rem; 
+            opacity: 0.6; 
+            letter-spacing: 2px;
+            font-weight: 400;
+            margin-top: 5px;
+        }
+
+        /* 하단: 문장 영역 */
         .quote-zone {
             flex: 1;
-            padding: 15px;
+            padding: 25px 30px;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
+
         #quote-text {
             font-family: 'Gowun Batang', serif;
-            font-size: 0.85rem;
-            line-height: 1.5;
+            line-height: 1.6;
             margin: 0;
             word-break: keep-all;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.9);
+            min-height: 1.6em;
         }
 
-        /* --- [추가] 출처와 버튼을 정렬하는 바 --- */
-        .bottom-bar {
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            /* 버튼은 클릭이 되어야 하므로 드래그 제외 */
-            -webkit-app-region: no-drag;
-            pointer-events: auto;
-        }
-        #quote-source {
-            font-size: 0.65rem;
-            opacity: 0.4;
-            font-weight: 100;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        #explore-btn {
-            font-size: 0.6rem;
+        #quote-text::after {
+            content: '|';
+            animation: blink 0.8s infinite;
             color: var(--accent);
-            text-decoration: none;
-            border: 1px solid var(--accent);
-            padding: 2px 6px;
-            letter-spacing: 1px;
-            font-weight: 900;
-            transition: 0.3s;
+            margin-left: 5px;
         }
-        #explore-btn:hover {
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        #quote-source {
+            margin-top: 15px;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            font-weight: 100;
+        }
+
+        /* 검색 버튼 스타일 */
+        .btn-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 6px 12px;
+            font-size: 0.65rem;
+            color: var(--text-main);
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            transition: 0.3s;
+            letter-spacing: 1px;
+            width: fit-content;
+            /* 위젯 드래그 중에도 클릭 가능하도록 설정 */
+            -webkit-app-region: no-drag;
+            cursor: pointer;
+        }
+        .btn-link:hover {
             background: var(--accent);
+            border-color: var(--accent);
             color: #fff;
         }
     </style>
@@ -117,70 +144,110 @@
 
     <div class="content">
         <div class="top-bar">
-            <div id="time">00:00:00</div>
-            <div id="date">2026.01.12 MON</div>
+            <div class="time-wrap">
+                <div id="time">00:00:00</div>
+                <div id="date">2026.01.12 MON</div>
+            </div>
+            <div class="weather-wrap">
+                <div id="weather-temp">--°C</div>
+                <div id="weather-desc">SEOUL</div>
+            </div>
         </div>
         <div class="quote-zone">
-            <p id="quote-text">영감을 불러오는 중...</p>
-            <div class="bottom-bar">
-                <span id="quote-source">— Loading</span>
-                <a id="explore-btn" href="#" target="_blank">EXPLORE</a>
-            </div>
+            <p id="quote-text"></p>
+            <span id="quote-source">— Loading Archive</span>
+            <a id="search-btn" href="#" target="_blank" class="btn-link">EXPLORE NOTE</a>
         </div>
     </div>
 
     <script src="quote_data.js"></script>
     <script>
-        const grid = document.getElementById('bg-grid');
         const timeEl = document.getElementById('time');
         const dateEl = document.getElementById('date');
+        const weatherTempEl = document.getElementById('weather-temp');
         const quoteTextEl = document.getElementById('quote-text');
         const quoteSourceEl = document.getElementById('quote-source');
-        const exploreBtn = document.getElementById('explore-btn');
+        const searchBtn = document.getElementById('search-btn');
 
+        async function updateWeather() {
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current_weather=true');
+                const data = await response.json();
+                const temp = Math.round(data.current_weather.temperature);
+                weatherTempEl.innerText = `${temp}°C`;
+            } catch (e) {
+                weatherTempEl.innerText = "--°C";
+            }
+        }
+
+        let typingTimer = null;
+        function startTyping(text) {
+            let index = 0;
+            quoteTextEl.innerHTML = "";
+            if (typingTimer) clearInterval(typingTimer);
+
+            if (text.length > 100) quoteTextEl.style.fontSize = "1.05rem";
+            else if (text.length > 60) quoteTextEl.style.fontSize = "1.25rem";
+            else quoteTextEl.style.fontSize = "1.6rem";
+
+            typingTimer = setInterval(() => {
+                if (index < text.length) {
+                    quoteTextEl.innerHTML += text.charAt(index);
+                    index++;
+                } else { clearInterval(typingTimer); }
+            }, 70);
+        }
+
+        function updateContent() {
+            if (typeof quoteData !== 'undefined' && quoteData.length > 0) {
+                const item = quoteData[Math.floor(Math.random() * quoteData.length)];
+                startTyping(item.text);
+                quoteSourceEl.innerText = `— ${item.source}`;
+                
+                // 구글 검색 URL 업데이트 (출처 + 롱블랙)
+                const searchQuery = encodeURIComponent(item.source + " 롱블랙");
+                searchBtn.href = `https://www.google.com/search?q=${searchQuery}`;
+            }
+        }
+
+        const grid = document.getElementById('bg-grid');
         for(let i=0; i<6; i++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             grid.appendChild(cell);
         }
         const cells = document.querySelectorAll('.cell');
-        // 이전의 차분한 컬러 팔레트 유지
-        const colors = ['#0A0A0A', '#121212', '#1C2833', '#8B2222', '#1A5276', '#1E8449', '#A04000'];
+        const colors = ['#0A0A0A', '#121212', '#1C2833', '#8B2222', '#1A5276', '#1E8449', '#A04000', '#FF4E00'];
 
         let lastHour = -1;
-        let count = 0;
-
         function tick() {
             const now = new Date();
-            timeEl.innerText = now.toTimeString().split(' ')[0];
+            
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            timeEl.innerText = `${h}:${m}:${s}`;
+
             const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
             dateEl.innerText = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${days[now.getDay()]}`;
 
-            count++;
-            if (count % 5 === 0) {
+            if (now.getSeconds() % 5 === 0) {
                 cells.forEach(cell => {
-                    if (Math.random() > 0.8) {
-                        cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    } else {
-                        cell.style.backgroundColor = '#050505';
-                    }
+                    if (Math.random() > 0.7) cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                 });
             }
 
+            // 정각 업데이트 체크
             if (now.getHours() !== lastHour) {
-                if (typeof quoteData !== 'undefined') {
-                    const item = quoteData[Math.floor(Math.random() * quoteData.length)];
-                    quoteTextEl.innerText = item.text;
-                    quoteSourceEl.innerText = `— ${item.source}`;
-                    
-                    // 구글 검색 URL 자동 생성
-                    const query = encodeURIComponent(item.source + " 롱블랙");
-                    exploreBtn.href = `https://www.google.com/search?q=${query}`;
-                }
+                updateContent();
+                updateWeather(); 
                 lastHour = now.getHours();
             }
         }
 
+        // 초기 실행
+        updateContent();
+        updateWeather(); 
         setInterval(tick, 1000);
         tick();
     </script>
