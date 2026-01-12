@@ -2,112 +2,108 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LongBlack Mini Widget - Note Explorer</title>
+    <title>LongBlack Mini Widget</title>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #ff4e00;
             --text-main: #ffffff;
-            --line-color: rgba(255, 255, 255, 0.2); 
+            --bg-glass: rgba(0, 0, 0, 0.4);
         }
 
         body {
             margin: 0; padding: 0;
-            width: 380px; height: 200px; 
+            width: 350px; height: 180px; 
             overflow: hidden;
-            background: #000;
+            background: transparent;
             font-family: 'Noto Sans KR', sans-serif;
             color: var(--text-main);
-            /* 위젯 드래그 가능 (PC 설치형 대비) */
-            -webkit-app-region: drag;
+            -webkit-app-region: drag; /* 창 드래그 가능 */
         }
 
-        /* --- 고해상도 몬드리안 배경 --- */
+        /* --- 기존 몬드리안 배경 (직선 두께 유지) --- */
         #bg-grid {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            gap: 1.5px;
-            background-color: var(--line-color);
+            gap: 2px; /* 이전의 굵기 유지 */
             z-index: 1;
         }
         .cell {
             background-color: #050505;
-            transition: background-color 1.5s ease;
+            transition: background-color 2s ease;
         }
 
-        /* --- 콘텐츠 레이어 --- */
+        /* --- 기존 블러 박스 스타일 복구 --- */
         .content {
             position: relative;
             z-index: 10;
             height: 100%;
             display: flex;
             flex-direction: column;
-            pointer-events: none; /* 배경 드래그를 위해 */
+            background: var(--bg-glass);
+            backdrop-filter: blur(8px); /* 이전의 블러 수치 유지 */
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* 상단 바: 시계와 날짜 */
         .top-bar {
-            padding: 15px 20px;
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        #time { font-size: 1.3rem; font-weight: 900; color: var(--accent); text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
-        #date { font-size: 0.8rem; opacity: 0.9; font-weight: 400; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        #time { font-size: 1.2rem; font-weight: 900; color: var(--accent); }
+        #date { font-size: 0.75rem; opacity: 0.7; font-weight: 400; }
 
-        /* 하단: 문장 및 버튼 영역 */
         .quote-zone {
             flex: 1;
-            padding: 0 25px 20px 25px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
         #quote-text {
             font-family: 'Gowun Batang', serif;
-            font-size: 0.95rem;
-            line-height: 1.6;
+            font-size: 0.85rem;
+            line-height: 1.5;
             margin: 0;
             word-break: keep-all;
-            text-shadow: 2px 2px 5px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.5);
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        /* 하단 정보바: 출처 + 탐색 버튼 */
+        /* --- [추가] 출처와 버튼을 정렬하는 바 --- */
         .bottom-bar {
-            margin-top: 12px;
+            margin-top: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            pointer-events: auto; /* 버튼 클릭 가능하게 */
+            /* 버튼은 클릭이 되어야 하므로 드래그 제외 */
             -webkit-app-region: no-drag;
+            pointer-events: auto;
         }
         #quote-source {
-            font-size: 0.7rem;
-            opacity: 0.7;
+            font-size: 0.65rem;
+            opacity: 0.4;
             font-weight: 100;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            letter-spacing: 1px;
-            white-space: nowrap;
+            max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 230px;
+            white-space: nowrap;
         }
         #explore-btn {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: var(--accent);
             text-decoration: none;
             border: 1px solid var(--accent);
-            padding: 2px 8px;
-            border-radius: 2px;
-            transition: 0.3s;
+            padding: 2px 6px;
             letter-spacing: 1px;
             font-weight: 900;
+            transition: 0.3s;
         }
         #explore-btn:hover {
             background: var(--accent);
@@ -127,7 +123,7 @@
         <div class="quote-zone">
             <p id="quote-text">영감을 불러오는 중...</p>
             <div class="bottom-bar">
-                <span id="quote-source">— Loading Archive</span>
+                <span id="quote-source">— Loading</span>
                 <a id="explore-btn" href="#" target="_blank">EXPLORE</a>
             </div>
         </div>
@@ -148,8 +144,8 @@
             grid.appendChild(cell);
         }
         const cells = document.querySelectorAll('.cell');
-        
-        const colors = ['#FF4E00', '#003366', '#8B0000', '#228B22', '#FFD700', '#1A1A1A', '#4B0082'];
+        // 이전의 차분한 컬러 팔레트 유지
+        const colors = ['#0A0A0A', '#121212', '#1C2833', '#8B2222', '#1A5276', '#1E8449', '#A04000'];
 
         let lastHour = -1;
         let count = 0;
@@ -163,7 +159,7 @@
             count++;
             if (count % 5 === 0) {
                 cells.forEach(cell => {
-                    if (Math.random() > 0.6) {
+                    if (Math.random() > 0.8) {
                         cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                     } else {
                         cell.style.backgroundColor = '#050505';
@@ -172,12 +168,12 @@
             }
 
             if (now.getHours() !== lastHour) {
-                if (typeof quoteData !== 'undefined' && quoteData.length > 0) {
+                if (typeof quoteData !== 'undefined') {
                     const item = quoteData[Math.floor(Math.random() * quoteData.length)];
                     quoteTextEl.innerText = item.text;
                     quoteSourceEl.innerText = `— ${item.source}`;
                     
-                    // 구글 검색 URL 업데이트
+                    // 구글 검색 URL 자동 생성
                     const query = encodeURIComponent(item.source + " 롱블랙");
                     exploreBtn.href = `https://www.google.com/search?q=${query}`;
                 }
