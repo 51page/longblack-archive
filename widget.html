@@ -185,5 +185,12 @@
         setInterval(tick, 1000);
         tick();
     </script>
+/* widget.html의 <style> 안에 추가 */
+body {
+    -webkit-app-region: drag; /* 창 전체를 마우스로 잡고 이동 가능하게 함 */
+}
+.btn, a {
+    -webkit-app-region: no-drag; /* 버튼이나 링크는 드래그 제외 */
+}
 </body>
 </html>
