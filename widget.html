@@ -2,143 +2,188 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LongBlack Sense Clock Widget</title>
-    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@100;900&display=swap" rel="stylesheet">
+    <title>LongBlack Dynamic Clock Widget</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@100;400;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-blur: rgba(0, 0, 0, 0.3);
             --accent: #ff4e00;
             --text-main: #ffffff;
+            --line-color: rgba(255, 255, 255, 0.1);
         }
 
         body {
             margin: 0; padding: 0;
-            width: 450px; height: 250px; /* 위젯 적정 사이즈 */
+            width: 550px; height: 280px; 
             overflow: hidden;
-            background: transparent; /* 배경화면 투명 처리 */
+            background: #000; /* 기본 배경 */
             font-family: 'Noto Sans KR', sans-serif;
             color: var(--text-main);
         }
 
-        /* 몬드리안 미니멀 위젯 보드 */
-        .widget-board {
+        /* --- 다이나믹 배경 그리드 --- */
+        #bg-grid {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: grid;
-            grid-template-columns: 120px 1fr;
-            grid-template-rows: 1fr;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
             gap: 2px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+        .cell {
+            background-color: #050505;
+            /* 배경색 변화를 부드럽게 만드는 핵심 설정 */
+            transition: background-color 0.9s ease; 
         }
 
-        /* 왼쪽: 시계 영역 */
-        .clock-zone {
-            background: var(--bg-blur);
+        /* --- 정보 레이어 --- */
+        .widget-content {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            height: 100%;
+            /* 블러 효과를 3px로 설정하여 배경색이 은은하게 보이도록 함 */
+            backdrop-filter: blur(3px); 
+        }
+
+        /* 왼쪽: 시계/날짜 */
+        .info-zone {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            border-right: 2px solid var(--accent);
+            border-right: 3px solid var(--accent);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.15);
         }
 
-        #time { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; }
-        #ampm { font-size: 0.7rem; opacity: 0.6; margin-top: 5px; }
+        #time { 
+            font-size: 2.2rem; font-weight: 900; 
+            letter-spacing: -1px; margin-bottom: 10px;
+            font-variant-numeric: tabular-nums;
+        }
 
-        /* 오른쪽: 문장 영역 */
+        #date { 
+            font-size: 0.8rem; font-weight: 400; opacity: 0.8;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 10px; width: 85%; text-align: center;
+        }
+
+        /* 오른쪽: 문장 */
         .quote-zone {
-            padding: 25px;
+            padding: 35px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.2);
-            position: relative;
+            background: rgba(0, 0, 0, 0.25);
         }
 
         #quote-text {
             font-family: 'Gowun Batang', serif;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin: 0;
-            word-break: keep-all;
-            display: -webkit-box;
-            -webkit-line-clamp: 4; /* 최대 4줄 제한 */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            font-size: 0.95rem; line-height: 1.7;
+            margin: 0; word-break: keep-all;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
         #quote-source {
-            margin-top: 15px;
-            font-size: 0.7rem;
-            opacity: 0.4;
-            letter-spacing: 1px;
+            margin-top: 20px; font-size: 0.7rem; opacity: 0.5;
+            letter-spacing: 1px; font-weight: 100;
         }
 
-        /* 정각 업데이트 효과 */
-        .update-flash { animation: flash 0.8s ease-out; }
-        @keyframes flash {
-            0% { background: var(--accent); opacity: 0.5; }
+        /* 문장 교체 시 반짝임 효과 */
+        .flash { animation: flash-anim 1s ease-out; }
+        @keyframes flash-anim {
+            0% { background: var(--accent); opacity: 0.3; }
             100% { background: transparent; opacity: 1; }
         }
     </style>
 </head>
 <body>
 
-    <div class="widget-board">
-        <div class="clock-zone">
-            <div id="time">00:00</div>
-            <div id="ampm">MORNING SENSE</div>
+    <div id="bg-grid"></div>
+
+    <div class="widget-content">
+        <div class="info-zone">
+            <div id="time">00:00:00</div>
+            <div id="date">2026.01.12 MON</div>
         </div>
         <div class="quote-zone" id="quote-zone">
-            <p id="quote-text">영감은 기다리는 것이 아니라 찾아내는 것입니다.</p>
-            <span id="quote-source">— LongBlack Archive</span>
+            <p id="quote-text">영감을 불러오는 중...</p>
+            <span id="quote-source">— Loading</span>
         </div>
     </div>
 
     <script src="quote_data.js"></script>
     <script>
+        const grid = document.getElementById('bg-grid');
         const timeEl = document.getElementById('time');
+        const dateEl = document.getElementById('date');
         const quoteTextEl = document.getElementById('quote-text');
         const quoteSourceEl = document.getElementById('quote-source');
         const quoteZone = document.getElementById('quote-zone');
 
+        // 1. 그리드 셀 생성 (12개)
+        for(let i=0; i<12; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            grid.appendChild(cell);
+        }
+        const cells = document.querySelectorAll('.cell');
+
+        // 컬러 팔레트 (롱블랙 감성)
+        const colors = [
+            '#0A0A0A', '#121212', '#1C2833', '#8B2222', '#1A5276', 
+            '#1E8449', '#A04000', '#2E4053', '#0E6251', '#283747'
+        ];
+
         let lastHour = -1;
 
-        // 1. 문장 랜덤 업데이트 함수
+        // 2. 배경 색상 업데이트 (매 초마다 호출)
+        function updateBg() {
+            cells.forEach(cell => {
+                // 30% 확률로 색상을 변경하여 너무 요란하지 않게 조절
+                if (Math.random() > 0.7) {
+                    cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                } else {
+                    cell.style.backgroundColor = '#050505';
+                }
+            });
+        }
+
+        // 3. 문장 업데이트 (정각)
         function updateQuote() {
             if (typeof quoteData !== 'undefined' && quoteData.length > 0) {
-                const randomIndex = Math.floor(Math.random() * quoteData.length);
-                const item = quoteData[randomIndex];
-                
-                // 애니메이션 효과
-                quoteZone.classList.add('update-flash');
-                setTimeout(() => quoteZone.classList.remove('update-flash'), 800);
-
+                const item = quoteData[Math.floor(Math.random() * quoteData.length)];
+                quoteZone.classList.add('flash');
+                setTimeout(() => quoteZone.classList.remove('flash'), 1000);
                 quoteTextEl.innerText = item.text;
                 quoteSourceEl.innerText = `— ${item.source}`;
             }
         }
 
-        // 2. 시계 및 정각 체크 로직
-        function updateClock() {
+        // 4. 메인 클락 루프
+        function tick() {
             const now = new Date();
-            const h = now.getHours();
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const s = now.getSeconds();
+            
+            // 시:분:초 업데이트
+            timeEl.innerText = now.toTimeString().split(' ')[0];
 
-            // 시간 표시
-            timeEl.innerText = `${String(h).padStart(2, '0')}:${m}`;
+            // 날짜 업데이트
+            const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+            dateEl.innerText = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${days[now.getDay()]}`;
 
-            // 정각 체크 (시간이 바뀌는 순간)
-            if (h !== lastHour) {
+            // 매 초마다 배경색 변화
+            updateBg();
+
+            // 정각에 문장 교체
+            if (now.getHours() !== lastHour) {
                 updateQuote();
-                lastHour = h;
+                lastHour = now.getHours();
             }
         }
 
-        // 초기 실행
-        setInterval(updateClock, 1000);
-        updateClock();
+        setInterval(tick, 1000);
+        tick();
     </script>
 </body>
 </html>
