@@ -3,70 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Living Mondrian Gallery</title>
-    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Nanum+Myeongjo:wght@800&family=Noto+Sans+KR:wght@100;900&display=swap" rel="stylesheet">
+    <title>LongBlack Archive - Vivid Mondrian Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Nanum+Myeongjo:wght@800&family=Noto+Sans+KR:wght@100;400;900&display=swap" rel="stylesheet">
     
     <style>
         :root { 
-            --line-color: rgba(255, 255, 255, 0.18); 
+            --line-color: rgba(255, 255, 255, 0.3); 
             --text-color: #fff; 
-            --safety-bg: rgba(0, 0, 0, 0.2); 
             --accent-color: #ff4e00;
         }
         body, html { margin: 0; padding: 0; background-color: #000; color: var(--text-color); overflow: hidden; transition: color 0.5s; }
 
-        /* --- 리빙 몬드리안 배경 (애니메이션 핵심) --- */
+        /* --- 고해상도 리빙 몬드리안 배경 --- */
         #mondrian-bg {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             display: grid; 
-            grid-template-columns: 1fr 1fr 1fr 1fr; /* 4열 고정 */
-            grid-template-rows: 1fr 1fr 1fr 1fr;    /* 4행 고정 */
-            gap: 4px; 
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr 1fr;
+            /* 선 두께를 1.5px로 줄여 아주 날카롭고 세련되게 변경 */
+            gap: 1.5px; 
             background-color: var(--line-color);
             z-index: 1;
-            /* 그리드 트랙 변화를 부드럽게 만드는 트랜지션 */
-            transition: grid-template-columns 1.2s cubic-bezier(0.65, 0, 0.35, 1), 
-                        grid-template-rows 1.2s cubic-bezier(0.65, 0, 0.35, 1),
-                        background-color 1s;
+            transition: grid-template-columns 1.5s cubic-bezier(0.65, 0, 0.35, 1), 
+                        grid-template-rows 1.5s cubic-bezier(0.65, 0, 0.35, 1);
         }
-        .cell { background-color: #050505; transition: background-color 0.8s ease; }
+        .cell { background-color: #050505; transition: background-color 1s ease; }
         
-        .noise-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; opacity: 0.1; background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="n"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23n)"/%3E%3C/svg%3E'); }
+        .noise-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; opacity: 0.08; background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="n"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23n)"/%3E%3C/svg%3E'); }
 
         /* --- 스크롤 컨테이너 --- */
         #scroll-container { position: relative; z-index: 10; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
         #scroll-container::-webkit-scrollbar { display: none; }
         section { height: 100vh; width: 100%; scroll-snap-align: start; display: flex; align-items: center; justify-content: center; padding: 10vw; box-sizing: border-box; }
 
-        /* --- 가독성 강화 플레이트 --- */
+        /* --- 타이포그래피 (박스 제거 및 음영 가독성) --- */
         .quote-box { 
-            opacity: 0; transition: opacity 0.6s ease; width: 100%; max-width: 900px; 
-            padding: 50px; border-radius: 2px;
-            background: var(--safety-bg);
-            backdrop-filter: blur(3px); /* 블러를 3px로 낮춰 맑게 유지 */
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            opacity: 0; transition: opacity 0.8s ease; width: 100%; max-width: 1000px; 
             position: relative;
             z-index: 20;
+            background: none; /* 블러 박스 제거 */
+            backdrop-filter: none;
         }
         section.active .quote-box { opacity: 1; }
         
         .text { 
             font-family: 'Nanum Myeongjo', serif; line-height: 1.8; word-break: keep-all; font-weight: 800; 
             display: inline;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2); 
+            /* 다중 텍스트 쉐도우로 어떤 색상의 배경에서도 글자가 튀어나와 보이게 설정 */
+            text-shadow: 
+                2px 2px 10px rgba(0,0,0,0.8),
+                -1px -1px 0 rgba(0,0,0,0.5),
+                1px -1px 0 rgba(0,0,0,0.5),
+                -1px 1px 0 rgba(0,0,0,0.5),
+                1px 1px 0 rgba(0,0,0,0.5); 
         }
-        .text::after { content: '|'; animation: blink 1s infinite; margin-left: 5px; color: var(--accent-color); }
+        .text::after { content: '|'; animation: blink 1s infinite; margin-left: 5px; color: var(--accent-color); text-shadow: none; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        .source { display: block; margin-top: 40px; font-size: 0.85rem; opacity: 0.6; font-family: 'Noto Sans KR'; letter-spacing: 6px; text-transform: uppercase; font-weight: 300; }
+        .source { 
+            display: block; margin-top: 40px; font-size: 0.9rem; opacity: 0.8; 
+            font-family: 'Noto Sans KR'; letter-spacing: 6px; text-transform: uppercase;
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
+        }
 
-        /* 무드별 타이포그래피 */
+        /* 무드별 스타일 */
         .mood-pop .text { font-family: 'Noto Sans KR', sans-serif !important; font-weight: 900; }
         .mood-energy .text { font-family: 'Noto Sans KR', sans-serif !important; font-weight: 100; letter-spacing: -0.01em; }
         .mood-connect .text { font-family: 'Gowun Batang', serif !important; }
 
         .btn-group { margin-top: 50px; display: flex; gap: 15px; }
-        .btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: inherit; padding: 12px 25px; cursor: pointer; text-decoration: none; font-size: 0.7rem; transition: 0.3s; letter-spacing: 2px; }
+        .btn { 
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); 
+            color: inherit; padding: 12px 25px; cursor: pointer; text-decoration: none; 
+            font-size: 0.75rem; transition: 0.3s; letter-spacing: 2px;
+            text-shadow: none;
+        }
         .btn:hover { background: var(--text-color); color: #000; border-color: var(--text-color); }
     </style>
 </head>
@@ -82,7 +93,6 @@
         const bg = document.getElementById('mondrian-bg');
         const moods = ['deep', 'pop', 'energy', 'connect'];
 
-        // 배경 셀 16개 미리 생성 (애니메이션을 위해 재사용)
         for(let i=0; i<16; i++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
@@ -98,7 +108,6 @@
             return array;
         }
 
-        // 1. 초기 렌더링
         if (typeof quoteData !== 'undefined') {
             const shuffledData = shuffle([...quoteData]);
             shuffledData.forEach((q, i) => {
@@ -109,7 +118,7 @@
                 sec.dataset.fullText = q.text;
                 sec.className = `mood-${mood}`;
 
-                const fSize = q.text.length < 40 ? 'clamp(2.1rem, 5.5vw, 3.8rem)' : (q.text.length > 90 ? 'clamp(1.2rem, 2.5vw, 1.85rem)' : 'clamp(1.5rem, 3.8vw, 2.6rem)');
+                const fSize = q.text.length < 40 ? 'clamp(2.3rem, 6vw, 4rem)' : (q.text.length > 90 ? 'clamp(1.2rem, 2.5vw, 1.9rem)' : 'clamp(1.6rem, 4vw, 2.8rem)');
 
                 sec.innerHTML = `
                     <div class="quote-box" style="text-align: ${['center', 'left', 'right'][i%3]}">
@@ -117,7 +126,7 @@
                         <span class="source">— ${q.source}</span>
                         <div class="btn-group" style="justify-content: ${['center', 'flex-start', 'flex-end'][i%3]}">
                             <button class="btn" onclick="save(${i}, this)">SAVE</button>
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(q.source + ' 롱블랙')}" target="_blank" class="btn">LINK</a>
+                            <a href="https://www.google.com/search?q=${encodeURIComponent(q.source + ' 롱블랙')}" target="_blank" class="btn">EXPLORE</a>
                         </div>
                     </div>
                 `;
@@ -125,7 +134,6 @@
             });
         }
 
-        // 2. 타이핑 엔진 (안정적인 85ms 호흡)
         let typingTimer = null;
         function startTyping(element, text) {
             let index = 0;
@@ -136,41 +144,38 @@
                     element.innerHTML += text.charAt(index);
                     index++;
                 } else { clearInterval(typingTimer); }
-            }, 85);
+            }, 75); // 사람이 읽기 좋은 적정 속도
         }
 
-        // 3. 리빙 몬드리안 업데이트 (무빙 그리드 로직)
         function updateMondrian(mood, index) {
-            // 그리드 트랙 비율 랜덤화 (선들이 미끄러지듯 움직임)
-            const getTracks = () => Array(4).fill(0).map(() => `${10 + Math.random() * 50}fr`).join(' ');
+            // 그리드 선의 움직임 (비율 변화)
+            const getTracks = () => Array(4).fill(0).map(() => `${15 + Math.random() * 45}fr`).join(' ');
             bg.style.gridTemplateColumns = getTracks();
             bg.style.gridTemplateRows = getTracks();
 
-            // 확장된 컬러 팔레트
+            // [수정] 쨍하고 선명한 고화질 컬러 팔레트
             const palettes = {
-                deep: ['#0A0A0A', '#121212', '#0A1A2A', '#1C2833', '#17202A', '#000000'],
-                pop: ['#8B2222', '#1A5276', '#D4AC0D', '#1E8449', '#A04000', '#2E4053', '#0E6251', '#78281F'],
-                energy: ['#641E16', '#7B241C', '#1B2631', '#000000', '#17202A', '#943126', '#121212'],
-                connect: ['#FDFEFE', '#F2F4F4', '#D5DBDB', '#AAB7B8', '#F9E79F', '#D5F5E3', '#EBF5FB']
+                deep: ['#000000', '#050505', '#111111', '#001F3F', '#1B1B1B'],
+                pop: ['#FF0000', '#0000FF', '#FFFF00', '#FF4E00', '#00FF00', '#000000'], // 원색 포인트
+                energy: ['#8B0000', '#FF4E00', '#000000', '#222222', '#330000'],
+                connect: ['#FFFFFF', '#F5F5F7', '#E0E0E0', '#FFD700', '#D3D3D3'] // 고대비 화이트
             };
 
             const currentPalette = palettes[mood];
             
             allCells.forEach((cell, i) => {
-                // 면 색상 배정 (매번 다른 패턴)
-                if (Math.random() > 0.65) {
+                if (Math.random() > 0.6) {
                     cell.style.backgroundColor = currentPalette[Math.floor(Math.random() * currentPalette.length)];
                 } else {
                     cell.style.backgroundColor = mood === 'connect' ? '#FFFFFF' : '#050505';
                 }
             });
 
-            // 가독성 대비 모드
+            // 배경 무드에 따른 가독성 색상 반전
             const isLight = mood === 'connect';
-            document.body.style.setProperty('--text-color', isLight ? '#111' : '#fff');
-            document.body.style.setProperty('--line-color', isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.22)');
-            document.body.style.setProperty('--safety-bg', isLight ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)');
-            document.body.style.setProperty('--accent-color', isLight ? '#D35400' : '#ff4e00');
+            document.body.style.setProperty('--text-color', isLight ? '#000' : '#fff');
+            document.body.style.setProperty('--line-color', isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)');
+            document.body.style.setProperty('--accent-color', isLight ? '#E64A19' : '#ff4e00');
         }
 
         const observer = new IntersectionObserver((entries) => {
@@ -198,12 +203,12 @@
                 favs.push(id);
                 localStorage.setItem('lb_favs', JSON.stringify(favs));
                 btn.innerText = "SAVED";
-                btn.style.color = "var(--accent-color)";
             }
         }
     </script>
 </body>
 </html>
+
 
 
 
