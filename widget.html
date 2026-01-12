@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <title>LongBlack Mini Widget</title>
+    <title>LongBlack Typing Widget</title>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #ff4e00;
             --text-main: #ffffff;
-            --bg-glass: rgba(0, 0, 0, 0.4);
+            --bg-glass: rgba(0, 0, 0, 0.3); /* 블러 박스 대신 더 투명하게 */
         }
 
         body {
             margin: 0; padding: 0;
             width: 500px; height: 350px; 
             overflow: hidden;
-            background: transparent;
+            background: #000;
             font-family: 'Noto Sans KR', sans-serif;
             color: var(--text-main);
-            /* 창 전체 드래그 가능하게 설정 (설치형 앱 제작 시 유용) */
             -webkit-app-region: drag;
         }
 
@@ -29,12 +28,12 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            gap: 1px;
+            gap: 1.5px; /* 선을 더 얇게 */
             z-index: 1;
         }
         .cell {
             background-color: #050505;
-            transition: background-color 2s ease; /* 색상 변화를 아주 천천히 */
+            transition: background-color 2s ease;
         }
 
         /* 콘텐츠 레이어 */
@@ -45,44 +44,54 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-glass);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(4px);
             border: 1px solid rgba(255,255,255,0.1);
         }
 
         /* 상단: 시계와 날짜 */
         .top-bar {
-            padding: 12px 15px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        #time { font-size: 2.0rem; font-weight: 900; color: var(--accent); }
-        #date { font-size: 0.75rem; opacity: 0.7; font-weight: 400; }
+        #time { font-size: 1.8rem; font-weight: 900; color: var(--accent); letter-spacing: -1px; }
+        #date { font-size: 0.8rem; opacity: 0.7; font-weight: 400; }
 
         /* 하단: 문장 영역 */
         .quote-zone {
             flex: 1;
-            padding: 15px;
+            padding: 25px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-        }
-        #quote-text {
-            font-family: 'Gowun Batang', serif;
-            font-size: 1.5rem;
-            line-height: 1.5;
-            margin: 0;
-            word-break: keep-all;
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            -webkit-box-orient: vertical;
             overflow: hidden;
         }
+
+        #quote-text {
+            font-family: 'Gowun Batang', serif;
+            line-height: 1.6;
+            margin: 0;
+            word-break: keep-all;
+            /* 가독성을 위한 텍스트 음영 추가 */
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5);
+            min-height: 1.6em;
+        }
+
+        /* 타이핑 커서 효과 */
+        #quote-text::after {
+            content: '|';
+            animation: blink 0.8s infinite;
+            color: var(--accent);
+            margin-left: 4px;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
         #quote-source {
-            margin-top: 8px;
-            font-size: 0.65rem;
-            opacity: 0.4;
+            margin-top: 15px;
+            font-size: 0.75rem;
+            opacity: 0.5;
             font-weight: 100;
         }
     </style>
@@ -97,8 +106,8 @@
             <div id="date">2026.01.12 MON</div>
         </div>
         <div class="quote-zone">
-            <p id="quote-text">영감을 불러오는 중...</p>
-            <span id="quote-source">— Loading</span>
+            <p id="quote-text"></p>
+            <span id="quote-source">— Loading Archive</span>
         </div>
     </div>
 
@@ -117,33 +126,58 @@
             grid.appendChild(cell);
         }
         const cells = document.querySelectorAll('.cell');
-        const colors = ['#0A0A0A', '#121212', '#1C2833', '#8B2222', '#1A5276', '#1E8449', '#A04000'];
+        const colors = ['#0A0A0A', '#121212', '#1C2833', '#8B2222', '#1A5276', '#1E8449', '#A04000', '#FF4E00'];
 
         let lastHour = -1;
         let count = 0;
+        let typingTimer = null;
 
+        // 1. 타이핑 함수 (최적 속도: 70ms)
+        function startTyping(text) {
+            let index = 0;
+            quoteTextEl.innerHTML = "";
+            if (typingTimer) clearInterval(typingTimer);
+
+            // 문장 길이에 따른 유동적 폰트 사이즈 조절 (잘림 방지)
+            if (text.length > 100) quoteTextEl.style.fontSize = "1.0rem";
+            else if (text.length > 60) quoteTextEl.style.fontSize = "1.2rem";
+            else quoteTextEl.style.fontSize = "1.5rem";
+
+            typingTimer = setInterval(() => {
+                if (index < text.length) {
+                    quoteTextEl.innerHTML += text.charAt(index);
+                    index++;
+                } else {
+                    clearInterval(typingTimer);
+                }
+            }, 70);
+        }
+
+        // 2. 배경 변화
+        function updateBg() {
+            cells.forEach(cell => {
+                if (Math.random() > 0.7) {
+                    cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                } else {
+                    cell.style.backgroundColor = '#050505';
+                }
+            });
+        }
+
+        // 3. 시계 및 로직 업데이트
         function tick() {
             const now = new Date();
             timeEl.innerText = now.toTimeString().split(' ')[0];
             const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
             dateEl.innerText = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${days[now.getDay()]}`;
 
-            // 배경 변화: 2초마다 한 번씩 아주 천천히 (산만함 방지)
             count++;
-            if (count % 2 === 0) {
-                cells.forEach(cell => {
-                    if (Math.random() > 0.8) {
-                        cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    } else {
-                        cell.style.backgroundColor = '#050505';
-                    }
-                });
-            }
+            if (count % 3 === 0) updateBg(); // 3초마다 배경 변화
 
             if (now.getHours() !== lastHour) {
                 if (typeof quoteData !== 'undefined') {
                     const item = quoteData[Math.floor(Math.random() * quoteData.length)];
-                    quoteTextEl.innerText = item.text;
+                    startTyping(item.text); // 정각마다 타이핑 시작
                     quoteSourceEl.innerText = `— ${item.source}`;
                 }
                 lastHour = now.getHours();
