@@ -1,117 +1,117 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <title>LongBlack Seoul Widget - Full Time</title>
+    <title>LongBlack Mini Widget - Note Explorer</title>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #ff4e00;
             --text-main: #ffffff;
-            --bg-glass: rgba(0, 0, 0, 0.3);
+            --line-color: rgba(255, 255, 255, 0.2); 
         }
 
         body {
             margin: 0; padding: 0;
-            width: 500px; height: 350px; 
+            width: 380px; height: 200px; 
             overflow: hidden;
             background: #000;
             font-family: 'Noto Sans KR', sans-serif;
             color: var(--text-main);
+            /* 위젯 드래그 가능 (PC 설치형 대비) */
             -webkit-app-region: drag;
         }
 
-        /* 몬드리안 제너레이티브 배경 */
+        /* --- 고해상도 몬드리안 배경 --- */
         #bg-grid {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
             gap: 1.5px;
+            background-color: var(--line-color);
             z-index: 1;
         }
-        .cell { background-color: #050505; transition: background-color 2s ease; }
+        .cell {
+            background-color: #050505;
+            transition: background-color 1.5s ease;
+        }
 
-        /* 콘텐츠 레이어 */
+        /* --- 콘텐츠 레이어 --- */
         .content {
             position: relative;
             z-index: 10;
             height: 100%;
             display: flex;
             flex-direction: column;
-            background: var(--bg-glass);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.1);
+            pointer-events: none; /* 배경 드래그를 위해 */
         }
 
-        /* 상단: 볼륨감 있는 시분초 시계와 날씨 */
+        /* 상단 바: 시계와 날짜 */
         .top-bar {
-            padding: 20px 25px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 1px solid rgba(255,255,255,0.15);
+            align-items: center;
         }
+        #time { font-size: 1.3rem; font-weight: 900; color: var(--accent); text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        #date { font-size: 0.8rem; opacity: 0.9; font-weight: 400; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
 
-        .time-wrap { display: flex; flex-direction: column; }
-        #time { 
-            font-size: 2.8rem; /* 초 추가를 위해 크기를 3.2에서 2.8로 미세 조정 */
-            font-weight: 900; 
-            color: var(--accent); 
-            line-height: 1;
-            letter-spacing: -1.5px;
-            font-variant-numeric: tabular-nums; /* 숫자 폭을 고정하여 초 바뀔 때 흔들림 방지 */
-            text-shadow: 2px 2px 15px rgba(255, 78, 0, 0.3);
-        }
-        #date { 
-            font-size: 0.85rem; 
-            opacity: 0.8; 
-            margin-top: 8px; 
-            letter-spacing: 1px;
-        }
-
-        .weather-wrap { text-align: right; }
-        #weather-temp { font-size: 1.8rem; font-weight: 900; }
-        #weather-desc { 
-            font-size: 0.8rem; 
-            opacity: 0.6; 
-            letter-spacing: 2px;
-            font-weight: 400;
-            margin-top: 5px;
-        }
-
-        /* 하단: 문장 영역 */
+        /* 하단: 문장 및 버튼 영역 */
         .quote-zone {
             flex: 1;
-            padding: 25px 30px;
+            padding: 0 25px 20px 25px;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
-
         #quote-text {
             font-family: 'Gowun Batang', serif;
+            font-size: 0.95rem;
             line-height: 1.6;
             margin: 0;
             word-break: keep-all;
-            text-shadow: 2px 2px 10px rgba(0,0,0,0.9);
-            min-height: 1.6em;
+            text-shadow: 2px 2px 5px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.5);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        #quote-text::after {
-            content: '|';
-            animation: blink 0.8s infinite;
-            color: var(--accent);
-            margin-left: 5px;
+        /* 하단 정보바: 출처 + 탐색 버튼 */
+        .bottom-bar {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto; /* 버튼 클릭 가능하게 */
+            -webkit-app-region: no-drag;
         }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
         #quote-source {
-            margin-top: 15px;
-            font-size: 0.75rem;
-            opacity: 0.5;
+            font-size: 0.7rem;
+            opacity: 0.7;
             font-weight: 100;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            letter-spacing: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 230px;
+        }
+        #explore-btn {
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid var(--accent);
+            padding: 2px 8px;
+            border-radius: 2px;
+            transition: 0.3s;
+            letter-spacing: 1px;
+            font-weight: 900;
+        }
+        #explore-btn:hover {
+            background: var(--accent);
+            color: #fff;
         }
     </style>
 </head>
@@ -121,103 +121,70 @@
 
     <div class="content">
         <div class="top-bar">
-            <div class="time-wrap">
-                <div id="time">00:00:00</div>
-                <div id="date">2026.01.12 MON</div>
-            </div>
-            <div class="weather-wrap">
-                <div id="weather-temp">--°C</div>
-                <div id="weather-desc">SEOUL</div>
-            </div>
+            <div id="time">00:00:00</div>
+            <div id="date">2026.01.12 MON</div>
         </div>
         <div class="quote-zone">
-            <p id="quote-text"></p>
-            <span id="quote-source">— Loading Archive</span>
+            <p id="quote-text">영감을 불러오는 중...</p>
+            <div class="bottom-bar">
+                <span id="quote-source">— Loading Archive</span>
+                <a id="explore-btn" href="#" target="_blank">EXPLORE</a>
+            </div>
         </div>
     </div>
 
     <script src="quote_data.js"></script>
     <script>
+        const grid = document.getElementById('bg-grid');
         const timeEl = document.getElementById('time');
         const dateEl = document.getElementById('date');
-        const weatherTempEl = document.getElementById('weather-temp');
         const quoteTextEl = document.getElementById('quote-text');
         const quoteSourceEl = document.getElementById('quote-source');
+        const exploreBtn = document.getElementById('explore-btn');
 
-        // 1. 날씨 정보 가져오기 (서울)
-        async function updateWeather() {
-            try {
-                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current_weather=true');
-                const data = await response.json();
-                const temp = Math.round(data.current_weather.temperature);
-                weatherTempEl.innerText = `${temp}°C`;
-            } catch (e) {
-                weatherTempEl.innerText = "--°C";
-            }
-        }
-
-        // 2. 타이핑 효과
-        let typingTimer = null;
-        function startTyping(text) {
-            let index = 0;
-            quoteTextEl.innerHTML = "";
-            if (typingTimer) clearInterval(typingTimer);
-
-            if (text.length > 100) quoteTextEl.style.fontSize = "1.05rem";
-            else if (text.length > 60) quoteTextEl.style.fontSize = "1.25rem";
-            else quoteTextEl.style.fontSize = "1.6rem";
-
-            typingTimer = setInterval(() => {
-                if (index < text.length) {
-                    quoteTextEl.innerHTML += text.charAt(index);
-                    index++;
-                } else { clearInterval(typingTimer); }
-            }, 70);
-        }
-
-        // 3. 배경 및 메인 루프
-        const grid = document.getElementById('bg-grid');
         for(let i=0; i<6; i++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             grid.appendChild(cell);
         }
         const cells = document.querySelectorAll('.cell');
-        const colors = ['#0A0A0A', '#121212', '#1C2833', '#8B2222', '#1A5276', '#1E8449', '#A04000', '#FF4E00'];
+        
+        const colors = ['#FF4E00', '#003366', '#8B0000', '#228B22', '#FFD700', '#1A1A1A', '#4B0082'];
 
         let lastHour = -1;
+        let count = 0;
+
         function tick() {
             const now = new Date();
-            
-            // 시:분:초 모두 표시
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
-            timeEl.innerText = `${h}:${m}:${s}`;
-
+            timeEl.innerText = now.toTimeString().split(' ')[0];
             const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
             dateEl.innerText = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${days[now.getDay()]}`;
 
-            // 배경 변화
-            if (now.getSeconds() % 5 === 0) {
+            count++;
+            if (count % 5 === 0) {
                 cells.forEach(cell => {
-                    if (Math.random() > 0.7) cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    if (Math.random() > 0.6) {
+                        cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    } else {
+                        cell.style.backgroundColor = '#050505';
+                    }
                 });
             }
 
-            // 정각 업데이트
             if (now.getHours() !== lastHour) {
-                if (typeof quoteData !== 'undefined') {
+                if (typeof quoteData !== 'undefined' && quoteData.length > 0) {
                     const item = quoteData[Math.floor(Math.random() * quoteData.length)];
-                    startTyping(item.text);
+                    quoteTextEl.innerText = item.text;
                     quoteSourceEl.innerText = `— ${item.source}`;
+                    
+                    // 구글 검색 URL 업데이트
+                    const query = encodeURIComponent(item.source + " 롱블랙");
+                    exploreBtn.href = `https://www.google.com/search?q=${query}`;
                 }
-                updateWeather(); 
                 lastHour = now.getHours();
             }
         }
 
-        updateWeather(); 
         setInterval(tick, 1000);
         tick();
     </script>
