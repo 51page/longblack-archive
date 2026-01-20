@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Global Insight V51</title>
+    <title>LongBlack - Kinetic Typography V52</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
     <script src="quote_data.js"></script> 
@@ -13,11 +13,36 @@
         :root { --bg: #000; --fg: #fff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
         #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; }
-        #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
-        .digital-clock { color: #fff; font-size: 8rem; font-weight: 200; letter-spacing: -3px; transition: color 0.4s ease; line-height: 1; }
-        .sub-brand { margin-top: 10px; font-size: 1.2rem; font-weight: 300; letter-spacing: 12px; text-transform: uppercase; transition: color 0.4s ease; }
-        #quote-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; background: rgba(0,0,0,0.98); opacity: 0; visibility: hidden; padding: 0 15%; box-sizing: border-box; }
-        .quote-text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 4vw; font-weight: 800; color: #fff; text-align: center; line-height: 1.4; word-break: keep-all; letter-spacing: -0.03em; }
+        
+        /* 시계 wrapper: 얇은 폰트 적용 */
+        #clock-wrapper { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 10; pointer-events: none; 
+        }
+        .digital-clock { 
+            color: #fff; font-size: 8rem; font-weight: 200; /* 얇은 볼드 */
+            letter-spacing: -3px; transition: color 0.4s ease; line-height: 1; 
+        }
+        .sub-brand { 
+            margin-top: 15px; font-size: 1.2rem; font-weight: 300; 
+            letter-spacing: 12px; text-transform: uppercase; transition: color 0.4s ease; 
+        }
+
+        /* 문장 노출 레이어: 헬베티카 폰트 적용 */
+        #quote-display { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; align-items: center; justify-content: center; 
+            z-index: 100; background: rgba(0,0,0,0.98); 
+            opacity: 0; visibility: hidden; padding: 0 15%; box-sizing: border-box; 
+        }
+        .quote-text { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            font-size: 3.5vw; font-weight: 700; color: #fff; 
+            text-align: center; line-height: 1.4; word-break: keep-all; 
+            letter-spacing: -0.03em; 
+        }
+
         .fixed-logo { position: fixed; top: 40px; left: 40px; color: #fff; font-weight: 900; font-size: 1.2rem; z-index: 1000; mix-blend-mode: difference; letter-spacing: 5px; }
     </style>
 </head>
@@ -32,15 +57,13 @@
     </div>
 
     <div id="quote-display">
-        <div id="target-quote" class="quote-text">데이터를 찾을 수 없습니다.</div>
+        <div id="target-quote" class="quote-text">Loading...</div>
     </div>
 
     <script>
-        // 배경 컬러셋
         const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
         let isQuoteShowing = false;
 
-        // 1. 시계 업데이트 (독립 실행)
         function updateClock() {
             const now = new Date();
             const clockEl = document.getElementById('clock');
@@ -49,7 +72,6 @@
             }
         }
 
-        // 2. 배경 슬라이드 (독립 실행)
         function slideBg() {
             if (isQuoteShowing) return;
             const bg = document.getElementById('main-bg');
@@ -75,10 +97,9 @@
             );
         }
 
-        // 3. 문장 노출 루프 (데이터 의존적 실행)
         function runMasterLoop() {
-            // quotes 데이터가 있는지 안전하게 확인
-            const safeQuotes = (typeof quotes !== 'undefined' && Array.isArray(quotes)) ? quotes : ["데이터 파일 연결을 확인해주세요."];
+            // [수정 포인트] quoteData라는 이름으로 데이터를 가져옵니다.
+            const dataTarget = (typeof quoteData !== 'undefined') ? quoteData : [];
 
             const master = gsap.timeline({ repeat: -1 });
             master
@@ -86,9 +107,11 @@
                 .to({}, { duration: 5 }) 
                 .add(() => {
                     isQuoteShowing = true;
-                    const selected = safeQuotes[Math.floor(Math.random() * safeQuotes.length)];
-                    // 객체 형태일 경우 .text 필드 사용, 아니면 그대로 출력
-                    document.getElementById('target-quote').innerText = selected.text || selected;
+                    if(dataTarget.length > 0) {
+                        const selected = dataTarget[Math.floor(Math.random() * dataTarget.length)];
+                        // .text 필드 데이터를 출력합니다.
+                        document.getElementById('target-quote').innerText = selected.text || "No Text Found";
+                    }
                 })
                 .set("#quote-display", { visibility: "visible" })
                 .to("#quote-display", { opacity: 1, duration: 0.6 })
@@ -100,9 +123,7 @@
                 .set("#quote-display", { visibility: "hidden" });
         }
 
-        // 초기 실행 (오류 방지를 위해 윈도우 로드 후 실행)
         window.onload = () => {
-            console.log("App Started");
             updateClock();
             setInterval(updateClock, 1000);
             setInterval(slideBg, 1000);
