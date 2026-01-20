@@ -3,53 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Seamless Kinetic V56</title>
+    <title>LongBlack - Sync Engine V57</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --fg: #fff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
-        
         #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; }
+        #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
+        .digital-clock { color: #fff; font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 200; letter-spacing: -0.04em; line-height: 1; }
+        .sub-brand { margin-top: 15px; font-size: clamp(0.8rem, 2.5vw, 1.2rem); font-weight: 300; letter-spacing: 12px; text-transform: uppercase; }
+        #quote-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: #000; visibility: hidden; padding: 0 10%; box-sizing: border-box; }
+        .quote-text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 500; color: #fff; text-align: center; line-height: 1.6; word-break: keep-all; letter-spacing: -0.02em; margin-bottom: 30px; }
+        .quote-source { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: clamp(0.8rem, 1.5vw, 1rem); font-weight: 300; color: rgba(255,255,255,0.6); letter-spacing: 0.1em; text-transform: uppercase; text-align: center; }
         
-        #clock-wrapper { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            z-index: 10; pointer-events: none; 
-        }
-        .digital-clock { 
-            color: #fff; font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 200; 
-            letter-spacing: -0.04em; line-height: 1; 
-        }
-        .sub-brand { 
-            margin-top: 15px; font-size: clamp(0.8rem, 2.5vw, 1.2rem); font-weight: 300; 
-            letter-spacing: clamp(6px, 2vw, 12px); text-transform: uppercase; 
-        }
-
-        #quote-display { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            z-index: 100; background: #000; 
-            visibility: hidden; padding: 0 10%; box-sizing: border-box; 
-        }
-        
-        .quote-text { 
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 500; color: #fff; 
-            text-align: center; line-height: 1.6; word-break: keep-all; 
-            letter-spacing: -0.02em; margin-bottom: 30px;
-        }
-
-        .quote-source {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: clamp(0.8rem, 1.5vw, 1rem); font-weight: 300; color: rgba(255,255,255,0.6);
-            letter-spacing: 0.1em; text-transform: uppercase; text-align: center;
-        }
+        /* 사운드 활성화 버튼 (브라우저 정책상 필요) */
+        #audio-start { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: #fff; color: #000; border: none; padding: 10px 20px; font-weight: 900; cursor: pointer; border-radius: 30px; font-size: 12px; }
     </style>
 </head>
 <body>
 
+    <button id="audio-start">CLICK TO START SOUND</button>
     <div id="main-bg"></div>
 
     <div id="clock-wrapper">
@@ -65,23 +40,34 @@
     <script>
         const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
         let lastDirection = "";
+        let lastSecond = -1;
+        let isQuotePhase = false;
+        let cycleCounter = 0;
 
-        function updateClockText() {
-            const now = new Date();
-            const clockEl = document.getElementById('clock');
-            if(clockEl) {
-                clockEl.innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-            }
+        // --- [사운드 시스템] ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTick() {
+            if (audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 고음 똑딱
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
+
+        document.getElementById('audio-start').addEventListener('click', () => {
+            audioCtx.resume();
+            document.getElementById('audio-start').style.display = 'none';
+        });
 
         function getUniqueSlideParams() {
             const directions = ['left', 'right', 'top', 'bottom'];
             let currentDir;
-            do {
-                currentDir = directions[Math.floor(Math.random() * directions.length)];
-            } while (currentDir === lastDirection);
+            do { currentDir = directions[Math.floor(Math.random() * directions.length)]; } while (currentDir === lastDirection);
             lastDirection = currentDir;
-
             switch(currentDir) {
                 case 'left': return { xPercent: -100, yPercent: 0 };
                 case 'right': return { xPercent: 100, yPercent: 0 };
@@ -90,70 +76,77 @@
             }
         }
 
-        function runMainEngine() {
-            const dataTarget = (typeof quoteData !== 'undefined') ? quoteData : [];
-            const master = gsap.timeline({ repeat: -1 });
+        // --- [핵심 엔진: 시계와 애니메이션의 강제 동기화] ---
+        function engine() {
+            const now = new Date();
+            const currentSec = now.getSeconds();
 
-            // --- [Phase 1: 시계 배경 슬라이드 (1초씩 5번 수행)] ---
-            for (let i = 0; i < 5; i++) {
-                master.add(() => {
-                    const bg = document.getElementById('main-bg');
-                    const clock = document.getElementById('clock');
-                    const sub = document.getElementById('clock-sub');
-                    const nextColor = customColors[Math.floor(Math.random() * customColors.length)];
-                    const startPos = getUniqueSlideParams();
-
-                    gsap.fromTo(bg, 
-                        { ...startPos, backgroundColor: nextColor },
-                        { 
-                            xPercent: 0, yPercent: 0, duration: 0.8, ease: "power4.out",
-                            onStart: () => {
-                                const targetColor = (nextColor === '#000000') ? '#ffffff' : '#000000';
-                                clock.style.color = targetColor;
-                                sub.style.color = targetColor;
-                            }
-                        }
-                    );
-                }).to({}, { duration: 1 }); // 각 슬라이드 간 1초 간격
-            }
-
-            // --- [Phase 2: 문장 레이어 슬라이드 인] ---
-            master.add(() => {
-                const selected = dataTarget[Math.floor(Math.random() * dataTarget.length)];
-                document.getElementById('target-quote').innerText = selected?.text || "";
-                document.getElementById('target-source').innerText = selected?.source || "";
+            if (currentSec !== lastSecond) { // 정확히 '초'가 바뀌는 시점
+                lastSecond = currentSec;
+                document.getElementById('clock').innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(currentSec).padStart(2,'0')}`;
                 
-                const startPos = getUniqueSlideParams();
-                gsap.set("#quote-display", { visibility: "visible" });
-                gsap.fromTo("#quote-display", 
-                    { ...startPos, opacity: 1 }, 
-                    { xPercent: 0, yPercent: 0, duration: 0.8, ease: "power4.out" }
-                );
-                gsap.to("#clock-wrapper", { opacity: 0, duration: 0.3 });
-            })
-            .to({}, { duration: 4.0 }) // 문장 노출 시간 (4초)
+                playTick(); // 똑딱 소리
 
-            // --- [Phase 3: 문장 레이어 슬라이드 아웃] ---
-            .add(() => {
-                const exitPos = getUniqueSlideParams();
-                gsap.to("#quote-display", { 
-                    ...exitPos, duration: 0.8, ease: "power4.in",
-                    onComplete: () => {
-                        gsap.set("#quote-display", { visibility: "hidden" });
-                        gsap.to("#clock-wrapper", { opacity: 1, duration: 0.3 });
+                if (!isQuotePhase) {
+                    cycleCounter++;
+                    if (cycleCounter >= 6) { // 5초 배경 전환 후 6초째에 문장 페이즈 진입
+                        triggerQuoteSequence();
+                    } else {
+                        triggerBackgroundSlide();
                     }
-                });
-            })
-            .to({}, { duration: 0.8 }); // 퇴장 애니메이션 시간 확보
+                }
+            }
+            requestAnimationFrame(engine);
         }
 
-        window.onload = () => {
-            // 시계 숫자는 1초마다 텍스트만 업데이트 (모션과 별개)
-            setInterval(updateClockText, 1000);
-            updateClockText();
-            // 통합 엔진 실행
-            runMainEngine();
-        };
+        function triggerBackgroundSlide() {
+            const bg = document.getElementById('main-bg');
+            const clock = document.getElementById('clock');
+            const sub = document.getElementById('clock-sub');
+            const nextColor = customColors[Math.floor(Math.random() * customColors.length)];
+            const startPos = getUniqueSlideParams();
+
+            gsap.fromTo(bg, 
+                { ...startPos, backgroundColor: nextColor },
+                { 
+                    xPercent: 0, yPercent: 0, duration: 0.7, ease: "expo.out",
+                    onStart: () => {
+                        const targetColor = (nextColor === '#000000') ? '#ffffff' : '#000000';
+                        clock.style.color = targetColor;
+                        sub.style.color = targetColor;
+                    }
+                }
+            );
+        }
+
+        function triggerQuoteSequence() {
+            isQuotePhase = true;
+            const dataTarget = (typeof quoteData !== 'undefined') ? quoteData : [];
+            const selected = dataTarget[Math.floor(Math.random() * dataTarget.length)];
+            
+            document.getElementById('target-quote').innerText = selected?.text || "";
+            document.getElementById('target-source').innerText = selected?.source || "";
+
+            const startPos = getUniqueSlideParams();
+            const exitPos = getUniqueSlideParams();
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    isQuotePhase = false;
+                    cycleCounter = 0;
+                    gsap.set("#quote-display", { visibility: "hidden" });
+                    gsap.to("#clock-wrapper", { opacity: 1, duration: 0.3 });
+                }
+            });
+
+            tl.set("#quote-display", { visibility: "visible", xPercent: startPos.xPercent, yPercent: startPos.yPercent, opacity: 1 })
+              .to("#clock-wrapper", { opacity: 0, duration: 0.2 })
+              .to("#quote-display", { xPercent: 0, yPercent: 0, duration: 0.7, ease: "expo.out" })
+              .to({}, { duration: 4.0 }) // 문장 감상
+              .to("#quote-display", { xPercent: exitPos.xPercent, yPercent: exitPos.yPercent, duration: 0.7, ease: "expo.in" });
+        }
+
+        window.onload = engine;
     </script>
 </body>
 </html>
