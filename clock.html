@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Focused Insight Fixed</title>
+    <title>LongBlack Insight - Precision Loop</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Nanum+Myeongjo:wght@800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --fg: #fff; }
+        :root { --bg: #000; --fg: #fff; --accent: #FF4E00; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
 
         /* 배경 레이어 */
@@ -18,7 +18,7 @@
         #clock-wrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            z-index: 10; /* 배경보다 위 */
+            z-index: 10;
         }
         .digital-clock {
             background: #000; color: #fff; padding: 20px 50px;
@@ -26,18 +26,18 @@
             border: 5px solid #fff;
         }
 
-        /* 문장 노출 레이어 (최상단) */
+        /* 문장 노출 레이어 */
         #quote-display {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            z-index: 100; /* 모든 것보다 위 */
-            background: rgba(0,0,0,0.9); /* 문장 등장 시 배경 어둡게 */
-            opacity: 0; visibility: hidden; pointer-events: none;
-            padding: 0 10%; box-sizing: border-box;
+            z-index: 100;
+            background: rgba(0,0,0,0.95);
+            opacity: 0; visibility: hidden;
+            padding: 0 12%; box-sizing: border-box;
         }
         .quote-text {
-            font-family: 'Nanum Myeongjo', serif; font-size: 4.5vw; font-weight: 800;
-            color: #fff; text-align: center; line-height: 1.4; word-break: keep-all;
+            font-family: 'Nanum Myeongjo', serif; font-size: 4.2vw; font-weight: 800;
+            color: #fff; text-align: center; line-height: 1.5; word-break: keep-all;
         }
 
         .brand { position: fixed; top: 40px; left: 40px; color: #fff; font-weight: 900; font-size: 1.5rem; z-index: 1000; mix-blend-mode: difference; }
@@ -53,47 +53,27 @@
     </div>
 
     <div id="quote-display">
-        <div id="target-quote" class="quote-text">데이터를 로딩 중입니다...</div>
+        <div id="target-quote" class="quote-text">Loading Insights...</div>
     </div>
 
     <script>
-        // 만약 quote_data.js 로드에 실패했을 경우를 위한 백업 데이터
+        // 데이터 백업
         if (typeof quotes === 'undefined') {
-            var quotes = [
-                "감각은 소비되는 것이 아니라 축적되는 것이다.",
-                "변화는 아주 사소한 관찰에서 시작된다.",
-                "지식은 텍스트가 아니라 컨텍스트로 존재한다.",
-                "기록하지 않는 영감은 휘발되는 향수와 같다.",
-                "본질은 복잡함 속에 숨어있는 단순함이다."
-            ];
+            var quotes = ["기록은 기억을 이긴다.", "본질은 변하지 않는 것이다.", "사소한 관찰이 위대한 발견이 된다."];
         }
 
         const colors = ['#FF4E00', '#00E5FF', '#FFEE00', '#FF007A', '#00FF41', '#7000FF'];
-        let count = 0;
-
-        function init() {
-            setInterval(() => {
-                updateClock();
-                slideBg();
-                
-                count++;
-                if (count % 5 === 0) {
-                    showQuote();
-                }
-            }, 1000);
-        }
+        let isQuoteShowing = false;
 
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = 
                 `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-            gsap.fromTo("#clock", { scale: 1.1 }, { scale: 1, duration: 0.2 });
+            if (!isQuoteShowing) gsap.fromTo("#clock", { scale: 1.05 }, { scale: 1, duration: 0.2 });
         }
 
         function slideBg() {
-            // 문장이 떠 있을 때는 배경 슬라이드를 멈춤
-            if (document.getElementById('quote-display').style.visibility === 'visible') return;
-
+            if (isQuoteShowing) return;
             const bg = document.getElementById('main-bg');
             const nextColor = colors[Math.floor(Math.random() * colors.length)];
             const dir = Math.random() > 0.5 ? 'xPercent' : 'yPercent';
@@ -101,38 +81,47 @@
 
             gsap.fromTo(bg, 
                 { [dir]: start, backgroundColor: nextColor },
-                { [dir]: 0, duration: 0.7, ease: "power2.out" }
+                { [dir]: 0, duration: 0.8, ease: "power3.out" }
             );
         }
 
-        function showQuote() {
-            const display = document.getElementById('quote-display');
-            const text = document.getElementById('target-quote');
-            
-            // 랜덤 문장 선택
-            const selected = quotes[Math.floor(Math.random() * quotes.length)];
-            text.innerText = typeof selected === 'string' ? selected : selected.text;
+        // 핵심: 5초 대기 - 2초 노출 무한 루프 엔진
+        function runMasterLoop() {
+            const master = gsap.timeline({ repeat: -1 });
 
-            // 시계 숨기기
-            gsap.to("#clock-wrapper", { opacity: 0, duration: 0.3 });
+            master
+                // 1. 5초 동안 시계 상태 유지
+                .add(() => { isQuoteShowing = false; }, 0)
+                .to({}, { duration: 5 }) // 5초 대기
 
-            // 문장 나타나기 (2초간 유지)
-            gsap.timeline()
-                .set(display, { visibility: 'visible', pointerEvents: 'auto' })
-                .to(display, { opacity: 1, duration: 0.5 })
-                .fromTo(text, { y: 30, scale: 0.9 }, { y: 0, scale: 1, duration: 0.6, ease: "back.out(1.7)" }, "<")
-                .to(display, { 
-                    opacity: 0, 
-                    duration: 0.5, 
-                    delay: 2, 
-                    onComplete: () => {
-                        gsap.set(display, { visibility: 'hidden', pointerEvents: 'none' });
-                        gsap.to("#clock-wrapper", { opacity: 1, duration: 0.3 });
-                    }
-                });
+                // 2. 문장 노출 시작
+                .add(() => {
+                    isQuoteShowing = true;
+                    const selected = quotes[Math.floor(Math.random() * quotes.length)];
+                    document.getElementById('target-quote').innerText = typeof selected === 'string' ? selected : selected.text;
+                })
+                .set("#quote-display", { visibility: "visible" })
+                .to("#quote-display", { opacity: 1, duration: 0.5 })
+                .to("#clock-wrapper", { opacity: 0, duration: 0.3 }, "<")
+                .fromTo("#target-quote", { y: 40, scale: 0.9 }, { y: 0, scale: 1, duration: 0.6, ease: "back.out(1.5)" }, "<")
+
+                // 3. 2초 동안 노출 유지
+                .to({}, { duration: 2 })
+
+                // 4. 문장 제거 및 복귀
+                .to("#quote-display", { opacity: 0, duration: 0.5 })
+                .to("#clock-wrapper", { opacity: 1, duration: 0.3 }, "<")
+                .set("#quote-display", { visibility: "hidden" });
         }
 
-        window.onload = init;
+        window.onload = () => {
+            // 시계 업데이트와 배경 슬라이드는 별도 인터벌로 (흐름 방해 방지)
+            setInterval(updateClock, 1000);
+            setInterval(slideBg, 1000);
+            
+            // 마스터 루프 실행
+            runMasterLoop();
+        };
     </script>
 </body>
 </html>
