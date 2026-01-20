@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Ticking Sequence V64</title>
+    <title>LongBlack - Real-time Ticking V65</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
@@ -11,8 +11,6 @@
         :root { --bg: #000; --fg: #fff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
         #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; will-change: transform; }
-        
-        /* 시계 영역 */
         #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
         .digital-clock { color: #fff; font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
         .logo-img { margin-top: 25px; width: clamp(120px, 22vw, 200px); height: auto; filter: brightness(0) invert(1); transition: filter 0.4s; }
@@ -29,12 +27,10 @@
             will-change: transform;
         }
 
-        /* 문장 레이어 */
         #quote-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: #000; visibility: hidden; padding: 0 10%; box-sizing: border-box; will-change: transform; }
         .quote-text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 500; color: #fff; text-align: center; line-height: 1.6; word-break: keep-all; letter-spacing: -0.02em; margin-bottom: 30px; }
         .quote-source { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: clamp(0.8rem, 1.5vw, 1rem); font-weight: 300; color: rgba(255,255,255,0.6); letter-spacing: 0.1em; text-transform: uppercase; text-align: center; }
         
-        /* 사운드 컨트롤 */
         #sound-control { position: fixed; bottom: 30px; right: 30px; z-index: 9999; width: 44px; height: 44px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); mix-blend-mode: difference; }
         #sound-control svg { width: 20px; height: 20px; fill: #fff; pointer-events: none; }
     </style>
@@ -52,6 +48,7 @@
     <script>
         const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
         let lastDirection = "", lastSecond = -1, isAnimating = false, cycleCounter = 0, quoteCounter = 0, soundEnabled = false;
+        let isFullLogoActive = false, currentLogoRotation = 0;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playTick() {
@@ -77,6 +74,7 @@
             return d === 'left' ? {xPercent:-100,yPercent:0} : d === 'right' ? {xPercent:100,yPercent:0} : d === 'top' ? {xPercent:0,yPercent:-100} : {xPercent:0,yPercent:100};
         }
 
+        // --- 실시간 엔진 ---
         function engine() {
             const now = new Date();
             const s = now.getSeconds();
@@ -84,6 +82,17 @@
                 lastSecond = s;
                 document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
                 playTick();
+
+                // 로고가 활성화 상태일 때 매 초마다 회전 추가
+                if (isFullLogoActive) {
+                    currentLogoRotation += 6; // 시계의 1초 각도인 6도씩 회전
+                    gsap.to("#spinning-logo", { 
+                        rotation: currentLogoRotation, 
+                        duration: 0.1, 
+                        ease: "back.out(1.7)" // 살짝 반동을 주어 기계적인 느낌 강화
+                    });
+                }
+
                 if (!isAnimating) {
                     cycleCounter++;
                     if (cycleCounter === 6) {
@@ -126,18 +135,24 @@
 
         function triggerFullLogoSequence() {
             const inDir = getDir(), outDir = getDir();
-            const tl = gsap.timeline({ onComplete: () => { isAnimating = false; cycleCounter = 0; quoteCounter = 0; gsap.set("#full-logo-display", { visibility: "hidden" }); triggerBg(); } });
+            const tl = gsap.timeline({ 
+                onStart: () => { 
+                    isFullLogoActive = true; // 매 초마다의 회전 로직 활성화
+                },
+                onComplete: () => { 
+                    isAnimating = false; 
+                    isFullLogoActive = false;
+                    cycleCounter = 0; 
+                    quoteCounter = 0; 
+                    gsap.set("#full-logo-display", { visibility: "hidden" }); 
+                    triggerBg(); 
+                } 
+            });
             
             tl.set("#full-logo-display", { visibility: "visible", ...inDir, opacity: 1 })
-              .set("#spinning-logo", { rotation: 0 }) 
               .to("#clock-wrapper", { opacity: 0, duration: 0.2 })
               .to("#full-logo-display", { xPercent: 0, yPercent: 0, duration: 0.6, ease: "power3.out" })
-              // 핵심: 3초 동안 3단계로 나누어 60도씩(혹은 원하는 각도만큼) '탁 탁 탁' 회전
-              .to("#spinning-logo", { 
-                  rotation: 180, // 3초 동안 총 180도 회전 (취향에 따라 360으로 변경 가능)
-                  duration: 3.0, 
-                  ease: "steps(3)" // 3초 동안 3번 끊어서 이동 (1초에 한 번씩 회전)
-              })
+              .to({}, { duration: 3.0 }) // 3초 대기 (이 동안 engine 함수가 초마다 로고를 돌림)
               .to("#full-logo-display", { ...outDir, duration: 0.6, ease: "power3.in" })
               .to("#clock-wrapper", { opacity: 1, duration: 0.2 }, "-=0.2");
         }
