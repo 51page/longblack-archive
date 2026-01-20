@@ -3,15 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Minimalist Pulse V53</title>
+    <title>LongBlack - Minimalist Pulse Responsive</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --fg: #fff; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: #000; overflow: hidden; 
+            font-family: 'Montserrat', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+        }
         
-        #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; }
+        #main-bg { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 1; 
+            will-change: transform, background-color;
+        }
         
         /* 시계 영역 */
         #clock-wrapper { 
@@ -20,12 +29,21 @@
             z-index: 10; pointer-events: none; 
         }
         .digital-clock { 
-            color: #fff; font-size: 8rem; font-weight: 200; 
-            letter-spacing: -3px; transition: color 0.4s ease; line-height: 1; 
+            color: #fff; 
+            /* 모바일 최적화 폰트 사이즈 (최소 3rem, 최대 8rem) */
+            font-size: clamp(3.5rem, 15vw, 8rem); 
+            font-weight: 200; 
+            letter-spacing: -0.04em; 
+            transition: color 0.4s ease; 
+            line-height: 1; 
         }
         .sub-brand { 
-            margin-top: 15px; font-size: 1.2rem; font-weight: 300; 
-            letter-spacing: 12px; text-transform: uppercase; transition: color 0.4s ease; 
+            margin-top: 15px; 
+            font-size: clamp(0.8rem, 2.5vw, 1.2rem); 
+            font-weight: 300; 
+            letter-spacing: clamp(6px, 2vw, 12px); 
+            text-transform: uppercase; 
+            transition: color 0.4s ease; 
         }
 
         /* 문장 노출 영역 */
@@ -33,22 +51,38 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             z-index: 100; background: rgba(0,0,0,0.98); 
-            opacity: 0; visibility: hidden; padding: 0 15%; box-sizing: border-box; 
+            opacity: 0; visibility: hidden; 
+            padding: 0 10%; /* 패딩 소폭 축소로 가독성 확보 */
+            box-sizing: border-box; 
         }
         
-        /* 문장(Text) 스타일: 크기 소폭 축소 */
+        /* 문장(Text) 스타일 */
         .quote-text { 
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            font-size: 1.7vw; font-weight: 500; color: #fff; 
-            text-align: center; line-height: 1.5; word-break: keep-all; 
-            letter-spacing: -0.02em; margin-bottom: 30px;
+            /* 모바일에서는 더 크게 보이도록 조정 */
+            font-size: clamp(1.4rem, 4vw, 2.2rem); 
+            font-weight: 500; color: #fff; 
+            text-align: center; line-height: 1.6; 
+            word-break: keep-all; 
+            letter-spacing: -0.02em; 
+            margin-bottom: 30px;
+            will-change: transform, opacity;
         }
 
         /* 출처(Source) 스타일 */
         .quote-source {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 1.2vw; font-weight: 300; color: rgba(255,255,255,0.6);
-            letter-spacing: 0.05em; text-transform: uppercase;
+            font-size: clamp(0.8rem, 1.5vw, 1rem); 
+            font-weight: 300; color: rgba(255,255,255,0.6);
+            letter-spacing: 0.1em; 
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        /* 가로 모드나 태블릿을 위한 미디어 쿼리 조정 */
+        @media (max-width: 768px) {
+            #quote-display { padding: 0 8%; }
+            .quote-text { line-height: 1.5; }
         }
     </style>
 </head>
@@ -104,18 +138,16 @@
         }
 
         function runMasterLoop() {
-            // quoteData 변수 확인
             const dataTarget = (typeof quoteData !== 'undefined') ? quoteData : [];
 
             const master = gsap.timeline({ repeat: -1 });
             master
                 .add(() => { isQuoteShowing = false; }, 0)
-                .to({}, { duration: 5 }) // 5초 대기
+                .to({}, { duration: 5 }) 
                 .add(() => {
                     isQuoteShowing = true;
                     if(dataTarget.length > 0) {
                         const selected = dataTarget[Math.floor(Math.random() * dataTarget.length)];
-                        // 문장(text)과 제목(source)을 각각 업데이트
                         document.getElementById('target-quote').innerText = selected.text || "";
                         document.getElementById('target-source').innerText = selected.source || "";
                     }
@@ -123,11 +155,10 @@
                 .set("#quote-display", { visibility: "visible" })
                 .to("#quote-display", { opacity: 1, duration: 0.6 })
                 .to("#clock-wrapper", { opacity: 0, duration: 0.3 }, "<")
-                // 텍스트 애니메이션
                 .fromTo(["#target-quote", "#target-source"], 
-                    { y: 30, opacity: 0 }, 
-                    { y: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "expo.out" }, "-=0.3")
-                .to({}, { duration: 3.0 }) // 문장 감상을 위해 노출 시간 소폭 연장 (2.5초)
+                    { y: 20, opacity: 0 }, 
+                    { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out" }, "-=0.2")
+                .to({}, { duration: 4.0 }) // 모바일에서 읽는 속도를 고려해 노출 시간 추가 확보
                 .to("#quote-display", { opacity: 0, duration: 0.6 })
                 .to("#clock-wrapper", { opacity: 1, duration: 0.4 }, "<")
                 .set("#quote-display", { visibility: "hidden" });
