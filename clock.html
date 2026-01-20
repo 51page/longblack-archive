@@ -3,56 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Time-Art V39</title>
+    <title>LongBlack Kinetic Art - Art Master</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@300;900&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;900&family=Montserrat:wght@300;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --fg: #fff; --accent: #FF4E00; }
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: var(--bg); color: var(--fg); 
-            overflow: hidden; transition: background 0.1s ease;
+            overflow: hidden; transition: background 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         #art-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
-        .text-fragment { 
+        .kinetic-text { 
             position: absolute; white-space: nowrap; will-change: transform, opacity; 
-            line-height: 1; mix-blend-mode: difference; user-select: none;
+            line-height: 0.8; mix-blend-mode: difference; user-select: none;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* [중앙 클래식 시계 디자인] */
+        /* [중앙 클래식 시계] */
         #clock-container {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 350px; height: 350px; z-index: 5000; pointer-events: none;
         }
         .clock-face {
             width: 100%; height: 100%; border: 2px solid var(--fg);
-            border-radius: 50%; position: relative; background: rgba(0,0,0,0.05);
-            backdrop-filter: blur(2px);
+            border-radius: 50%; position: relative; background: rgba(0,0,0,0.02);
+            backdrop-filter: blur(4px);
         }
-        /* 시계 숫자/눈금 */
-        .marking {
-            position: absolute; width: 2px; height: 15px; background: var(--fg);
-            left: 50%; transform-origin: 50% 175px; opacity: 0.5;
-        }
-        #digital-time {
-            position: absolute; top: 65%; left: 50%; transform: translateX(-50%);
-            font-family: 'Montserrat'; font-weight: 300; font-size: 0.9rem;
-            letter-spacing: 3px; opacity: 0.8;
-        }
+        .marking { position: absolute; width: 2px; height: 15px; background: var(--fg); left: 50%; transform-origin: 50% 175px; opacity: 0.3; }
+        #digital-time { position: absolute; top: 65%; left: 50%; transform: translateX(-50%); font-family: 'Montserrat'; font-weight: 300; font-size: 0.8rem; letter-spacing: 4px; opacity: 0.8; }
         
         .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; border-radius: 10px; }
         .hour-hand { width: 6px; height: 80px; background: var(--fg); z-index: 10; }
         .min-hand { width: 4px; height: 120px; background: var(--fg); z-index: 11; }
         .sec-hand { width: 2px; height: 145px; background: var(--accent); z-index: 12; }
-        .center-dot { 
-            position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; 
-            background: var(--accent); border-radius: 50%; transform: translate(-50%, -50%); z-index: 15; 
-        }
+        .center-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transform: translate(-50%, -50%); z-index: 15; }
 
-        #brand { position: fixed; top: 30px; left: 30px; font-family: 'Montserrat'; font-weight: 900; font-size: 1.2rem; z-index: 6000; letter-spacing: 5px; mix-blend-mode: difference; }
+        #brand { position: fixed; top: 30px; left: 30px; font-family: 'Montserrat'; font-weight: 900; font-size: 1.2rem; z-index: 6000; letter-spacing: 8px; mix-blend-mode: difference; }
     </style>
 </head>
 <body>
@@ -74,28 +64,25 @@
         let noteData = [];
         let isInverted = false;
         const canvas = document.getElementById('art-canvas');
-        const fonts = ["'Nanum Myeongjo'", "'Montserrat'", "'Playfair Display'"];
+        const fonts = ["'Nanum Myeongjo'", "'Montserrat'"];
 
-        // 한글 해체 로직
-        const CHOSUNG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-        const JUNGSUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-        const JONGSUNG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        // 한글 해체 데이터
+        const CHOSUNG = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        const JUNGSUNG = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
 
         function disassemble(str) {
             let result = [];
             for (let i = 0; i < str.length; i++) {
                 const code = str.charCodeAt(i) - 44032;
-                if (code > -1 && code < 11172) {
-                    result.push(CHOSUNG[Math.floor(code / 588)]);
-                    result.push(JUNGSUNG[Math.floor((code % 588) / 28)]);
-                    const jong = JONGSUNG[code % 28];
-                    if (jong) result.push(jong);
+                if (code >= 0 && code < 11172) {
+                    result.push(CHOSUNG[Math.floor(code / 588)] || str[i]);
+                    result.push(JUNGSUNG[Math.floor((code % 588) / 28)] || str[i]);
                 } else { result.push(str[i]); }
             }
             return result;
         }
 
-        // 시계 눈금 생성
+        // 시계 눈금
         const face = document.getElementById('clock-face');
         for(let i=0; i<12; i++) {
             const mark = document.createElement('div');
@@ -108,88 +95,113 @@
             download: true, header: true,
             complete: function(results) {
                 noteData = results.data.filter(row => row.note_title);
-                startEngine();
+                startKineticEngine();
             }
         });
 
-        function startEngine() {
+        function startKineticEngine() {
             setInterval(() => {
-                // 1. 배경 반전
+                // 1. Black & White Morphing
                 isInverted = !isInverted;
                 document.body.style.setProperty('--bg', isInverted ? '#fff' : '#000');
                 document.body.style.setProperty('--fg', isInverted ? '#000' : '#fff');
 
-                // 2. 시계 및 디지털 시간 업데이트
+                // 2. Real-time Clock
                 const now = new Date();
-                const h = now.getHours();
-                const m = now.getMinutes();
-                const s = now.getSeconds();
-
-                document.getElementById('digital-time').innerText = 
-                    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-                gsap.to("#s-hand", { rotation: s * 6, duration: 0.4, ease: "elastic.out(1, 0.3)" });
+                const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+                document.getElementById('digital-time').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                gsap.to("#s-hand", { rotation: s * 6, duration: 0.4, ease: "elastic.out(1, 0.2)" });
                 gsap.to("#m-hand", { rotation: m * 6, duration: 0.6 });
                 gsap.to("#h-hand", { rotation: (h % 12) * 30 + m * 0.5, duration: 1 });
 
-                // 3. 타이포그래피 아트 (랜덤 모드: 완성형 vs 해체형)
-                renderArt();
+                // 3. Kinetic Animation Pulse
+                triggerKineticPulse();
             }, 1000);
         }
 
-        function renderArt() {
-            // 기존 텍스트 삭제
-            const old = document.querySelectorAll('.text-fragment');
+        function triggerKineticPulse() {
+            // Destroy: 기존 요소들을 비틀며 제거
+            const old = document.querySelectorAll('.kinetic-text');
             old.forEach(el => {
                 gsap.to(el, {
-                    x: (Math.random() - 0.5) * window.innerWidth * 2.5,
-                    y: (Math.random() - 0.5) * window.innerHeight * 2.5,
-                    opacity: 0, rotation: Math.random() * 360, duration: 0.7, onComplete: () => el.remove()
+                    rotationX: 90, rotationY: 90, scale: 2, 
+                    opacity: 0, duration: 0.6, ease: "power2.in",
+                    onComplete: () => el.remove()
                 });
             });
 
             const randomNote = noteData[Math.floor(Math.random() * noteData.length)].note_title;
-            const isFullSentence = Math.random() > 0.5; // 50% 확률로 완성형 문장
+            const mode = Math.random(); 
 
-            if (isFullSentence) {
-                // 완성형 문장 모드
-                createFragment(randomNote, true);
+            if (mode > 0.6) {
+                // [Fluid Scrolling Mode] - 문장이 흐르듯 지나감
+                renderScrolling(randomNote);
+            } else if (mode > 0.3) {
+                // [Morphing/Twist Mode] - 문장이 비틀리며 나타남
+                renderTwist(randomNote);
             } else {
-                // 해체형 파편 모드
-                const chars = disassemble(randomNote);
-                chars.forEach((char, i) => {
-                    if (char !== " ") setTimeout(() => createFragment(char, false), i * 20);
-                });
+                // [Disassembled Chaos] - 자모 파편이 쏟아짐
+                renderChaos(disassemble(randomNote));
             }
         }
 
-        function createFragment(text, isFull) {
-            const span = document.createElement('div');
-            span.className = 'text-fragment';
-            span.innerText = text;
+        function createEl(text, size, font) {
+            const el = document.createElement('div');
+            el.className = 'kinetic-text';
+            el.innerText = text;
+            el.style.fontSize = size + "px";
+            el.style.fontFamily = font;
+            canvas.appendChild(el);
+            return el;
+        }
 
-            // 크기 및 폰트 변주
-            const baseSize = isFull ? window.innerWidth * 0.08 : window.innerWidth * 0.2;
-            const fontSize = baseSize * (0.5 + Math.random() * 1.5);
+        // 기법 1: Fluid Scrolling (문장이 화면을 가로질러 흐름)
+        function renderScrolling(text) {
+            const size = window.innerWidth * 0.15;
+            const el = createEl(text, size, fonts[1]);
+            const yPos = Math.random() * window.innerHeight;
             
-            span.style.fontSize = fontSize + "px";
-            span.style.fontFamily = fonts[Math.floor(Math.random() * fonts.length)];
-            span.style.fontWeight = isFull ? "700" : (Math.random() > 0.5 ? "900" : "100");
-            
-            canvas.appendChild(span);
+            gsap.fromTo(el, 
+                { x: -window.innerWidth, y: yPos, skewX: 30, opacity: 0 },
+                { x: window.innerWidth, y: yPos, skewX: -30, opacity: 0.4, duration: 4, ease: "none" }
+            );
+        }
 
-            // 랜덤 위치
-            const targetX = Math.random() * (window.innerWidth - 200);
-            const targetY = Math.random() * (window.innerHeight - 100);
+        // 기법 2: Rotation & Twist (중앙에서 회전하며 압도적 크기로 등장)
+        function renderTwist(text) {
+            const size = window.innerWidth * 0.1;
+            const el = createEl(text, size, fonts[0]);
+            gsap.set(el, { x: window.innerWidth/2, y: window.innerHeight/2, xPercent: -50, yPercent: -50 });
 
-            gsap.fromTo(span, {
-                x: window.innerWidth / 2, y: window.innerHeight / 2,
-                scale: 0, opacity: 0, rotation: Math.random() * 360
-            }, {
-                x: targetX, y: targetY,
-                scale: 1, opacity: Math.random() * 0.7 + 0.3,
-                rotation: Math.random() * 20 - 10,
-                duration: 0.8, ease: "back.out(1.2)"
+            gsap.fromTo(el, 
+                { rotationY: 180, rotationZ: -20, scale: 0, opacity: 0 },
+                { rotationY: 0, rotationZ: 5, scale: 1.5, opacity: 0.8, duration: 1, ease: "expo.out" }
+            );
+        }
+
+        // 기법 3: Chaos Fragments (해체된 자모들이 유체처럼 부유)
+        function renderChaos(chars) {
+            chars.forEach((char, i) => {
+                if(char === " ") return;
+                const size = 50 + Math.random() * 200;
+                const el = createEl(char, size, fonts[Math.floor(Math.random()*2)]);
+                
+                const startX = window.innerWidth / 2;
+                const startY = window.innerHeight / 2;
+                
+                gsap.fromTo(el, 
+                    { x: startX, y: startY, opacity: 0, scale: 0 },
+                    { 
+                        x: Math.random() * window.innerWidth, 
+                        y: Math.random() * window.innerHeight, 
+                        opacity: Math.random() * 0.6 + 0.2, 
+                        scale: 1,
+                        rotation: Math.random() * 720,
+                        duration: 1.5, 
+                        delay: i * 0.03,
+                        ease: "power4.out"
+                    }
+                );
             });
         }
     </script>
