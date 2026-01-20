@@ -3,213 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Mosaic - Final Mobile Fix</title>
+    <title>LongBlack Kinetic Archive</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #000000;
             --accent: #FF4E00;
-            --tile-w: 120px;
-            --tile-h: 170px;
-            --gap: 10px;
+            --tile-w: 120px; --tile-h: 170px; --gap: 10px;
+            --nav-height: 80px;
         }
 
         body, html {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            background-color: var(--bg);
-            color: #fff; font-family: 'Montserrat', sans-serif;
-            overflow: hidden;
-            touch-action: none;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg); color: #fff;
+            font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
         }
 
+        /* 상단 카테고리 내비게이션 */
+        #category-nav {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-height);
+            display: flex; align-items: center; justify-content: center; /* 중앙 정렬 */
+            flex-wrap: wrap; gap: 15px 25px; padding: 10px 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            z-index: 50; box-sizing: border-box;
+            /* 모바일에서 스크롤 가능하게 */
+            overflow-x: auto; -webkit-overflow-scrolling: touch; 
+        }
+
+        /* 스크롤바 숨김 */
+        #category-nav::-webkit-scrollbar { display: none; }
+        #category-nav { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .nav-item {
+            font-size: 0.9rem; font-weight: 800; color: #777;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            transition: all 0.3s ease; white-space: nowrap; /* 줄바꿈 방지 */
+            position: relative;
+        }
+        .nav-item:hover, .nav-item.active { color: #fff; transform: scale(1.1); }
+        .nav-item.active::after {
+            content: ''; position: absolute; bottom: -5px; left: 0;
+            width: 100%; height: 2px; background: var(--accent);
+        }
+
+        /* 배경 그리드 컨테이너 */
         #grid-container {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            justify-content: center;
-            gap: var(--gap);
-            z-index: 5;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            gap: var(--gap); z-index: 5;
+            padding-top: var(--nav-height); /* 내비게이션 공간 확보 */
+            box-sizing: border-box;
         }
 
-        .grid-row {
-            display: flex; gap: var(--gap);
-            width: max-content; will-change: transform;
-        }
+        .grid-row { display: flex; gap: var(--gap); width: max-content; will-change: transform; }
 
         .tile {
             width: var(--tile-w); height: var(--tile-h);
-            background: #111; border-radius: 4px;
-            overflow: hidden; cursor: pointer;
-            flex-shrink: 0;
-            filter: brightness(0.5) grayscale(1);
-            /* 모바일 클릭 반응성 향상 */
+            background: #111; border-radius: 4px; overflow: hidden;
+            cursor: pointer; flex-shrink: 0;
+            filter: brightness(0.4) grayscale(1);
             -webkit-tap-highlight-color: transparent;
+            /* 부드러운 움직임을 위한 트랜지션 설정 */
+            transition: filter 0.4s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
         }
+        
+        /* 필터링 모드일 때의 스타일 */
+        body.is-filtered .tile { transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        body.is-filtered .tile.matched {
+            filter: brightness(1.1) grayscale(0) !important;
+            z-index: 20;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        body.is-filtered .tile.dimmed { opacity: 0.05; pointer-events: none; filter: blur(5px); }
+
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* 하이라이트 오버레이 (Z-INDEX 대폭 강화) */
+        /* 하이라이트 오버레이 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000000; /* 블러 전 배경색 고정 */
+            background: rgba(0,0,0,0.96);
+            -webkit-backdrop-filter: blur(25px); backdrop-filter: blur(25px);
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; pointer-events: none;
-            transition: opacity 0.4s ease;
-        }
-        /* 사파리 대응 블러 처리 */
-        @supports ((-webkit-backdrop-filter: blur(25px)) or (backdrop-filter: blur(25px))) {
-            #focus-overlay {
-                background: rgba(0,0,0,0.9);
-                -webkit-backdrop-filter: blur(25px);
-                backdrop-filter: blur(25px);
-            }
+            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
 
         .focus-content {
-            width: 85%; max-width: 450px;
-            text-align: center; color: #fff;
-            z-index: 10000;
+            width: 85%; max-width: 420px; text-align: center; color: #fff;
+            display: flex; flex-direction: column; align-items: center;
         }
-
         .focus-img {
-            width: 100%; max-height: 40vh;
-            border-radius: 8px; object-fit: contain;
-            margin-bottom: 25px;
-            background: #111;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 100%; max-height: 35vh; border-radius: 8px; object-fit: contain;
+            margin-bottom: 25px; background: #111; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-
         .focus-quote {
-            font-family: 'Nanum Myeongjo', serif;
-            font-size: 1.15rem; font-weight: 800; line-height: 1.6;
-            margin: 0 0 15px 0; color: #fff !important;
+            font-family: 'Nanum Myeongjo', serif; font-size: 1.2rem; font-weight: 800;
+            line-height: 1.6; margin: 0 0 15px 0; color: #fff; word-break: keep-all;
         }
-
         .focus-title {
-            font-size: 0.8rem; font-weight: 500; opacity: 0.6; margin: 0;
-            color: #ccc;
+            font-size: 0.8rem; font-weight: 400; opacity: 0.5;
+            margin: 0 0 25px 0; color: #ccc;
         }
-
-        .close-hint {
-            margin-top: 35px; font-size: 0.6rem; opacity: 0.4; letter-spacing: 2px;
-            text-transform: uppercase;
+        .view-btn {
+            display: inline-block; padding: 12px 30px; background-color: var(--accent);
+            color: #fff; text-decoration: none; font-size: 0.75rem; font-weight: 600;
+            border-radius: 50px; letter-spacing: 2px; transition: transform 0.2s;
         }
+        .view-btn:active { transform: scale(0.95); }
+        .close-hint { margin-top: 30px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 2px; }
     </style>
 </head>
 <body>
+
+    <nav id="category-nav">
+        <span class="nav-item active" data-cat="all">All</span>
+        <span class="nav-item" data-cat="브랜딩">Branding</span>
+        <span class="nav-item" data-cat="사업기획">Business</span>
+        <span class="nav-item" data-cat="디자인">Design</span>
+        <span class="nav-item" data-cat="자기계발">Growth</span>
+        <span class="nav-item" data-cat="테크">Tech</span>
+        <span class="nav-item" data-cat="책 리뷰">Book</span>
+        <span class="nav-item" data-cat="웰니스">Wellness</span>
+        <span class="nav-item" data-cat="트렌드">Trend</span>
+        <span class="nav-item" data-cat="인문">Humanities</span>
+        <span class="nav-item" data-cat="예술">Art</span>
+        <span class="nav-item" data-cat="리더십">Leadership</span>
+        <span class="nav-item" data-cat="생산성">Productivity</span>
+    </nav>
 
     <div id="grid-container"></div>
 
     <div id="focus-overlay">
         <div class="focus-content">
-            <img id="focus-img" src="" alt="Thumbnail" class="focus-img">
+            <img id="focus-img" src="" alt="Note Thumbnail" class="focus-img">
             <p id="focus-quote" class="focus-quote"></p>
             <h3 id="focus-title" class="focus-title"></h3>
-            <p class="close-hint">CLOSE</p>
+            <a id="focus-link" href="" target="_blank" class="view-btn">READ FULL NOTE</a>
+            <p class="close-hint">TAP OUTSIDE TO RETURN</p>
         </div>
     </div>
 
     <script>
-        // 데이터 인덱스 사용
-        const noteData = [
-            { title: "영감의 탄생, 그 찰나", quote: "위대한 영감은 우연을 가장한 필연적인 축적의 결과물이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/176656503563a1934c51b320fe95469a34126b5418.png" },
-            { title: "비즈니스의 본질을 묻다", quote: "결국 모든 비즈니스는 사람의 마음을 얻는 과정이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251217/1765962945ee9b56524b06910d3698879edb452464.png" },
-            { title: "감각의 아카이빙", quote: "나를 정의하는 것은 내가 보고 듣고 읽은 것들의 총합이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251217/1765962275e8eeb5995c8d6addd9153ffc4ec434ce.png" },
-            { title: "기록이 쌓이면 통찰이 된다", quote: "어제의 기록이 오늘의 나를 만들고, 내일의 통찰이 된다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251211/1765433740ebaf8b810d2d1f9ead935299364919a1.png" },
-            { title: "시대의 흐름을 읽는 법", quote: "변화의 파도 속에서 변하지 않는 본질을 보는 눈을 길러야 한다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251211/1765433716be1ad9dbf19817a9573785fe6ae33360.png" },
-            { title: "기본으로 돌아가는 용기", quote: "가장 혁신적인 답은 언제나 가장 기본적인 질문 속에 숨어있다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/176474266585e9885cba40526329edaafbfcc51581.png" },
-            { title: "공간의 미학", quote: "좋은 공간은 머무는 사람의 태도까지 디자인한다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/1764742730aeaf9a1c72017d80b52900534bd50794.png" },
-            { title: "디테일의 완성", quote: "사소한 디테일 하나가 브랜드의 영혼을 결정짓는다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251125/17640579902f4c62d2fbf8001c97c38d02d59e237c.png" },
-            { title: "매일의 감각을 깨우다", quote: "무뎌진 일상의 감각을 깨우는 것이 영감의 시작이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/176472681167f136b488d418f792a6f7c62e7d7981.png" },
-            { title: "미래의 조각들", quote: "미래는 예측하는 것이 아니라, 오늘의 조각들로 만들어가는 것이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251121/1763724643574a7a78e625111f95a9b0bc522eb356.png" },
-            { title: "브랜드의 탄생", quote: "사랑받는 브랜드는 명확한 자기다움에서 시작된다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251112/176294083545516b03ee7bd96747e27648c1080e19.png" }
+        // 데이터에 카테고리(cat) 정보 추가 (예시 데이터)
+        const rawNoteData = [
+            { cat: "예술", title: "영감의 탄생, 그 찰나", quote: "위대한 영감은 우연을 가장한 필연적인 축적의 결과물이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384619eac446d2cac1af75e09af270aaacb279.png", url: "#" },
+            { cat: "사업기획", title: "비즈니스의 본질을 묻다", quote: "결국 모든 비즈니스는 사람의 마음을 얻는 과정이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384603edcd73ebd53934bf6a377eedc43790ec.png", url: "#" },
+            { cat: "아카이빙", title: "감각의 아카이빙", quote: "나를 정의하는 것은 내가 보고 듣고 읽은 것들의 총합이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/17683845947c75c9555c9bbfe7c994abc37a6785d5.png", url: "#" },
+            { cat: "자기계발", title: "기록이 쌓이면 통찰이 된다", quote: "어제의 기록이 오늘의 나를 만들고, 내일의 통찰이 된다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260112/1768210148519c8f742204d28d70bf4ace87622432.png", url: "#" },
+            { cat: "트렌드", title: "시대의 흐름을 읽는 법", quote: "변화의 파도 속에서 변하지 않는 본질을 보는 눈을 길러야 한다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251211/1765433716be1ad9dbf19817a9573785fe6ae33360.png", url: "#" },
+            { cat: "리더십", title: "기본으로 돌아가는 용기", quote: "가장 혁신적인 답은 언제나 가장 기본적인 질문 속에 숨어있다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/176474266585e9885cba40526329edaafbfcc51581.png", url: "#" },
+            { cat: "디자인", title: "공간의 미학", quote: "좋은 공간은 머무는 사람의 태도까지 디자인한다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/1764742730aeaf9a1c72017d80b52900534bd50794.png", url: "#" },
+            { cat: "브랜딩", title: "디테일의 완성", quote: "사소한 디테일 하나가 브랜드의 영혼을 결정짓는다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251125/17640579902f4c62d2fbf8001c97c38d02d59e237c.png", url: "#" },
+            { cat: "웰니스", title: "매일의 감각을 깨우다", quote: "무뎌진 일상의 감각을 깨우는 것이 영감의 시작이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/176472681167f136b488d418f792a6f7c62e7d7981.png", url: "#" },
+            { cat: "인문", title: "미래의 조각들", quote: "미래는 예측하는 것이 아니라, 오늘의 조각들로 만들어가는 것이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251121/1763724643574a7a78e625111f95a9b0bc522eb356.png", url: "#" },
+            { cat: "테크", title: "기술과 인문의 만남", quote: "가장 인간적인 기술이 가장 혁신적이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/176656503563a1934c51b320fe95469a34126b5418.png", url: "#" },
+            { cat: "책 리뷰", title: "활자 속의 우주", quote: "한 권의 책은 하나의 세계다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251217/1765962945ee9b56524b06910d3698879edb452464.png", url: "#" },
+            { cat: "생산성", title: "몰입의 기술", quote: "생산성은 속도가 아니라 방향과 깊이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251217/1765962275e8eeb5995c8d6addd9153ffc4ec434ce.png", url: "#" }
         ];
+
+        // 데이터 확장 (충분한 수량을 위해 복제 및 랜덤 섞기)
+        let noteData = [...rawNoteData, ...rawNoteData, ...rawNoteData, ...rawNoteData].sort(() => Math.random() - 0.5);
 
         const container = document.getElementById('grid-container');
         const overlay = document.getElementById('focus-overlay');
-        const timelines = [];
+        const navItems = document.querySelectorAll('.nav-item');
+        let timelines = [];
+        let allTiles = [];
+        let isFiltered = false;
 
-        // 1. 그리드 생성
-        const rowCount = 6;
-        for (let r = 0; r < rowCount; r++) {
-            const row = document.createElement('div');
-            row.className = 'grid-row';
-            const repeatedData = [...noteData, ...noteData, ...noteData];
-            repeatedData.forEach((data, idx) => {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.innerHTML = `<img src="${data.img}" loading="lazy">`;
-                // 인덱스를 활용한 데이터 바인딩
-                tile.dataset.index = idx % noteData.length;
+        // 1. 그리드 생성 및 초기화
+        function initGrid() {
+            container.innerHTML = '';
+            timelines.forEach(tl => tl.kill()); // 기존 타임라인 제거
+            timelines = [];
+            allTiles = [];
+
+            const rowCount = 6;
+            const tilesPerRow = Math.ceil(noteData.length / rowCount);
+
+            for (let r = 0; r < rowCount; r++) {
+                const row = document.createElement('div');
+                row.className = 'grid-row';
                 
-                // 모바일에서도 확실히 동작하는 표준 클릭 이벤트
-                tile.onclick = (e) => {
-                    e.stopPropagation();
-                    const dataIndex = e.currentTarget.dataset.index;
-                    showFocus(noteData[dataIndex]);
-                };
-                row.appendChild(tile);
-            });
-            container.appendChild(row);
+                for (let i = 0; i < tilesPerRow * 2; i++) { // 무한루프를 위해 2배수로 생성
+                    const dataIndex = (r * tilesPerRow + i) % noteData.length;
+                    const data = noteData[dataIndex];
+                    
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.innerHTML = `<img src="${data.img}" loading="lazy">`;
+                    tile.dataset.index = dataIndex;
+                    tile.dataset.cat = data.cat; // 카테고리 정보 저장
 
-            const tl = gsap.to(row, {
-                x: r % 2 === 0 ? "-50%" : "0%",
-                duration: 50 + (r * 12),
-                ease: "none",
-                repeat: -1
-            });
-            if(r % 2 !== 0) gsap.set(row, {x: "-50%"});
-            timelines.push({tl, dir: r % 2 === 0 ? 1 : -1});
+                    tile.onclick = (e) => {
+                        if(isFiltered && !tile.classList.contains('matched')) return;
+                        e.stopPropagation();
+                        showFocus(noteData[tile.dataset.index]);
+                    };
+                    row.appendChild(tile);
+                    allTiles.push(tile);
+                }
+                container.appendChild(row);
+
+                // 흐름 애니메이션
+                const tl = gsap.to(row, {
+                    x: r % 2 === 0 ? "-50%" : "0%",
+                    duration: 60 + (r * 10), ease: "none", repeat: -1
+                });
+                if(r % 2 !== 0) gsap.set(row, {x: "-50%"});
+                timelines.push(tl);
+            }
         }
 
-        // 2. 스크롤 인터랙션 (Observer)
-        gsap.registerPlugin(Observer);
+        // 2. 카테고리 필터링 및 "헤쳐모여" 애니메이션 (핵심!)
+        function filterTiles(category) {
+            isFiltered = category !== 'all';
+            document.body.classList.toggle('is-filtered', isFiltered);
 
+            if (!isFiltered) {
+                // 'All' 선택 시: 흐름 재개
+                allTiles.forEach(tile => {
+                    tile.classList.remove('matched', 'dimmed');
+                    gsap.to(tile, { x: 0, y: 0, scale: 1, rotation: 0, duration: 0.8 }); // 원래 위치로 복귀
+                });
+                timelines.forEach(tl => tl.play());
+            } else {
+                // 카테고리 선택 시: 흐름 정지 및 재배치
+                timelines.forEach(tl => tl.pause());
+                
+                let matchedCount = 0;
+                allTiles.forEach(tile => {
+                    const isMatch = tile.dataset.cat === category;
+                    tile.classList.toggle('matched', isMatch);
+                    tile.classList.toggle('dimmed', !isMatch);
+
+                    if (isMatch) {
+                        // 화면 중앙을 기준으로 랜덤하게 모이는 효과 계산
+                        const centerX = window.innerWidth / 2;
+                        const centerY = window.innerHeight / 2;
+                        const rect = tile.getBoundingClientRect();
+                        const currentX = rect.left + rect.width / 2;
+                        const currentY = rect.top + rect.height / 2;
+
+                        // 중앙으로 모이되 약간의 랜덤 산포(Scatter)를 주어 미디어 아트 느낌 연출
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = Math.random() * 150; // 중앙에서의 거리
+                        const targetX = centerX + Math.cos(angle) * radius - currentX;
+                        const targetY = centerY + Math.sin(angle) * radius - currentY;
+                        const randomScale = 1 + Math.random() * 0.3;
+                        const randomRotation = (Math.random() - 0.5) * 20;
+
+                        gsap.to(tile, {
+                            x: targetX,
+                            y: targetY,
+                            scale: randomScale,
+                            rotation: randomRotation,
+                            duration: 1.2,
+                            ease: "expo.out",
+                            delay: matchedCount * 0.02 // 순차적 등장
+                        });
+                        matchedCount++;
+                    } else {
+                        gsap.to(tile, { x: 0, y: 0, scale: 1, rotation: 0, duration: 0.8 });
+                    }
+                });
+            }
+        }
+
+        // 내비게이션 클릭 이벤트
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                filterTiles(item.dataset.cat);
+            });
+        });
+
+        // 3. 스크롤 가속 (Observer) - 필터 모드 아닐 때만 작동
+        gsap.registerPlugin(Observer);
         Observer.create({
-            target: window,
-            type: "wheel,touch,pointer",
+            target: window, type: "wheel,touch,pointer",
             onChange: (self) => {
-                // 스크롤 시 속도 가속 강화
+                if (isFiltered) return; 
                 const power = Math.abs(self.deltaY) * 0.02;
-                timelines.forEach((item) => {
-                    gsap.to(item.tl, {
-                        timeScale: 1 + (power * 4),
-                        duration: 0.1,
-                        overwrite: true,
-                        onComplete: () => {
-                            gsap.to(item.tl, { timeScale: 1, duration: 1.2, ease: "power1.out" });
-                        }
-                    });
+                timelines.forEach(tl => {
+                    gsap.to(tl, { timeScale: 1 + power * 5, duration: 0.1, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 1.5, ease: "power2.out" }) });
                 });
             }
         });
 
-        // 3. 포커스 함수 (모바일 렌더링 최적화)
+        // 4. 포커스 및 유틸리티
         function showFocus(data) {
-            const fImg = document.getElementById('focus-img');
-            const fQuote = document.getElementById('focus-quote');
-            const fTitle = document.getElementById('focus-title');
-
-            // 내용 먼저 채우기
-            fImg.src = data.img;
-            fQuote.innerText = `“${data.quote}”`;
-            fTitle.innerText = data.title;
-
-            // 오버레이 표시
+            if(!isFiltered) timelines.forEach(tl => tl.pause());
+            document.getElementById('focus-img').src = data.img;
+            document.getElementById('focus-quote').innerText = `“${data.quote}”`;
+            document.getElementById('focus-title').innerText = data.title;
+            document.getElementById('focus-link').href = data.url;
             overlay.classList.add('active');
         }
 
-        overlay.onclick = () => {
-            overlay.classList.remove('active');
+        overlay.onclick = (e) => {
+            if (e.target === overlay || e.target.classList.contains('close-hint')) {
+                overlay.classList.remove('active');
+                if(!isFiltered) timelines.forEach(tl => tl.play());
+            }
         };
+        document.getElementById('focus-link').onclick = (e) => e.stopPropagation();
 
-        // 초기화
-        document.fonts.ready.then(() => {
-            gsap.to("body", {opacity: 1, duration: 0.5});
-        });
+        // 초기 실행
+        initGrid();
+        document.fonts.ready.then(() => gsap.to("body", {opacity: 1}));
+        window.addEventListener('resize', () => { if(!isFiltered) initGrid(); });
     </script>
 </body>
 </html>
