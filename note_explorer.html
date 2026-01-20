@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - 3D Kinetic Master</title>
+    <title>LongBlack Archive - Kinetic Grid Master</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -11,16 +11,17 @@
     <style>
         :root {
             --bg: #000; --accent: #FF4E00;
-            --tile-w: 120px; --tile-h: 170px; --gap: 15px; --nav-h: 100px;
+            --tile-w: 115px; --tile-h: 165px; --gap: 12px; --nav-h: 90px;
         }
+        @media (min-width: 768px) { --tile-w: 135px; --tile-h: 190px; --gap: 15px; }
+
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg); color: #fff;
             font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
-            perspective: 2000px; /* 3D 효과를 위한 원근감 설정 */
         }
 
-        /* 내비게이션 */
+        /* 상단 카테고리 내비게이션 */
         #category-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-h);
             display: flex; align-items: center; justify-content: flex-start;
@@ -34,49 +35,50 @@
         .nav-item {
             font-size: 0.8rem; font-weight: 900; color: #444;
             cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-            transition: all 0.4s ease; white-space: nowrap; flex-shrink: 0;
+            transition: 0.4s; white-space: nowrap; flex-shrink: 0;
         }
         .nav-item.active { color: var(--accent); transform: scale(1.1); }
 
-        /* 그리드 및 스택 컨테이너 */
+        /* 그리드 컨테이너 */
         #grid-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center;
             gap: var(--gap); z-index: 10;
-            transform-style: preserve-3d;
+            will-change: transform;
         }
-        .grid-row { display: flex; gap: var(--gap); width: max-content; transform-style: preserve-3d; }
+        .grid-row { display: flex; gap: var(--gap); width: max-content; }
 
         .tile {
             width: var(--tile-w); height: var(--tile-h);
-            background: #111; border-radius: 6px; overflow: hidden;
+            background: #111; border-radius: 4px; overflow: hidden;
             cursor: pointer; flex-shrink: 0; filter: brightness(0.4) grayscale(1);
             transition: filter 0.5s ease;
             will-change: transform, opacity;
         }
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* 필터링 모드 스타일 */
-        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0) translateZ(-1000px); }
-        body.is-filtered .tile.matched { filter: brightness(1.1) grayscale(0) !important; z-index: 100; }
+        /* 필터링 시 스타일 */
+        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0.2); }
+        body.is-filtered .tile.matched { filter: brightness(1.1) grayscale(0) !important; z-index: 50; }
 
         /* 상세 팝업 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98); backdrop-filter: blur(30px);
+            background: rgba(0,0,0,0.97); backdrop-filter: blur(25px);
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s ease;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
         .focus-content { width: 88%; max-width: 440px; text-align: center; }
-        .focus-img { width: 100%; max-height: 35vh; border-radius: 10px; object-fit: contain; margin-bottom: 20px; box-shadow: 0 30px 100px rgba(0,0,0,0.8); }
-        .focus-quote { font-family: 'Nanum Myeongjo', serif; font-size: 1.25rem; font-weight: 800; line-height: 1.6; margin-bottom: 12px; }
-        .focus-title { font-size: 0.85rem; font-weight: 600; opacity: 0.8; margin-bottom: 25px; color: #ccc; }
-        .view-btn { display: inline-block; padding: 15px 45px; background: var(--accent); color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 800; border-radius: 50px; letter-spacing: 2px; }
-        .close-hint { margin-top: 35px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+        .focus-img { width: 100%; max-height: 32vh; border-radius: 8px; object-fit: contain; margin-bottom: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+        .focus-quote { font-family: 'Nanum Myeongjo', serif; font-size: 1.2rem; font-weight: 800; line-height: 1.6; margin-bottom: 12px; }
+        .focus-title { font-size: 0.8rem; font-weight: 600; opacity: 0.8; margin-bottom: 8px; color: #ccc; }
+        .focus-meta { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.7rem; color: #888; margin-bottom: 25px; }
+        .rating { color: #FFB800; font-weight: 700; }
+        .view-btn { display: inline-block; padding: 14px 40px; background: var(--accent); color: #fff; text-decoration: none; font-size: 0.75rem; font-weight: 800; border-radius: 50px; letter-spacing: 2px; }
     </style>
 </head>
-<body style="opacity: 0; transition: opacity 1s;">
+<body style="opacity: 0; transition: 1s;">
 
     <nav id="category-nav">
         <span class="nav-item active" data-cat="all">All (Loading...)</span>
@@ -96,11 +98,11 @@
             <img id="focus-img" src="" class="focus-img">
             <p id="focus-quote" class="focus-quote"></p>
             <h3 id="focus-title" class="focus-title"></h3>
-            <div style="display: flex; gap: 15px; justify-content: center; font-size: 0.7rem; color: #888; margin-bottom: 25px;">
-                <span id="focus-date"></span> | <span id="focus-author"></span> | <span style="color: #FFB800; font-weight: 700;">★ <span id="focus-rating"></span></span>
+            <div class="focus-meta">
+                <span id="focus-date"></span> | <span id="focus-author"></span> | <span class="rating">★ <span id="focus-rating"></span></span>
             </div>
             <a id="focus-link" href="https://www.longblack.co/" target="_blank" class="view-btn">READ FULL NOTE</a>
-            <p class="close-hint">CLOSE</p>
+            <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="margin-top:30px; font-size:0.6rem; opacity:0.3; letter-spacing:2px; cursor:pointer;">CLOSE</p>
         </div>
     </div>
 
@@ -110,20 +112,19 @@
         const overlay = document.getElementById('focus-overlay');
         const timelines = [];
         let allTiles = [], isFiltered = false;
-        let stackIndex = 0; // 스택 모드에서의 현재 카드 번호
+        let verticalScrollY = 0; // 필터 모드 수직 스크롤 값
+        let maxScrollY = 0;
 
-        // 1. 카테고리 태깅
         function autoTag(title) {
             if(/디자인|공간|건축/.test(title)) return "디자인";
             if(/브랜드|협업|마케팅/.test(title)) return "브랜딩";
             if(/비즈니스|경영|기획/.test(title)) return "사업기획";
             if(/AI|테크|기술/.test(title)) return "테크";
-            if(/책|리뷰|글쓰기/.test(title)) return "책리뷰";
+            if(/책|리뷰|읽기/.test(title)) return "책리뷰";
             if(/기록|메모|성장/.test(title)) return "자기계발";
             return "예술";
         }
 
-        // 2. CSV 로드
         function loadCSV() {
             Papa.parse("notedata.csv", {
                 download: true, header: true,
@@ -139,10 +140,14 @@
         }
 
         function initGrid() {
-            container.innerHTML = ''; timelines.length = 0; allTiles = [];
+            container.innerHTML = ''; timelines.forEach(tl => tl.kill());
+            timelines.length = 0; allTiles = []; verticalScrollY = 0;
+            gsap.set(container, { y: 0 }); // 위치 초기화
+
             const winH = window.innerHeight;
-            const rowCount = Math.ceil(winH / 200) + 1;
-            const itemsPerRow = Math.ceil(noteData.length / rowCount);
+            const tileH = 185, gap = 15;
+            const rowCount = Math.ceil(winH / (tileH + gap)) + 1;
+            const itemsPerRow = 15;
 
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
@@ -162,72 +167,67 @@
                     allTiles.push(tile);
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 45 + r*10, ease: "none", repeat: -1 });
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 45 + r*8, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-30%"});
                 timelines.push(tl);
             }
         }
 
-        // 3. 진화된 "헤쳐모여" - 3D 스택 레이아웃
+        // 키워드 클릭 시: 헤쳐모여 (중앙 정렬 그리드 + 수직 스크롤 준비)
         function organizeGrid(category) {
             isFiltered = category !== 'all';
             document.body.classList.toggle('is-filtered', isFiltered);
-            stackIndex = 0; // 카테고리 변경 시 첫 카드로 리셋
+            verticalScrollY = 0;
+            gsap.to(container, { y: 0, duration: 0.5 });
 
             if (!isFiltered) {
                 timelines.forEach(tl => tl.play());
                 allTiles.forEach(tile => {
                     tile.classList.remove('matched', 'dimmed');
-                    gsap.to(tile, { x: 0, y: 0, z: 0, rotationY: 0, rotationX: 0, scale: 1, opacity: 1, duration: 1, ease: "expo.out" });
+                    gsap.to(tile, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power2.out" });
                 });
             } else {
                 timelines.forEach(tl => tl.pause());
                 const matched = allTiles.filter(t => t.dataset.cat === category);
                 const unmatched = allTiles.filter(t => t.dataset.cat !== category);
 
-                gsap.to(unmatched, { opacity: 0, scale: 0, z: -1000, duration: 0.5 });
+                gsap.to(unmatched, { opacity: 0, scale: 0.2, duration: 0.4 });
 
-                updateStack(matched);
+                const winW = window.innerWidth;
+                const winH = window.innerHeight;
+                // 반응형 열 개수 (모바일 2열, PC 5열)
+                const cols = winW < 600 ? 2 : (winW < 1200 ? 3 : 5);
+                const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight;
+                const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap'));
+                
+                const totalGridW = (cols * tileW) + ((cols - 1) * gap);
+                const rows = Math.ceil(matched.length / cols);
+                const totalGridH = (rows * tileH) + ((rows - 1) * gap);
+                
+                // 스크롤 한계치 설정 (화면보다 길 때만 스크롤)
+                maxScrollY = Math.max(0, totalGridH - (winH - 200));
+
+                const startX = (winW - totalGridW) / 2;
+                const startY = 140; // 상단 여백
+
+                matched.forEach((tile, idx) => {
+                    tile.classList.add('matched');
+                    tile.classList.remove('dimmed');
+                    const rect = tile.getBoundingClientRect();
+                    
+                    // 중앙 그리드 좌표 계산
+                    const targetX = startX + (idx % cols) * (tileW + gap) - rect.left;
+                    const targetY = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
+
+                    gsap.to(tile, {
+                        x: targetX, y: targetY, scale: 1, opacity: 1,
+                        duration: 1.2, ease: "expo.out", delay: idx * 0.01
+                    });
+                });
             }
         }
 
-        // 스택 모드에서 카드들의 위치를 업데이트하는 함수 (3D 효과)
-        function updateStack(matchedTiles) {
-            const winW = window.innerWidth;
-            const winH = window.innerHeight;
-
-            matchedTiles.forEach((tile, idx) => {
-                tile.classList.add('matched');
-                tile.classList.remove('dimmed');
-                
-                const relativeIdx = idx - stackIndex;
-                const rect = tile.getBoundingClientRect();
-                
-                // 중앙 좌표 기준 오프셋
-                const targetX = (winW / 2) - (135 / 2) - rect.left;
-                const targetY = (winH / 2) - (190 / 2) - rect.top;
-                
-                // 스택 깊이 조절 (뒤로 갈수록 작아지고 흐려짐)
-                const zPos = relativeIdx * -50;
-                const yOffset = relativeIdx * 10;
-                const opacity = relativeIdx < 0 ? 0 : Math.max(0, 1 - (relativeIdx * 0.2));
-                const visibility = relativeIdx < 0 ? "hidden" : "visible";
-
-                gsap.to(tile, {
-                    x: targetX,
-                    y: targetY + yOffset,
-                    z: zPos,
-                    rotationX: -5,
-                    opacity: opacity,
-                    autoAlpha: relativeIdx < 0 ? 0 : 1, // 앞에 지난 카드는 숨김
-                    duration: 0.8,
-                    ease: "power3.out",
-                    delay: isFiltered ? 0 : idx * 0.01 // 처음 모일 때만 딜레이
-                });
-            });
-        }
-
-        // 4. 스크롤 인터랙션 (All 모드: 가속 / 스택 모드: 카드 넘기기)
+        // 스크롤 로직 (All 모드: 가속 / 필터 모드: 수직 스크롤)
         gsap.registerPlugin(Observer);
         Observer.create({
             target: window, type: "wheel,touch,pointer",
@@ -235,18 +235,20 @@
                 if (!isFiltered) {
                     const v = Math.abs(self.deltaY) * 0.12;
                     timelines.forEach(tl => {
-                        gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 2.0 }) });
+                        gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 1.5 }) });
                     });
                 } else {
-                    // 스택 모드에서 카드 넘기기
-                    const matched = allTiles.filter(t => t.dataset.cat === document.querySelector('.nav-item.active').dataset.cat);
-                    if (self.deltaY > 0 && stackIndex < matched.length - 1) {
-                        stackIndex++;
-                        updateStack(matched);
-                    } else if (self.deltaY < 0 && stackIndex > 0) {
-                        stackIndex--;
-                        updateStack(matched);
-                    }
+                    // 수직 스크롤 이동
+                    verticalScrollY -= self.deltaY * 0.8;
+                    // 스크롤 범위 제한
+                    verticalScrollY = Math.max(-maxScrollY, Math.min(0, verticalScrollY));
+                    
+                    gsap.to(container, { 
+                        y: verticalScrollY, 
+                        duration: 0.6, 
+                        ease: "power2.out",
+                        overwrite: true 
+                    });
                 }
             }
         });
@@ -260,7 +262,6 @@
             document.getElementById('focus-rating').innerText = data.avg_rating;
             overlay.classList.add('active');
         }
-        overlay.onclick = () => overlay.classList.remove('active');
 
         document.querySelectorAll('.nav-item').forEach(item => {
             item.onclick = () => {
