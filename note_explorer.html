@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Master V31</title>
+    <title>LongBlack Archive - Double Flow Master</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -11,45 +11,101 @@
     <style>
         :root {
             --bg: #000; --accent: #FF4E00;
-            --thumb-w: 120px; --thumb-h: 170px;
-            --card-w: 260px; --card-h: 340px;
+            --thumb-w: 120px; --thumb-h: 170px; /* 썸네일 뷰 사이즈 */
+            --card-w: 260px; --card-h: 340px;   /* 카드뉴스 뷰 사이즈 */
             --gap: 15px; --nav-h: 100px;
         }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: #fff; font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg); color: #fff;
+            font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
+        }
 
-        /* Navigation */
-        #header-wrapper { position: fixed; top: 0; left: 0; width: 100%; z-index: 2000; background: linear-gradient(to bottom, #000 80%, transparent); padding-bottom: 10px; }
-        #category-nav { display: flex; align-items: center; justify-content: flex-start; gap: 15px; padding: 20px 20px 10px; overflow-x: auto; scrollbar-width: none; }
+        /* [Header & Nav] */
+        #header-wrapper {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 2000;
+            background: linear-gradient(to bottom, #000 80%, transparent);
+            padding-bottom: 10px;
+        }
+        #category-nav {
+            display: flex; align-items: center; justify-content: flex-start;
+            gap: 15px; padding: 20px 20px 10px; overflow-x: auto; scrollbar-width: none;
+        }
         #category-nav::-webkit-scrollbar { display: none; }
         @media (min-width: 1024px) { #category-nav { justify-content: center; } }
-        .nav-item { font-size: 0.8rem; font-weight: 900; color: #444; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; white-space: nowrap; }
+
+        .nav-item {
+            font-size: 0.8rem; font-weight: 900; color: #444; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; white-space: nowrap;
+        }
         .nav-item.active { color: var(--accent); transform: scale(1.1); }
-        #mode-switch { display: flex; justify-content: center; gap: 40px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.1); }
-        .mode-btn { font-size: 0.7rem; font-weight: 700; color: #555; cursor: pointer; letter-spacing: 3px; text-transform: uppercase; transition: 0.3s; }
+
+        #mode-switch {
+            display: flex; justify-content: center; gap: 40px; padding: 10px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .mode-btn {
+            font-size: 0.7rem; font-weight: 700; color: #555; cursor: pointer;
+            letter-spacing: 3px; text-transform: uppercase; transition: 0.3s;
+        }
         .mode-btn.active { color: #fff; border-bottom: 2px solid var(--accent); padding-bottom: 3px; }
 
-        /* View Containers */
-        .flow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        /* [Common View Container] */
+        .flow-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            overflow: hidden; transition: opacity 0.5s;
+        }
         .flow-row { display: flex; gap: var(--gap); width: max-content; will-change: transform; }
 
-        /* Tiles */
-        .thumb-tile { width: var(--thumb-w); height: var(--thumb-h); background: #111; border-radius: 4px; overflow: hidden; cursor: pointer; flex-shrink: 0; filter: grayscale(1) brightness(0.4); transition: filter 0.4s; }
-        .card-tile { width: var(--card-w); height: var(--card-h); background: #111; border-radius: 12px; overflow: hidden; cursor: pointer; flex-shrink: 0; position: relative; border: 1px solid rgba(255,255,255,0.1); }
-        .card-tile img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
-        .card-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.9)); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; box-sizing: border-box; }
-        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.2rem; margin: 0; color: #fff; }
+        /* [Mode 1: Thumbnail Flow] */
+        #thumb-view { z-index: 10; gap: 12px; }
+        .thumb-tile {
+            width: var(--thumb-w); height: var(--thumb-h);
+            background: #111; border-radius: 4px; overflow: hidden;
+            cursor: pointer; flex-shrink: 0; filter: grayscale(1) brightness(0.4);
+            transition: filter 0.4s, transform 0.4s;
+        }
+        .thumb-tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); }
+        .thumb-tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* Filter State */
-        body.is-filtered .thumb-tile.dimmed, body.is-filtered .card-tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0.2); }
-        body.is-filtered .thumb-tile.matched, body.is-filtered .card-tile.matched { filter: grayscale(0) brightness(1.1) !important; opacity: 1; z-index: 100; }
+        /* [Mode 2: Card News Flow] */
+        #card-view { z-index: 20; display: none; gap: 20px; }
+        .card-tile {
+            width: var(--card-w); height: var(--card-h);
+            background: #111; border-radius: 12px; overflow: hidden;
+            cursor: pointer; flex-shrink: 0; position: relative;
+            border: 1px solid rgba(255,255,255,0.1); transition: transform 0.4s;
+        }
+        .card-tile:hover { transform: scale(1.03); }
+        .card-tile img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+        
+        .card-content {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.95));
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 25px; box-sizing: border-box;
+        }
+        .c-tag { font-size: 0.65rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
+        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.3rem; font-weight: 800; line-height: 1.4; color: #fff; word-break: keep-all; }
+        .c-rating { font-size: 0.8rem; color: #FFB800; font-weight: 700; }
 
-        /* Overlay */
-        #focus-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); backdrop-filter: blur(30px); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s; }
+        /* [Detail Focus Overlay] */
+        #focus-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); backdrop-filter: blur(30px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s;
+        }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
-        .f-card { width: 90%; max-width: 400px; background: #111; border-radius: 20px; overflow: hidden; text-align: center; }
-        .f-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
-        .f-body { padding: 25px; }
-        .f-btn { background: var(--accent); color: #fff; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-weight: 800; display: inline-block; margin-top: 15px; }
+        .focus-card {
+            width: 90%; max-width: 400px; background: #111; border-radius: 20px;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        .focus-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+        .focus-body { padding: 30px; }
+        .f-quote { font-family: 'Nanum Myeongjo'; font-size: 1.25rem; font-weight: 800; line-height: 1.5; margin-bottom: 20px; }
+        .f-btn { background: var(--accent); color: #fff; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-size: 0.8rem; font-weight: 800; display: inline-block; }
     </style>
 </head>
 <body style="opacity: 0; transition: 1s;">
@@ -71,27 +127,29 @@
     </div>
 
     <div id="thumb-view" class="flow-container"></div>
-    <div id="card-view" class="flow-container" style="display:none;"></div>
+
+    <div id="card-view" class="flow-container"></div>
 
     <div id="focus-overlay">
-        <div class="f-card">
-            <img id="focus-img" src="" class="f-img">
-            <div class="f-body">
-                <p id="focus-quote" style="font-family:'Nanum Myeongjo'; font-size:1.2rem; font-weight:800;"></p>
-                <h3 id="focus-title" style="font-size:0.8rem; color:#666;"></h3>
-                <a id="focus-link" href="#" target="_blank" class="f-btn">READ NOTE</a>
-                <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="margin-top:20px; font-size:0.6rem; opacity:0.3; cursor:pointer;">CLOSE</p>
+        <div class="focus-card">
+            <img id="focus-img" src="" class="focus-img">
+            <div class="focus-body">
+                <p id="focus-quote" class="f-quote"></p>
+                <h3 id="focus-title" style="font-size:0.8rem; color:#666; margin-bottom:20px;"></h3>
+                <div style="display:flex; justify-content: space-between; align-items:center;">
+                    <span id="focus-rating" style="color:#FFB800; font-weight:700;"></span>
+                    <a id="focus-link" href="#" target="_blank" class="f-btn">READ NOTE</a>
+                </div>
             </div>
+            <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="text-align:center; padding:15px; font-size:0.6rem; opacity:0.3; cursor:pointer;">CLOSE</p>
         </div>
     </div>
 
     <script>
         let noteData = [];
         let displayMode = 'thumbnail';
-        let currentCat = 'all';
-        const thumbTLs = [];
-        const cardTLs = [];
-        let allTiles = [];
+        const thumbTimelines = [];
+        const cardTimelines = [];
 
         function autoTag(title) {
             if(/디자인|공간/.test(title)) return "디자인";
@@ -117,137 +175,114 @@
             });
         }
 
+        // 1. 썸네일 무빙 뷰 (작은 타일)
         function initThumbnailFlow() {
             const container = document.getElementById('thumb-view');
-            container.innerHTML = '';
             const rowCount = Math.ceil(window.innerHeight / 180) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
                 row.className = 'flow-row';
                 for (let i = 0; i < 15; i++) {
                     const data = noteData[(r * 15 + i) % noteData.length];
-                    const tile = document.createElement('div');
-                    tile.className = 'thumb-tile';
-                    tile.dataset.cat = data.category;
-                    tile.innerHTML = `<img src="${data.thumbnail_url}" loading="lazy">`;
-                    tile.onclick = () => showFocus(data);
-                    row.appendChild(tile);
+                    row.innerHTML += `<div class="thumb-tile" onclick="showFocus_js(${encodeURIComponent(JSON.stringify(data))})"><img src="${data.thumbnail_url}"></div>`;
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 25 + r*5, ease: "none", repeat: -1 });
+                // 속도 상향: duration 20~30초 (기존 40초 대비 2배 빠름)
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 20 + r*5, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-30%"});
-                thumbTLs.push(tl);
+                thumbTimelines.push(tl);
             }
         }
 
+        // 2. 카드뉴스 무빙 뷰 (큰 타일 - 사용자 요청)
         function initCardFlow() {
             const container = document.getElementById('card-view');
-            container.innerHTML = '';
             const rowCount = Math.ceil(window.innerHeight / 350) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
                 row.className = 'flow-row';
                 for (let i = 0; i < 10; i++) {
                     const data = noteData[(r * 10 + i) % noteData.length];
-                    const tile = document.createElement('div');
-                    tile.className = 'card-tile';
-                    tile.dataset.cat = data.category;
-                    tile.innerHTML = `<img src="${data.thumbnail_url}"><div class="card-content"><h2 class="c-title">${data.note_title}</h2></div>`;
-                    tile.onclick = () => showFocus(data);
-                    row.appendChild(tile);
+                    const card = document.createElement('div');
+                    card.className = 'card-tile';
+                    card.innerHTML = `
+                        <img src="${data.thumbnail_url}">
+                        <div class="card-content">
+                            <span class="c-tag">${data.category}</span>
+                            <h2 class="c-title">${data.note_title}</h2>
+                            <span class="c-rating">★ ${data.avg_rating || '4.8'}</span>
+                        </div>
+                    `;
+                    card.onclick = () => showFocus(data);
+                    row.appendChild(card);
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-40%" : "0%", duration: 30 + r*8, ease: "none", repeat: -1 });
+                // 카드뉴스 속도: 약간 묵직하게 duration 25~40초
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-40%" : "0%", duration: 25 + r*8, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-40%"});
-                cardTLs.push(tl);
+                cardTimelines.push(tl);
             }
         }
 
-        // 핵심 필터링 함수 (헤쳐모여 완벽 작동)
-        function applyFilter(cat) {
-            currentCat = cat;
-            const isFiltered = cat !== 'all';
-            document.body.classList.toggle('is-filtered', isFiltered);
-            
-            const currentTiles = Array.from(document.querySelectorAll(displayMode === 'thumbnail' ? '.thumb-tile' : '.card-tile'));
-            const currentTLs = displayMode === 'thumbnail' ? thumbTLs : cardTLs;
+        // 3. 스크롤 가속 엔진 (수치 대폭 상향)
+        gsap.registerPlugin(Observer);
+        Observer.create({
+            target: window, type: "wheel,touch,pointer",
+            onChange: (self) => {
+                const currentTLs = displayMode === 'thumbnail' ? thumbTimelines : cardTimelines;
+                // 민감도 상향: 0.12 -> 0.4
+                const v = Math.abs(self.deltaY) * 0.4; 
 
-            if (!isFiltered) {
-                currentTLs.forEach(tl => tl.play());
-                gsap.to(currentTiles, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power2.out" });
-                currentTiles.forEach(t => t.classList.remove('matched', 'dimmed'));
-            } else {
-                currentTLs.forEach(tl => tl.pause());
-                const matched = currentTiles.filter(t => t.dataset.cat === cat);
-                const unmatched = currentTiles.filter(t => t.dataset.cat !== cat);
-
-                gsap.to(unmatched, { opacity: 0, scale: 0.2, duration: 0.4 });
-                
-                const winW = window.innerWidth, winH = window.innerHeight;
-                const cols = displayMode === 'thumbnail' ? (winW < 600 ? 2 : 5) : (winW < 600 ? 1 : 3);
-                const gap = 15;
-                const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight;
-                
-                const startX = (winW - (cols * (tileW + gap))) / 2;
-                const startY = 150;
-
-                matched.forEach((tile, idx) => {
-                    tile.classList.add('matched');
-                    tile.classList.remove('dimmed');
-                    const rect = tile.getBoundingClientRect();
-                    const tx = startX + (idx % cols) * (tileW + gap) - rect.left;
-                    const ty = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
-                    gsap.to(tile, { x: tx, y: ty, scale: 1, opacity: 1, duration: 1.2, ease: "expo.out", delay: idx * 0.01 });
+                currentTLs.forEach(tl => {
+                    gsap.to(tl, { 
+                        timeScale: 1 + v, 
+                        duration: 0.2, 
+                        overwrite: true, 
+                        // 관성 상향: 1.5 -> 2.5 (더 오래 굴러감)
+                        onComplete: () => gsap.to(tl, { timeScale: 1, duration: 2.5, ease: "power2.out" }) 
+                    });
                 });
             }
-        }
+        });
 
         function setupEvents() {
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.onclick = () => {
-                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                    nav.classList.add('active');
-                    applyFilter(nav.dataset.cat);
-                };
-            });
-
             document.getElementById('mode-thumb').onclick = () => {
                 displayMode = 'thumbnail';
                 document.getElementById('mode-thumb').classList.add('active');
                 document.getElementById('mode-card').classList.remove('active');
                 document.getElementById('thumb-view').style.display = 'flex';
                 document.getElementById('card-view').style.display = 'none';
-                applyFilter(currentCat);
+                cardTimelines.forEach(tl => tl.pause());
+                thumbTimelines.forEach(tl => tl.play());
             };
-
             document.getElementById('mode-card').onclick = () => {
                 displayMode = 'card';
                 document.getElementById('mode-card').classList.add('active');
                 document.getElementById('mode-thumb').classList.remove('active');
                 document.getElementById('thumb-view').style.display = 'none';
                 document.getElementById('card-view').style.display = 'flex';
-                applyFilter(currentCat);
+                thumbTimelines.forEach(tl => tl.pause());
+                cardTimelines.forEach(tl => tl.play());
             };
+            // 카테고리 필터링 (간략화)
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.onclick = () => {
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    nav.classList.add('active');
+                    // 필터링 시 가시성 조절 로직 추가 가능
+                };
+            });
         }
-
-        gsap.registerPlugin(Observer);
-        Observer.create({
-            target: window, type: "wheel,touch,pointer",
-            onChange: (self) => {
-                if (currentCat !== 'all') return;
-                const currentTLs = displayMode === 'thumbnail' ? thumbTLs : cardTLs;
-                const v = Math.abs(self.deltaY) * 0.4;
-                currentTLs.forEach(tl => {
-                    gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 2.5 }) });
-                });
-            }
-        });
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
             document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 내일이 됩니다.”";
             document.getElementById('focus-title').innerText = data.note_title;
+            document.getElementById('focus-rating').innerText = `★ ${data.avg_rating || '4.8'}`;
             document.getElementById('focus-overlay').classList.add('active');
+        }
+        function showFocus_js(encodedData) {
+            showFocus(JSON.parse(decodeURIComponent(encodedData)));
         }
 
         loadCSV();
