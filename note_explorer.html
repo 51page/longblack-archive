@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Final Master</title>
+    <title>LongBlack Archive - Card News Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@300;600;900&family=Playfair+Display:ital,wght@0,700;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #000; --accent: #FF4E00;
@@ -21,7 +21,7 @@
             font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
         }
 
-        /* [상단 내비게이션] */
+        /* [Header & Nav] */
         #header-wrapper {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 2000;
             background: linear-gradient(to bottom, #000 80%, transparent);
@@ -29,112 +29,141 @@
         }
         #category-nav {
             display: flex; align-items: center; justify-content: flex-start;
-            gap: 20px; padding: 20px 30px 10px; overflow-x: auto; scrollbar-width: none;
+            gap: 15px; padding: 20px 20px 10px; overflow-x: auto; scrollbar-width: none;
         }
         #category-nav::-webkit-scrollbar { display: none; }
         @media (min-width: 1024px) { #category-nav { justify-content: center; } }
 
         .nav-item {
-            font-size: 0.85rem; font-weight: 900; color: #444; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; white-space: nowrap;
+            font-size: 0.75rem; font-weight: 900; color: #444; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; white-space: nowrap;
         }
-        .nav-item.active { color: var(--accent); transform: scale(1.1); }
+        .nav-item.active { color: var(--accent); }
 
         #mode-switch {
-            display: flex; justify-content: center; gap: 40px; padding: 10px 0;
+            display: flex; justify-content: center; gap: 30px; padding: 10px 0;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
         .mode-btn {
-            font-size: 0.7rem; font-weight: 700; color: #555; cursor: pointer;
-            letter-spacing: 3px; text-transform: uppercase; transition: 0.3s;
+            font-size: 0.65rem; font-weight: 700; color: #555; cursor: pointer;
+            letter-spacing: 2px; text-transform: uppercase; transition: 0.3s;
         }
-        .mode-btn.active { color: #fff; border-bottom: 2px solid #fff; padding-bottom: 2px; }
+        .mode-btn.active { color: #fff; border-bottom: 2px solid var(--accent); }
 
-        /* [모드 1: 썸네일 그리드] */
-        #grid-container {
+        /* [Container Common] */
+        .main-view {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: center;
-            gap: var(--gap); z-index: 10;
+            display: flex; flex-direction: column; transition: opacity 0.5s;
         }
+
+        /* [Mode 1: Mosaic Flow] */
+        #mosaic-view { z-index: 10; justify-content: center; gap: var(--gap); }
         .grid-row { display: flex; gap: var(--gap); width: max-content; }
-        .tile {
+        .thumb-tile {
             width: var(--tile-w); height: var(--tile-h);
             background: #111; border-radius: 4px; overflow: hidden;
             cursor: pointer; flex-shrink: 0; filter: grayscale(1) brightness(0.4);
-            transition: filter 0.4s; will-change: transform, opacity;
+            transition: 0.4s ease;
         }
-        .tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); }
-        .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .thumb-tile:hover { filter: grayscale(0) brightness(1); transform: scale(1.05); }
+        .thumb-tile img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* 필터링 모드 */
-        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0.2); }
-        body.is-filtered .tile.matched { filter: grayscale(0) brightness(1.1) !important; z-index: 50; }
+        /* [Mode 2: Card News Grid] */
+        #card-view { 
+            z-index: 20; display: none; padding-top: 150px; 
+            overflow-y: auto; scrollbar-width: none; align-items: center;
+        }
+        #card-view::-webkit-scrollbar { display: none; }
+        .card-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 15px; width: 92%; max-width: 1200px; padding-bottom: 100px;
+        }
+        @media (min-width: 768px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1200px) { .card-grid { grid-template-columns: repeat(5, 1fr); } }
 
-        /* [모드 2: 타이포그래피 리스트] */
-        #typo-container {
+        .card-item {
+            position: relative; aspect-ratio: 4/5; background: #111;
+            border-radius: 12px; overflow: hidden; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05); transition: transform 0.3s;
+        }
+        .card-item:hover { transform: translateY(-10px); }
+        .card-item img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.5s; }
+        .card-item:hover img { opacity: 0.8; transform: scale(1.1); }
+
+        .card-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: none; justify-content: center; align-items: center; z-index: 20;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.95));
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 20px; box-sizing: border-box;
         }
-        .typo-list { position: relative; width: 100%; height: 100%; will-change: transform; }
-        .typo-item {
-            position: absolute; width: 90%; max-width: 900px; left: 50%; transform: translateX(-50%);
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            cursor: pointer; padding: 20px 0;
-        }
+        .c-tag { font-size: 0.6rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
+        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.1rem; font-weight: 800; line-height: 1.4; color: #fff; word-break: keep-all; }
+        .c-rating { font-size: 0.7rem; color: #FFB800; font-weight: 700; }
 
-        /* 폰트 변주 스타일들 */
-        .style-hero { font-family: 'Nanum Myeongjo'; font-size: clamp(2rem, 6vw, 4rem); font-weight: 800; }
-        .style-italic { font-family: 'Playfair Display'; font-style: italic; font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 900; }
-        .style-modern { font-family: 'Montserrat'; font-size: clamp(1.2rem, 3vw, 2.5rem); font-weight: 300; text-transform: uppercase; letter-spacing: -1px; }
-        .style-bold { font-family: 'Montserrat'; font-size: clamp(1.5rem, 5vw, 3.5rem); font-weight: 900; color: var(--accent); }
+        /* [Filtering Styles] */
+        body.is-filtered .thumb-tile.dimmed { opacity: 0; pointer-events: none; }
+        body.is-filtered .thumb-tile.matched { filter: grayscale(0) brightness(1) !important; z-index: 50; }
 
-        .typo-info { font-size: 0.7rem; font-weight: 700; color: var(--accent); margin-bottom: 10px; letter-spacing: 3px; }
-        .typo-rating { font-size: 0.8rem; font-weight: 600; color: #FFB800; margin-top: 10px; }
-
-        /* [상세 팝업] */
+        /* [Detail Focus Overlay - Card News Style] */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98); backdrop-filter: blur(30px);
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s ease;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
-        .focus-content { width: 88%; max-width: 440px; text-align: center; }
-        .focus-img { width: 100%; max-height: 32vh; border-radius: 8px; object-fit: contain; margin-bottom: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+        .focus-card {
+            width: 90%; max-width: 400px; background: #111; border-radius: 20px;
+            overflow: hidden; box-shadow: 0 30px 100px rgba(0,0,0,1);
+            display: flex; flex-direction: column;
+        }
+        .focus-card-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+        .focus-card-body { padding: 30px; text-align: left; }
+        .f-quote { font-family: 'Nanum Myeongjo'; font-size: 1.3rem; font-weight: 800; line-height: 1.5; margin-bottom: 20px; color: #fff; }
+        .f-title { font-size: 0.85rem; color: #888; margin-bottom: 30px; }
+        .f-meta { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 20px; }
+        .f-btn { background: var(--accent); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-size: 0.75rem; font-weight: 800; }
     </style>
 </head>
 <body style="opacity: 0; transition: 1s;">
 
     <div id="header-wrapper">
         <nav id="category-nav">
-            <span class="nav-item active" data-cat="all">All Library</span>
+            <span class="nav-item active" data-cat="all">All Archive</span>
             <span class="nav-item" data-cat="브랜딩">Branding</span>
             <span class="nav-item" data-cat="사업기획">Business</span>
             <span class="nav-item" data-cat="디자인">Design</span>
             <span class="nav-item" data-cat="자기계발">Growth</span>
             <span class="nav-item" data-cat="테크">Tech</span>
             <span class="nav-item" data-cat="책리뷰">Book</span>
-            <span class="nav-item" data-cat="예술">Art</span>
         </nav>
         <div id="mode-switch">
-            <span class="mode-btn active" id="mode-thumb">Mosaic</span>
-            <span class="mode-btn" id="mode-typo">Typography</span>
+            <span class="mode-btn active" id="mode-thumb">Mosaic Flow</span>
+            <span class="mode-btn" id="mode-card">Card News Grid</span>
         </div>
     </div>
 
-    <div id="grid-container"></div>
-    <div id="typo-container"><div class="typo-list" id="typo-list"></div></div>
+    <div id="mosaic-view" class="main-view"></div>
+
+    <div id="card-view" class="main-view">
+        <div class="card-grid" id="card-grid"></div>
+    </div>
 
     <div id="focus-overlay">
-        <div class="focus-content">
-            <img id="focus-img" src="" class="focus-img">
-            <p id="focus-quote" style="font-family:'Nanum Myeongjo'; font-size:1.2rem; font-weight:800; line-height:1.6; margin-bottom:12px;"></p>
-            <h3 id="focus-title" style="font-size:0.85rem; margin-bottom:8px;"></h3>
-            <div style="font-size:0.7rem; color:#888; margin-bottom:25px;">
-                <span id="focus-date"></span> | <span id="focus-author"></span> | ★ <span id="focus-rating"></span>
+        <div class="focus-card">
+            <img id="focus-img" src="" class="focus-card-img">
+            <div class="focus-card-body">
+                <p id="focus-quote" class="f-quote"></p>
+                <h3 id="focus-title" class="f-title"></h3>
+                <div class="f-meta">
+                    <div style="font-size: 0.7rem; color: #555;">
+                        <span id="focus-author"></span><br>
+                        <span id="focus-date"></span>
+                    </div>
+                    <a id="focus-link" href="https://www.longblack.co/" target="_blank" class="f-btn">READ FULL</a>
+                </div>
             </div>
-            <a id="focus-link" href="https://www.longblack.co/" target="_blank" style="display:inline-block; padding:14px 45px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.8rem; font-weight:800; border-radius:50px; letter-spacing:2px;">READ FULL NOTE</a>
-            <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="margin-top:30px; font-size:0.6rem; opacity:0.3; letter-spacing:2px; cursor:pointer;">CLOSE</p>
+            <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="text-align:center; padding: 15px; font-size:0.6rem; opacity:0.3; cursor:pointer; letter-spacing:2px;">TAP TO CLOSE</p>
         </div>
     </div>
 
@@ -142,19 +171,15 @@
         let noteData = [];
         let displayMode = 'thumbnail';
         let currentCat = 'all';
-        let typoY = 0;
-        let typoItems = [];
-        const gridContainer = document.getElementById('grid-container');
-        const typoList = document.getElementById('typo-list');
         const timelines = [];
-        let allTiles = [];
+        let allThumbTiles = [];
 
         function autoTag(title) {
-            if(/디자인|공간/.test(title)) return "디자인";
-            if(/브랜드|마케팅/.test(title)) return "브랜딩";
-            if(/비즈니스|경영/.test(title)) return "사업기획";
-            if(/AI|테크/.test(title)) return "테크";
-            if(/책|리뷰/.test(title)) return "책리뷰";
+            if(/디자인|공간|건축/.test(title)) return "디자인";
+            if(/브랜드|협업|마케팅/.test(title)) return "브랜딩";
+            if(/비즈니스|전략|기획/.test(title)) return "사업기획";
+            if(/AI|테크|기술/.test(title)) return "테크";
+            if(/책|리뷰|글쓰기/.test(title)) return "책리뷰";
             return "자기계발";
         }
 
@@ -165,17 +190,18 @@
                     noteData = results.data.filter(row => row.note_title).map(row => ({
                         ...row, category: autoTag(row.note_title)
                     }));
-                    initGrid();
-                    initTypography();
+                    initMosaic();
+                    initCardGrid();
                     gsap.to("body", {opacity: 1, duration: 1});
-                    setupNav();
+                    setupEvents();
                 }
             });
         }
 
-        // 1. 썸네일 그리드
-        function initGrid() {
-            gridContainer.innerHTML = '';
+        // 1. Mosaic View Init
+        function initMosaic() {
+            const container = document.getElementById('mosaic-view');
+            container.innerHTML = '';
             const rowCount = Math.ceil(window.innerHeight / 180) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
@@ -183,149 +209,117 @@
                 for (let i = 0; i < 15; i++) {
                     const data = noteData[(r * 15 + i) % noteData.length];
                     const tile = document.createElement('div');
-                    tile.className = 'tile';
+                    tile.className = 'thumb-tile';
                     tile.innerHTML = `<img src="${data.thumbnail_url}" loading="lazy">`;
                     tile.dataset.cat = data.category;
                     tile.onclick = () => showFocus(data);
                     row.appendChild(tile);
-                    allTiles.push(tile);
+                    allThumbTiles.push(tile);
                 }
-                gridContainer.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 40 + r*8, ease: "none", repeat: -1 });
-                if(r % 2 !== 0) gsap.set(row, {x: "-30%"});
+                container.appendChild(row);
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-20%" : "0%", duration: 40 + r*5, ease: "none", repeat: -1 });
+                if(r % 2 !== 0) gsap.set(row, {x: "-20%"});
                 timelines.push(tl);
             }
         }
 
-        // 2. 타이포그래피 (강약 조절 버전)
-        function initTypography() {
-            typoList.innerHTML = '';
-            typoItems = [];
-            const styles = ['style-hero', 'style-italic', 'style-modern', 'style-bold'];
-            
-            noteData.forEach((data, idx) => {
+        // 2. Card Grid View Init (요청하신 타일 형태)
+        function initCardGrid() {
+            const grid = document.getElementById('card-grid');
+            grid.innerHTML = '';
+            noteData.forEach(data => {
                 const item = document.createElement('div');
-                item.className = 'typo-item';
-                const style = styles[idx % styles.length];
+                item.className = 'card-item';
+                item.dataset.cat = data.category;
                 item.innerHTML = `
-                    <span class="typo-info">${data.category}</span>
-                    <span class="${style}">${data.note_title}</span>
-                    <span class="typo-rating">★ ${data.avg_rating || '4.8'}</span>
+                    <img src="${data.thumbnail_url}" loading="lazy">
+                    <div class="card-overlay">
+                        <span class="c-tag">${data.category}</span>
+                        <h2 class="c-title">${data.note_title}</h2>
+                        <span class="c-rating">★ ${data.avg_rating || '4.8'}</span>
+                    </div>
                 `;
                 item.onclick = () => showFocus(data);
-                typoList.appendChild(item);
-                typoItems.push(item);
-            });
-            updateTypoPositions();
-        }
-
-        function updateTypoPositions() {
-            const center = window.innerHeight / 2;
-            const spacing = 320; // 텍스트 덩어리 간격
-
-            typoItems.forEach((item, idx) => {
-                let y = (idx * spacing) - (typoY % (typoItems.length * spacing));
-                if (y < -spacing) y += typoItems.length * spacing;
-                if (y > window.innerHeight + spacing) y -= typoItems.length * spacing;
-
-                const dist = Math.abs(y + 100 - center);
-                const norm = Math.min(dist / (window.innerHeight / 1.5), 1);
-
-                gsap.set(item, {
-                    y: y,
-                    opacity: 1 - norm,
-                    filter: `blur(${norm * 12}px)`,
-                    scale: 1.2 - (norm * 0.4),
-                    zIndex: Math.round((1 - norm) * 100)
-                });
+                grid.appendChild(item);
             });
         }
 
-        // 3. 필터링 로직 (완벽 개선)
+        // 3. Filtering Logic
         function applyFilter(cat) {
             currentCat = cat;
             const isFiltered = cat !== 'all';
             document.body.classList.toggle('is-filtered', isFiltered);
 
-            if (!isFiltered) {
-                timelines.forEach(tl => tl.play());
-                gsap.to(allTiles, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8 });
+            // Thumbnail 모드 필터링 (헤쳐모여)
+            if (displayMode === 'thumbnail') {
+                if (!isFiltered) {
+                    timelines.forEach(tl => tl.play());
+                    gsap.to(allThumbTiles, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8 });
+                } else {
+                    timelines.forEach(tl => tl.pause());
+                    const matched = allThumbTiles.filter(t => t.dataset.cat === cat);
+                    const unmatched = allThumbTiles.filter(t => t.dataset.cat !== cat);
+                    gsap.to(unmatched, { opacity: 0, scale: 0.2, duration: 0.4 });
+                    
+                    const winW = window.innerWidth, cols = winW < 600 ? 2 : 5, gap = 15;
+                    const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight;
+                    const startX = (winW - (cols * (tileW + gap))) / 2;
+                    matched.forEach((tile, idx) => {
+                        const rect = tile.getBoundingClientRect();
+                        const tx = startX + (idx % cols) * (tileW + gap) - rect.left;
+                        const ty = 140 + Math.floor(idx / cols) * (tileH + gap) - rect.top;
+                        gsap.to(tile, { x: tx, y: ty, scale: 1, opacity: 1, duration: 1, ease: "expo.out" });
+                    });
+                }
             } else {
-                timelines.forEach(tl => tl.pause());
-                const matched = allTiles.filter(t => t.dataset.cat === cat);
-                const unmatched = allTiles.filter(t => t.dataset.cat !== cat);
-                gsap.to(unmatched, { opacity: 0, scale: 0.2, duration: 0.4 });
-
-                const winW = window.innerWidth;
-                const cols = winW < 600 ? 2 : 5;
-                const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight, gap = 15;
-                const startX = (winW - (cols * (tileW + gap))) / 2;
-                const startY = 140;
-
-                matched.forEach((tile, idx) => {
-                    const rect = tile.getBoundingClientRect();
-                    const targetX = startX + (idx % cols) * (tileW + gap) - rect.left;
-                    const targetY = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
-                    gsap.to(tile, { x: targetX, y: targetY, scale: 1, opacity: 1, duration: 1, ease: "expo.out" });
+                // Card News 모드 필터링
+                const cards = document.querySelectorAll('.card-item');
+                cards.forEach(card => {
+                    const isMatch = cat === 'all' || card.dataset.cat === cat;
+                    gsap.to(card, { 
+                        display: isMatch ? 'block' : 'none', 
+                        opacity: isMatch ? 1 : 0, 
+                        scale: isMatch ? 1 : 0.8,
+                        duration: 0.4 
+                    });
                 });
             }
         }
 
-        // 4. 이벤트 및 모드 전환
-        function setupNav() {
+        function setupEvents() {
             document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.addEventListener('click', (e) => {
+                nav.onclick = () => {
                     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                     nav.classList.add('active');
                     applyFilter(nav.dataset.cat);
-                });
+                };
             });
 
             document.getElementById('mode-thumb').onclick = () => {
                 displayMode = 'thumbnail';
                 document.getElementById('mode-thumb').classList.add('active');
-                document.getElementById('mode-typo').classList.remove('active');
-                gridContainer.style.display = 'flex';
-                document.getElementById('typo-container').style.display = 'none';
-                timelines.forEach(tl => tl.play());
+                document.getElementById('mode-card').classList.remove('active');
+                document.getElementById('mosaic-view').style.display = 'flex';
+                document.getElementById('card-view').style.display = 'none';
+                applyFilter(currentCat);
             };
 
-            document.getElementById('mode-typo').onclick = () => {
-                displayMode = 'typo';
-                document.getElementById('mode-typo').classList.add('active');
+            document.getElementById('mode-card').onclick = () => {
+                displayMode = 'card';
+                document.getElementById('mode-card').classList.add('active');
                 document.getElementById('mode-thumb').classList.remove('active');
-                gridContainer.style.display = 'none';
-                document.getElementById('typo-container').style.display = 'flex';
-                timelines.forEach(tl => tl.pause());
-            }
+                document.getElementById('mosaic-view').style.display = 'none';
+                document.getElementById('card-view').style.display = 'flex';
+                applyFilter(currentCat);
+            };
         }
-
-        gsap.ticker.add(() => {
-            if (displayMode === 'typo') { typoY += 1.5; updateTypoPositions(); }
-        });
-
-        gsap.registerPlugin(Observer);
-        Observer.create({
-            target: window, type: "wheel,touch,pointer",
-            onChange: (self) => {
-                if (displayMode === 'thumbnail' && currentCat === 'all') {
-                    const v = Math.abs(self.deltaY) * 0.12;
-                    timelines.forEach(tl => {
-                        gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 1.5 }) });
-                    });
-                } else if (displayMode === 'typo') {
-                    typoY += self.deltaY * 0.6;
-                    updateTypoPositions();
-                }
-            }
-        });
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
-            document.getElementById('focus-quote').innerText = "“오늘의 통찰이 당신의 내일이 되길.”";
+            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 통찰이 되길 바랍니다.”";
             document.getElementById('focus-title').innerText = data.note_title;
-            document.getElementById('focus-date').innerText = data.published_date;
             document.getElementById('focus-author').innerText = `저자 ${data.authors}`;
+            document.getElementById('focus-date').innerText = data.published_date;
             document.getElementById('focus-rating').innerText = data.avg_rating;
             document.getElementById('focus-overlay').classList.add('active');
         }
