@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Kinetic Slide V54</title>
+    <title>LongBlack - Master Slide V55</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;900&display=swap" rel="stylesheet">
@@ -15,11 +15,13 @@
             font-family: 'Montserrat', sans-serif; 
         }
         
+        /* 메인 배경 레이어 */
         #main-bg { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: #000; z-index: 1; 
         }
         
+        /* 시계 영역 */
         #clock-wrapper { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
@@ -34,11 +36,11 @@
             letter-spacing: clamp(6px, 2vw, 12px); text-transform: uppercase; transition: color 0.4s ease; 
         }
 
-        /* 문장 노출 영역: 이제 배경 슬라이더 역할을 겸함 */
+        /* 문장 노출 영역 */
         #quote-display { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            z-index: 100; background: #000; /* 문장 배경색 고정 */
+            z-index: 100; background: #000; 
             visibility: hidden; padding: 0 10%; box-sizing: border-box; 
             will-change: transform;
         }
@@ -74,6 +76,7 @@
     <script>
         const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
         let isQuoteShowing = false;
+        let lastDirection = ""; // 이전 방향 저장
 
         function updateClock() {
             const now = new Date();
@@ -83,11 +86,26 @@
             }
         }
 
-        // 공통 슬라이드 애니메이션 함수
-        function getSlideParams() {
-            const dir = Math.random() > 0.5 ? 'xPercent' : 'yPercent';
-            const start = Math.random() > 0.5 ? 100 : -100;
-            return { dir, start };
+        // 겹치지 않는 슬라이드 방향 생성 로직
+        function getUniqueSlideParams() {
+            const directions = ['left', 'right', 'top', 'bottom'];
+            let currentDir;
+            
+            // 이전과 다른 방향이 나올 때까지 반복
+            do {
+                currentDir = directions[Math.floor(Math.random() * directions.length)];
+            } while (currentDir === lastDirection);
+            
+            lastDirection = currentDir;
+
+            let params = {};
+            switch(currentDir) {
+                case 'left': params = { xPercent: -100, yPercent: 0 }; break;
+                case 'right': params = { xPercent: 100, yPercent: 0 }; break;
+                case 'top': params = { xPercent: 0, yPercent: -100 }; break;
+                case 'bottom': params = { xPercent: 0, yPercent: 100 }; break;
+            }
+            return params;
         }
 
         function slideBg() {
@@ -97,12 +115,12 @@
             const sub = document.getElementById('clock-sub');
             
             const nextColor = customColors[Math.floor(Math.random() * customColors.length)];
-            const { dir, start } = getSlideParams();
+            const startPos = getUniqueSlideParams();
 
             gsap.fromTo(bg, 
-                { [dir]: start, backgroundColor: nextColor },
+                { ...startPos, backgroundColor: nextColor },
                 { 
-                    [dir]: 0, 
+                    xPercent: 0, yPercent: 0,
                     duration: 0.8, 
                     ease: "power4.out",
                     onStart: () => {
@@ -122,37 +140,37 @@
                 .add(() => { isQuoteShowing = false; }, 0)
                 .to({}, { duration: 5 }) // 5초 대기
                 
-                // 문장 슬라이드 인 (배경 슬라이드와 동일한 방식)
+                // [문장 슬라이드 인]
                 .add(() => {
                     isQuoteShowing = true;
-                    if(dataTarget.length > 0) {
-                        const selected = dataTarget[Math.floor(Math.random() * dataTarget.length)];
-                        document.getElementById('target-quote').innerText = selected.text || "";
-                        document.getElementById('target-source').innerText = selected.source || "";
-                    }
+                    const selected = dataTarget[Math.floor(Math.random() * dataTarget.length)];
+                    document.getElementById('target-quote').innerText = selected?.text || "";
+                    document.getElementById('target-source').innerText = selected?.source || "";
                 })
-                .set("#quote-display", { visibility: "visible", xPercent: 0, yPercent: 0 })
+                .set("#quote-display", { visibility: "visible" })
                 .add(() => {
-                    const { dir, start } = getSlideParams();
+                    const startPos = getUniqueSlideParams();
                     gsap.fromTo("#quote-display", 
-                        { [dir]: start, opacity: 1 }, 
-                        { [dir]: 0, duration: 0.8, ease: "power4.out" }
+                        { ...startPos, opacity: 1 }, 
+                        { xPercent: 0, yPercent: 0, duration: 0.8, ease: "power4.out" }
                     );
                 })
                 .to("#clock-wrapper", { opacity: 0, duration: 0.3 }, "<")
                 
-                .to({}, { duration: 4.0 }) // 문장 노출
+                .to({}, { duration: 4.0 }) // 문장 노출 시간
                 
-                // 문장 슬라이드 아웃
+                // [문장 슬라이드 아웃 & 시계 복귀]
                 .add(() => {
-                    const { dir, start } = getSlideParams();
-                    // 들어온 방향의 반대 또는 새로운 랜덤 방향으로 밀어내기
+                    const exitPos = getUniqueSlideParams(); // 나갈 때도 새로운 방향으로
                     gsap.to("#quote-display", { 
-                        [dir]: -start, 
+                        ...exitPos,
                         duration: 0.8, 
                         ease: "power4.in",
                         onComplete: () => {
                             gsap.set("#quote-display", { visibility: "hidden" });
+                            // 시계가 복귀할 때 배경색을 다시 한번 슬라이드하여 자연스럽게 연결
+                            isQuoteShowing = false; 
+                            slideBg(); 
                             gsap.to("#clock-wrapper", { opacity: 1, duration: 0.4 });
                         }
                     });
