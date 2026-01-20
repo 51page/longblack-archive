@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Minimalist Pulse Responsive</title>
+    <title>LongBlack - Kinetic Slide V54</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;900&display=swap" rel="stylesheet">
@@ -13,76 +13,47 @@
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: #000; overflow: hidden; 
             font-family: 'Montserrat', sans-serif; 
-            -webkit-font-smoothing: antialiased;
         }
         
         #main-bg { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: #000; z-index: 1; 
-            will-change: transform, background-color;
         }
         
-        /* 시계 영역 */
         #clock-wrapper { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             z-index: 10; pointer-events: none; 
         }
         .digital-clock { 
-            color: #fff; 
-            /* 모바일 최적화 폰트 사이즈 (최소 3rem, 최대 8rem) */
-            font-size: clamp(3.5rem, 15vw, 8rem); 
-            font-weight: 200; 
-            letter-spacing: -0.04em; 
-            transition: color 0.4s ease; 
-            line-height: 1; 
+            color: #fff; font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 200; 
+            letter-spacing: -0.04em; transition: color 0.4s ease; line-height: 1; 
         }
         .sub-brand { 
-            margin-top: 15px; 
-            font-size: clamp(0.8rem, 2.5vw, 1.2rem); 
-            font-weight: 300; 
-            letter-spacing: clamp(6px, 2vw, 12px); 
-            text-transform: uppercase; 
-            transition: color 0.4s ease; 
+            margin-top: 15px; font-size: clamp(0.8rem, 2.5vw, 1.2rem); font-weight: 300; 
+            letter-spacing: clamp(6px, 2vw, 12px); text-transform: uppercase; transition: color 0.4s ease; 
         }
 
-        /* 문장 노출 영역 */
+        /* 문장 노출 영역: 이제 배경 슬라이더 역할을 겸함 */
         #quote-display { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            z-index: 100; background: rgba(0,0,0,0.98); 
-            opacity: 0; visibility: hidden; 
-            padding: 0 10%; /* 패딩 소폭 축소로 가독성 확보 */
-            box-sizing: border-box; 
+            z-index: 100; background: #000; /* 문장 배경색 고정 */
+            visibility: hidden; padding: 0 10%; box-sizing: border-box; 
+            will-change: transform;
         }
         
-        /* 문장(Text) 스타일 */
         .quote-text { 
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            /* 모바일에서는 더 크게 보이도록 조정 */
-            font-size: clamp(1.4rem, 4vw, 2.2rem); 
-            font-weight: 500; color: #fff; 
-            text-align: center; line-height: 1.6; 
-            word-break: keep-all; 
-            letter-spacing: -0.02em; 
-            margin-bottom: 30px;
-            will-change: transform, opacity;
+            font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 500; color: #fff; 
+            text-align: center; line-height: 1.6; word-break: keep-all; 
+            letter-spacing: -0.02em; margin-bottom: 30px;
         }
 
-        /* 출처(Source) 스타일 */
         .quote-source {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: clamp(0.8rem, 1.5vw, 1rem); 
-            font-weight: 300; color: rgba(255,255,255,0.6);
-            letter-spacing: 0.1em; 
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        /* 가로 모드나 태블릿을 위한 미디어 쿼리 조정 */
-        @media (max-width: 768px) {
-            #quote-display { padding: 0 8%; }
-            .quote-text { line-height: 1.5; }
+            font-size: clamp(0.8rem, 1.5vw, 1rem); font-weight: 300; color: rgba(255,255,255,0.6);
+            letter-spacing: 0.1em; text-transform: uppercase; text-align: center;
         }
     </style>
 </head>
@@ -112,6 +83,13 @@
             }
         }
 
+        // 공통 슬라이드 애니메이션 함수
+        function getSlideParams() {
+            const dir = Math.random() > 0.5 ? 'xPercent' : 'yPercent';
+            const start = Math.random() > 0.5 ? 100 : -100;
+            return { dir, start };
+        }
+
         function slideBg() {
             if (isQuoteShowing) return;
             const bg = document.getElementById('main-bg');
@@ -119,8 +97,7 @@
             const sub = document.getElementById('clock-sub');
             
             const nextColor = customColors[Math.floor(Math.random() * customColors.length)];
-            const dir = Math.random() > 0.5 ? 'xPercent' : 'yPercent';
-            const start = Math.random() > 0.5 ? 100 : -100;
+            const { dir, start } = getSlideParams();
 
             gsap.fromTo(bg, 
                 { [dir]: start, backgroundColor: nextColor },
@@ -139,11 +116,13 @@
 
         function runMasterLoop() {
             const dataTarget = (typeof quoteData !== 'undefined') ? quoteData : [];
-
             const master = gsap.timeline({ repeat: -1 });
+
             master
                 .add(() => { isQuoteShowing = false; }, 0)
-                .to({}, { duration: 5 }) 
+                .to({}, { duration: 5 }) // 5초 대기
+                
+                // 문장 슬라이드 인 (배경 슬라이드와 동일한 방식)
                 .add(() => {
                     isQuoteShowing = true;
                     if(dataTarget.length > 0) {
@@ -152,16 +131,32 @@
                         document.getElementById('target-source').innerText = selected.source || "";
                     }
                 })
-                .set("#quote-display", { visibility: "visible" })
-                .to("#quote-display", { opacity: 1, duration: 0.6 })
+                .set("#quote-display", { visibility: "visible", xPercent: 0, yPercent: 0 })
+                .add(() => {
+                    const { dir, start } = getSlideParams();
+                    gsap.fromTo("#quote-display", 
+                        { [dir]: start, opacity: 1 }, 
+                        { [dir]: 0, duration: 0.8, ease: "power4.out" }
+                    );
+                })
                 .to("#clock-wrapper", { opacity: 0, duration: 0.3 }, "<")
-                .fromTo(["#target-quote", "#target-source"], 
-                    { y: 20, opacity: 0 }, 
-                    { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out" }, "-=0.2")
-                .to({}, { duration: 4.0 }) // 모바일에서 읽는 속도를 고려해 노출 시간 추가 확보
-                .to("#quote-display", { opacity: 0, duration: 0.6 })
-                .to("#clock-wrapper", { opacity: 1, duration: 0.4 }, "<")
-                .set("#quote-display", { visibility: "hidden" });
+                
+                .to({}, { duration: 4.0 }) // 문장 노출
+                
+                // 문장 슬라이드 아웃
+                .add(() => {
+                    const { dir, start } = getSlideParams();
+                    // 들어온 방향의 반대 또는 새로운 랜덤 방향으로 밀어내기
+                    gsap.to("#quote-display", { 
+                        [dir]: -start, 
+                        duration: 0.8, 
+                        ease: "power4.in",
+                        onComplete: () => {
+                            gsap.set("#quote-display", { visibility: "hidden" });
+                            gsap.to("#clock-wrapper", { opacity: 1, duration: 0.4 });
+                        }
+                    });
+                });
         }
 
         window.onload = () => {
