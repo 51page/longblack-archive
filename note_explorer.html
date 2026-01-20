@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Fine-Grid Mosaic</title>
+    <title>LongBlack Real-Asset Mosaic</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@800&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #020202;
+            --bg: #010101;
             --accent: #FF4E00;
-            /* 타일 크기를 더 작고 정밀하게 조정 */
             --tile-w: 160px;
             --tile-h: 220px;
-            --gap: 12px;
+            --gap: 15px;
         }
 
         body, html {
@@ -32,8 +31,6 @@
             justify-content: center;
             gap: var(--gap);
             z-index: 1;
-            /* 전체적으로 살짝 기울여서 역동성 추가 가능 (선택 사항) */
-            /* transform: skewY(-2deg); */
         }
 
         .grid-row {
@@ -47,29 +44,29 @@
             width: var(--tile-w);
             height: var(--tile-h);
             background: #111;
-            border-radius: 4px; /* 반경도 작게 조정 */
+            border-radius: 4px;
             overflow: hidden;
             cursor: pointer;
             position: relative;
             flex-shrink: 0;
-            filter: brightness(0.4) grayscale(0.8);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            filter: brightness(0.4) grayscale(1); /* 기본 상태: 어둡고 흑백 */
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .tile:hover {
-            filter: brightness(1.1) grayscale(0);
+            filter: brightness(1.2) grayscale(0);
             transform: scale(1.1);
             z-index: 10;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
         }
 
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* 하이라이트 포커스 (기존 크기 유지하여 가독성 확보) */
+        /* 하이라이트 포커스 레이어 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92);
-            backdrop-filter: blur(20px);
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(25px);
             display: flex; align-items: center; justify-content: center;
             z-index: 100; opacity: 0; pointer-events: none;
             transition: opacity 0.6s ease;
@@ -77,15 +74,16 @@
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
 
         .focus-content {
-            width: 90%; max-width: 450px;
+            width: 90%; max-width: 480px;
             text-align: center;
         }
 
         .focus-img {
-            width: 100%; height: 550px;
+            width: 100%; height: auto;
+            aspect-ratio: 3 / 4;
             border-radius: 8px; object-fit: cover;
             margin-bottom: 30px;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.9);
+            box-shadow: 0 40px 100px rgba(0,0,0,1);
         }
 
         .focus-title {
@@ -95,10 +93,11 @@
         }
         .focus-source {
             color: var(--accent); letter-spacing: 4px; font-size: 0.8rem; font-weight: 600;
+            text-transform: uppercase;
         }
 
         .close-hint {
-            margin-top: 40px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 3px;
+            margin-top: 50px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 3px;
         }
     </style>
 </head>
@@ -110,37 +109,40 @@
         <div class="focus-content">
             <img id="focus-img" src="" class="focus-img">
             <h2 id="focus-title" class="focus-title"></h2>
-            <span id="focus-source" class="focus-source"></span>
-            <p class="close-hint">CLICK TO BACK TO OCEAN</p>
+            <span id="focus-source" class="focus-source">LONGBLACK ARCHIVE</span>
+            <p class="close-hint">CLICK ANYWHERE TO RETURN</p>
         </div>
     </div>
 
     <script>
+        // 제공해주신 실제 롱블랙 썸네일 데이터 적용
         const noteData = [
-            { title: "픽사, '별로'라는 피드백을 환영하는 이유", cat: "BUSINESS", img: "https://picsum.photos/id/11/400/600" },
-            { title: "딥마인드 CEO, AI 시대의 창의성을 말하다", cat: "TECH", img: "https://picsum.photos/id/22/400/600" },
-            { title: "무인양품, 결국 다시 기본으로 돌아가다", cat: "DESIGN", img: "https://picsum.photos/id/33/400/600" },
-            { title: "통찰은 정돈된 마음에서 시작됩니다", cat: "SENSE", img: "https://picsum.photos/id/44/400/600" },
-            { title: "모든 데이터는 각자의 궤도를 가집니다", cat: "DATA", img: "https://picsum.photos/id/55/400/600" },
-            { title: "기록은 기억을 지배한다", cat: "ARCHIVE", img: "https://picsum.photos/id/66/400/600" },
-            { title: "영감의 탄생, 그 찰나의 순간", cat: "MIND", img: "https://picsum.photos/id/77/400/600" },
-            { title: "공간이 주는 경험의 미학", cat: "SPACE", img: "https://picsum.photos/id/88/400/600" },
-            { title: "브랜드의 영혼은 디테일에 있다", cat: "BRAND", img: "https://picsum.photos/id/99/400/600" },
-            { title: "미래를 읽는 가장 확실한 방법", cat: "FUTURE", img: "https://picsum.photos/id/110/400/600" }
+            { title: "영감의 탄생, 찰나의 순간", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384619eac446d2cac1af75e09af270aaacb279.png" },
+            { title: "비즈니스의 본질을 묻다", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384603edcd73ebd53934bf6a377eedc43790ec.png" },
+            { title: "감각의 아카이빙", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/17683845947c75c9555c9bbfe7c994abc37a6785d5.png" },
+            { title: "기록이 쌓이면 통찰이 된다", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260112/1768210148519c8f742204d28d70bf4ace87622432.png" },
+            { title: "시대의 흐름을 읽는 법", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260109/1767946388b29b85abaadfdd3c955d0c2620e4bf5c.png" },
+            { title: "기본으로 돌아가는 용기", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260107/17677774737a16067d49477e7b8b36bec3ab0a9d17.png" },
+            { title: "공간의 미학", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260107/1767777461941d081fd270caedcf978cc497944277.png" },
+            { title: "디테일의 완성", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251231/176717253930de709dc8885df3385e0f903ac8a80d.png" },
+            { title: "매일의 감각", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251231/176717253129756460f67875e063f5e4e8f3a6d9e1.png" },
+            { title: "미래의 조각들", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/1766565622366b4fa1860195c07097801614456294.png" },
+            { title: "브랜드의 탄생", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/17665656151dbf8b1a9de9bce4e3e696ea2c63b246.svg" }
         ];
 
         const container = document.getElementById('grid-container');
         const overlay = document.getElementById('focus-overlay');
         
-        // 1. 촘촘한 바둑판 생성 (5줄)
+        // 5줄의 촘촘한 그리드 생성
         const rowCount = 5;
         for (let r = 0; r < rowCount; r++) {
             const row = document.createElement('div');
             row.className = 'grid-row';
             
-            // 데이터를 충분히 반복하여 무한 스크롤 구현
-            const repeatedData = [...noteData, ...noteData, ...noteData, ...noteData, ...noteData];
-            repeatedData.forEach(data => {
+            // 이미지들을 랜덤하게 섞어서 배치
+            const shuffledData = [...noteData, ...noteData, ...noteData].sort(() => Math.random() - 0.5);
+            
+            shuffledData.forEach(data => {
                 const tile = document.createElement('div');
                 tile.className = 'tile';
                 tile.innerHTML = `<img src="${data.img}" alt="">`;
@@ -149,16 +151,16 @@
             });
             container.appendChild(row);
 
-            // 2. 가로 흐름 속도와 방향 조절
-            // 줄마다 속도를 다르게 하여 입체감 부여
-            const speed = 50 + (r * 15);
-            const xVal = r % 2 === 0 ? "-50%" : "50%"; // 지그재그 방향 설정 가능
-            
+            // 줄마다 서로 다른 속도로 무한 루프
+            const duration = 60 + (r * 15);
+            const moveDirection = r % 2 === 0 ? "-50%" : "0%";
+            const startPos = r % 2 === 0 ? "0%" : "-50%";
+
             gsap.fromTo(row, 
-                { x: r % 2 === 0 ? "0%" : "-50%" },
+                { x: startPos },
                 {
-                    x: r % 2 === 0 ? "-50%" : "0%",
-                    duration: speed,
+                    x: moveDirection,
+                    duration: duration,
                     ease: "none",
                     repeat: -1
                 }
@@ -168,7 +170,6 @@
         function showFocus(data) {
             document.getElementById('focus-img').src = data.img;
             document.getElementById('focus-title').innerText = data.title;
-            document.getElementById('focus-source').innerText = data.cat;
             overlay.classList.add('active');
         }
 
