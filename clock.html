@@ -3,46 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Kinetic Art - Art Master</title>
+    <title>LongBlack Kinetic City - V41</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;900&family=Montserrat:wght@300;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;800&family=Montserrat:wght@300;900&family=Noto+Sans+KR:wght@100;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --fg: #fff; --accent: #FF4E00; }
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: var(--bg); color: var(--fg); 
-            overflow: hidden; transition: background 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden; 
+            transition: background 0.08s cubic-bezier(0.65, 0, 0.35, 1);
+            perspective: 1200px; /* 3D 원근감 */
         }
 
         #art-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
         .kinetic-text { 
-            position: absolute; white-space: nowrap; will-change: transform, opacity; 
-            line-height: 0.8; mix-blend-mode: difference; user-select: none;
-            display: flex; align-items: center; justify-content: center;
+            position: absolute; white-space: nowrap; will-change: transform, opacity, filter; 
+            line-height: 0.8; user-select: none;
+            mix-blend-mode: difference; /* 극적인 대비 효과 */
+            transform-origin: center center;
         }
 
-        /* [중앙 클래식 시계] */
+        /* [모던 & 미니멀 시계 디자인] */
         #clock-container {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 350px; height: 350px; z-index: 5000; pointer-events: none;
+            width: 300px; height: 300px; z-index: 5000; pointer-events: none;
         }
-        .clock-face {
-            width: 100%; height: 100%; border: 2px solid var(--fg);
-            border-radius: 50%; position: relative; background: rgba(0,0,0,0.02);
-            backdrop-filter: blur(4px);
+        .clock-line {
+            position: absolute; width: 100%; height: 100%; border: 1px solid var(--fg);
+            border-radius: 50%; opacity: 0.2;
         }
-        .marking { position: absolute; width: 2px; height: 15px; background: var(--fg); left: 50%; transform-origin: 50% 175px; opacity: 0.3; }
-        #digital-time { position: absolute; top: 65%; left: 50%; transform: translateX(-50%); font-family: 'Montserrat'; font-weight: 300; font-size: 0.8rem; letter-spacing: 4px; opacity: 0.8; }
-        
-        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; border-radius: 10px; }
-        .hour-hand { width: 6px; height: 80px; background: var(--fg); z-index: 10; }
-        .min-hand { width: 4px; height: 120px; background: var(--fg); z-index: 11; }
-        .sec-hand { width: 2px; height: 145px; background: var(--accent); z-index: 12; }
-        .center-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transform: translate(-50%, -50%); z-index: 15; }
+        .sec-marker {
+            position: absolute; top: 0; left: 50%; width: 2px; height: 15px; background: var(--accent);
+            transform-origin: 50% 150px; opacity: 0.6;
+        }
+        #digital-time {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            font-family: 'Montserrat'; font-weight: 300; font-size: 1.5rem; letter-spacing: 5px; 
+            color: var(--accent); mix-blend-mode: difference;
+        }
 
-        #brand { position: fixed; top: 30px; left: 30px; font-family: 'Montserrat'; font-weight: 900; font-size: 1.2rem; z-index: 6000; letter-spacing: 8px; mix-blend-mode: difference; }
+        #brand { 
+            position: fixed; top: 40px; left: 40px; font-family: 'Montserrat'; font-weight: 900; 
+            font-size: 1.8rem; z-index: 6000; letter-spacing: 10px; mix-blend-mode: difference; 
+        }
     </style>
 </head>
 <body>
@@ -51,22 +58,20 @@
     <div id="art-canvas"></div>
 
     <div id="clock-container">
-        <div class="clock-face" id="clock-face">
-            <div id="digital-time">00:00:00</div>
-            <div class="center-dot"></div>
-            <div id="h-hand" class="hand hour-hand"></div>
-            <div id="m-hand" class="hand min-hand"></div>
-            <div id="s-hand" class="hand sec-hand"></div>
-        </div>
+        <div class="clock-line"></div>
+        <div id="sec-marker" class="sec-marker"></div>
+        <div id="digital-time">00:00:00</div>
     </div>
 
     <script>
+        gsap.registerPlugin(TextPlugin); // TextPlugin 등록
+
         let noteData = [];
         let isInverted = false;
         const canvas = document.getElementById('art-canvas');
-        const fonts = ["'Nanum Myeongjo'", "'Montserrat'"];
+        const fonts = ["'Nanum Myeongjo'", "'Montserrat'", "'Noto Sans KR'"];
 
-        // 한글 해체 데이터
+        // 한글 해체 로직 (자음/모음만 간략화)
         const CHOSUNG = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
         const JUNGSUNG = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
 
@@ -79,127 +84,184 @@
                     result.push(JUNGSUNG[Math.floor((code % 588) / 28)] || str[i]);
                 } else { result.push(str[i]); }
             }
-            return result;
+            return result.flat().filter(c => c && c !== ' ').slice(0, 30); // 너무 많지 않게
         }
 
-        // 시계 눈금
-        const face = document.getElementById('clock-face');
-        for(let i=0; i<12; i++) {
-            const mark = document.createElement('div');
-            mark.className = 'marking';
-            mark.style.transform = `rotate(${i * 30}deg)`;
-            face.appendChild(mark);
-        }
-
+        // CSV 로드
         Papa.parse("notedata.csv", {
             download: true, header: true,
             complete: function(results) {
                 noteData = results.data.filter(row => row.note_title);
+                if (noteData.length === 0) {
+                    noteData = [{ note_title: "NO DATA FOUND, BUT ART CONTINUES" }];
+                }
                 startKineticEngine();
             }
         });
 
         function startKineticEngine() {
             setInterval(() => {
-                // 1. Black & White Morphing
+                // 1. Black & White Toggle
                 isInverted = !isInverted;
                 document.body.style.setProperty('--bg', isInverted ? '#fff' : '#000');
                 document.body.style.setProperty('--fg', isInverted ? '#000' : '#fff');
 
-                // 2. Real-time Clock
+                // 2. Modern Clock & Digital Time
                 const now = new Date();
                 const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
                 document.getElementById('digital-time').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                gsap.to("#s-hand", { rotation: s * 6, duration: 0.4, ease: "elastic.out(1, 0.2)" });
-                gsap.to("#m-hand", { rotation: m * 6, duration: 0.6 });
-                gsap.to("#h-hand", { rotation: (h % 12) * 30 + m * 0.5, duration: 1 });
+                gsap.to("#sec-marker", { rotation: s * 6, duration: 0.3, ease: "expo.out" }); // 초침만 강조
 
-                // 3. Kinetic Animation Pulse
+                // 3. Kinetic Typography Master Pulse
                 triggerKineticPulse();
             }, 1000);
         }
 
         function triggerKineticPulse() {
-            // Destroy: 기존 요소들을 비틀며 제거
-            const old = document.querySelectorAll('.kinetic-text');
-            old.forEach(el => {
-                gsap.to(el, {
-                    rotationX: 90, rotationY: 90, scale: 2, 
-                    opacity: 0, duration: 0.6, ease: "power2.in",
-                    onComplete: () => el.remove()
-                });
+            // [Destroy] 이전 요소들을 3D 공간에서 파편화하며 제거
+            const oldElements = document.querySelectorAll('.kinetic-text');
+            gsap.to(oldElements, {
+                duration: 0.4,
+                rotationX: (i) => 360 * Math.random() - 180,
+                rotationY: (i) => 360 * Math.random() - 180,
+                z: (i) => Math.random() * 800 - 400, // 깊이감
+                x: (i) => (Math.random() - 0.5) * window.innerWidth,
+                y: (i) => (Math.random() - 0.5) * window.innerHeight,
+                opacity: 0,
+                scale: 0,
+                ease: "power2.in",
+                stagger: 0.005,
+                onCompleteAll: () => canvas.innerHTML = '' // 전부 제거 후 캔버스 비우기
             });
 
+            // [Create] 새로운 텍스트 아트 생성
             const randomNote = noteData[Math.floor(Math.random() * noteData.length)].note_title;
-            const mode = Math.random(); 
+            const mode = Math.random(); // 3가지 모드 전환
 
-            if (mode > 0.6) {
-                // [Fluid Scrolling Mode] - 문장이 흐르듯 지나감
-                renderScrolling(randomNote);
-            } else if (mode > 0.3) {
-                // [Morphing/Twist Mode] - 문장이 비틀리며 나타남
-                renderTwist(randomNote);
+            if (mode < 0.33) {
+                // 모드 1: [Fluid Swarm] - 군중처럼 한 방향으로 휩쓸리는 파편
+                renderFluidSwarm(disassemble(randomNote));
+            } else if (mode < 0.66) {
+                // 모드 2: [Morphing Glitch] - 하나의 완성된 문장이 글리치와 함께 변형
+                renderMorphingGlitch(randomNote);
             } else {
-                // [Disassembled Chaos] - 자모 파편이 쏟아짐
-                renderChaos(disassemble(randomNote));
+                // 모드 3: [Rotation Tunnel] - 문장들이 3D 터널처럼 중앙으로 빨려 들어감
+                renderRotationTunnel(randomNote);
             }
         }
 
-        function createEl(text, size, font) {
+        function createTextElement(text, options = {}) {
             const el = document.createElement('div');
             el.className = 'kinetic-text';
             el.innerText = text;
-            el.style.fontSize = size + "px";
-            el.style.fontFamily = font;
+            el.style.fontSize = (options.fontSize || 50) + "px";
+            el.style.fontFamily = options.fontFamily || fonts[0];
+            el.style.fontWeight = options.fontWeight || "normal";
+            el.style.position = 'absolute';
+            el.style.left = '0'; el.style.top = '0'; // GSAP이 위치 제어
             canvas.appendChild(el);
             return el;
         }
 
-        // 기법 1: Fluid Scrolling (문장이 화면을 가로질러 흐름)
-        function renderScrolling(text) {
-            const size = window.innerWidth * 0.15;
-            const el = createEl(text, size, fonts[1]);
-            const yPos = Math.random() * window.innerHeight;
-            
-            gsap.fromTo(el, 
-                { x: -window.innerWidth, y: yPos, skewX: 30, opacity: 0 },
-                { x: window.innerWidth, y: yPos, skewX: -30, opacity: 0.4, duration: 4, ease: "none" }
-            );
-        }
-
-        // 기법 2: Rotation & Twist (중앙에서 회전하며 압도적 크기로 등장)
-        function renderTwist(text) {
-            const size = window.innerWidth * 0.1;
-            const el = createEl(text, size, fonts[0]);
-            gsap.set(el, { x: window.innerWidth/2, y: window.innerHeight/2, xPercent: -50, yPercent: -50 });
-
-            gsap.fromTo(el, 
-                { rotationY: 180, rotationZ: -20, scale: 0, opacity: 0 },
-                { rotationY: 0, rotationZ: 5, scale: 1.5, opacity: 0.8, duration: 1, ease: "expo.out" }
-            );
-        }
-
-        // 기법 3: Chaos Fragments (해체된 자모들이 유체처럼 부유)
-        function renderChaos(chars) {
+        // 기법 1: Fluid Swarm (유체처럼 휩쓸리는 자모 파편)
+        function renderFluidSwarm(chars) {
+            const numElements = chars.length;
             chars.forEach((char, i) => {
-                if(char === " ") return;
-                const size = 50 + Math.random() * 200;
-                const el = createEl(char, size, fonts[Math.floor(Math.random()*2)]);
-                
-                const startX = window.innerWidth / 2;
-                const startY = window.innerHeight / 2;
-                
+                const fontSize = 30 + Math.random() * 120;
+                const el = createTextElement(char, { 
+                    fontSize: fontSize, 
+                    fontFamily: fonts[Math.floor(Math.random()*fonts.length)],
+                    fontWeight: Math.random() > 0.5 ? 900 : 300
+                });
+
+                const startX = window.innerWidth * (0.1 + Math.random() * 0.8);
+                const startY = -fontSize; // 위에서 시작
+
                 gsap.fromTo(el, 
-                    { x: startX, y: startY, opacity: 0, scale: 0 },
+                    { x: startX, y: startY, opacity: 0, scale: 0.5, rotation: Math.random() * 90 - 45 },
                     { 
-                        x: Math.random() * window.innerWidth, 
-                        y: Math.random() * window.innerHeight, 
-                        opacity: Math.random() * 0.6 + 0.2, 
-                        scale: 1,
-                        rotation: Math.random() * 720,
+                        y: window.innerHeight + fontSize, // 아래로 흘러내림
+                        x: startX + (Math.random() - 0.5) * 100, // 좌우로 미세하게 흔들림
+                        opacity: 0.8, scale: 1, rotation: Math.random() * 90 - 45,
+                        duration: 3 + Math.random() * 2, // 천천히 흐르도록
+                        ease: "linear",
+                        delay: i * 0.05,
+                        onUpdate: function() { // 흐르면서 색상/글리치 변화
+                            const progress = this.progress();
+                            el.style.filter = `blur(${progress < 0.2 || progress > 0.8 ? 5 * (progress < 0.2 ? 0.2 - progress : progress - 0.8) : 0}px)`;
+                            el.style.textShadow = `
+                                ${Math.sin(progress * Math.PI * 2 * 5) * 2}px 0 var(--fg), 
+                                ${Math.cos(progress * Math.PI * 2 * 5) * 2}px 0 var(--accent)
+                            `;
+                        }
+                    }
+                );
+            });
+        }
+
+        // 기법 2: Morphing Glitch (단일 문장이 글리치와 함께 변형)
+        function renderMorphingGlitch(sentence) {
+            const el = createTextElement(sentence, { 
+                fontSize: window.innerWidth * 0.15, 
+                fontFamily: fonts[1], 
+                fontWeight: 900 
+            });
+            gsap.set(el, { x: window.innerWidth / 2, y: window.innerHeight / 2, xPercent: -50, yPercent: -50 });
+
+            gsap.fromTo(el, 
+                { opacity: 0, scale: 0.5, rotationX: 90, filter: "blur(20px)" },
+                { 
+                    opacity: 1, scale: 1, rotationX: 0, filter: "blur(0px)",
+                    duration: 0.8, ease: "power3.out",
+                    onUpdate: function() {
+                        // Morphing (텍스트 자체의 변화)
+                        if (Math.random() < 0.1) { // 10% 확률로 글자 깜빡임 (글리치)
+                            el.innerText = randomNote.split('').map((char, j) => Math.random() < 0.3 ? String.fromCharCode(65 + Math.random() * 25) : char).join('');
+                        } else {
+                            el.innerText = sentence; // 원래 문장으로 복구
+                        }
+                        // Glitch effect (text-shadow)
+                        el.style.textShadow = `
+                            ${Math.sin(Date.now() * 0.01) * 5}px 0 var(--accent), 
+                            ${Math.cos(Date.now() * 0.01) * 5}px 0 var(--fg)
+                        `;
+                    },
+                    onComplete: () => {
+                        gsap.to(el, { duration: 0.2, textShadow: "none" }); // 애니메이션 끝난 후 글리치 제거
+                    }
+                }
+            );
+        }
+
+        // 기법 3: Rotation Tunnel (3D 원근법 터널)
+        function renderRotationTunnel(sentence) {
+            const characters = sentence.split('');
+            characters.forEach((char, i) => {
+                if (char === " ") return;
+                const fontSize = 80 + Math.random() * 150;
+                const el = createTextElement(char, { 
+                    fontSize: fontSize, 
+                    fontFamily: fonts[Math.floor(Math.random()*fonts.length)],
+                    fontWeight: Math.random() > 0.5 ? 900 : 100
+                });
+
+                gsap.set(el, { x: window.innerWidth / 2, y: window.innerHeight / 2, xPercent: -50, yPercent: -50 });
+
+                gsap.fromTo(el, 
+                    { opacity: 0, scale: 0.1, rotationY: 0, rotationX: 0, z: -1000 }, // 멀리서 작게 시작
+                    { 
+                        opacity: Math.random() * 0.8 + 0.2, scale: 1.5, // 커지면서 가까이
+                        rotationY: (i % 2 === 0 ? 360 : -360), // 회전
+                        rotationX: (i % 3 === 0 ? 180 : -180),
+                        z: 500, // 화면 밖으로 튀어나옴
                         duration: 1.5, 
-                        delay: i * 0.03,
-                        ease: "power4.out"
+                        delay: i * 0.05,
+                        ease: "power3.out",
+                        onUpdate: function() { // 원근감에 따른 흐림 효과
+                            const progress = this.progress();
+                            const blurAmount = Math.abs(this.targets()[0]._gsTransform.z) / 200;
+                            el.style.filter = `blur(${blurAmount}px)`;
+                        }
                     }
                 );
             });
