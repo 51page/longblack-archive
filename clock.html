@@ -3,52 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Atomic Sync V59</title>
+    <title>LongBlack - Seamless Final V60</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --fg: #fff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
-        #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; }
+        #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; will-change: transform; }
         #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
         .digital-clock { color: #fff; font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 200; letter-spacing: -0.04em; line-height: 1; }
         .sub-brand { margin-top: 15px; font-size: clamp(0.8rem, 2.5vw, 1.2rem); font-weight: 300; letter-spacing: 12px; text-transform: uppercase; }
-        #quote-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: #000; visibility: hidden; padding: 0 10%; box-sizing: border-box; }
+        #quote-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: #000; visibility: hidden; padding: 0 10%; box-sizing: border-box; will-change: transform; }
         .quote-text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 500; color: #fff; text-align: center; line-height: 1.6; word-break: keep-all; letter-spacing: -0.02em; margin-bottom: 30px; }
         .quote-source { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: clamp(0.8rem, 1.5vw, 1rem); font-weight: 300; color: rgba(255,255,255,0.6); letter-spacing: 0.1em; text-transform: uppercase; text-align: center; }
         #sound-control { position: fixed; bottom: 30px; right: 30px; z-index: 9999; width: 44px; height: 44px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease; mix-blend-mode: difference; }
-        #sound-control:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
-        #sound-control svg { width: 20px; height: 20px; fill: #fff; }
+        #sound-control svg { width: 20px; height: 20px; fill: #fff; pointer-events: none; }
     </style>
 </head>
 <body>
-
-    <div id="sound-control"><svg id="icon-on" style="display:none;" viewBox="0 0 24 24"><path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.85 14,18.71V20.77C18.01,19.86 21,16.28 21,12C21,7.72 18.01,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16.02C15.5,15.29 16.5,13.77 16.5,12M3,9V15H7L12,20V4L7,9H3Z"/></svg><svg id="icon-off" viewBox="0 0 24 24"><path d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18.01,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,11.53 16.42,11.08 16.28,10.66L14,8.38V15.54L15.36,14.18C16.08,13.63 16.5,12.87 16.5,12Z"/></svg></div>
+    <div id="sound-control"><svg id="icon-off" viewBox="0 0 24 24"><path d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18.01,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,11.53 16.42,11.08 16.28,10.66L14,8.38V15.54L15.36,14.18C16.08,13.63 16.5,12.87 16.5,12Z"/></svg></div>
     <div id="main-bg"></div>
     <div id="clock-wrapper"><div id="clock" class="digital-clock">00:00:00</div><div id="clock-sub" class="sub-brand">LongBlack</div></div>
     <div id="quote-display"><div id="target-quote" class="quote-text"></div><div id="target-source" class="quote-source"></div></div>
 
     <script>
         const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
-        let lastDirection = "", lastSecond = -1, isQuotePhase = false, cycleCounter = 0, soundEnabled = false;
+        let lastDirection = "", lastSecond = -1, isAnimating = false, cycleCounter = 0, soundEnabled = false;
 
+        // --- 오디오 노드 미리 생성 (지연 감소) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playTick() {
             if (!soundEnabled || audioCtx.state === 'suspended') return;
             const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
             osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.04);
         }
 
-        document.getElementById('sound-control').addEventListener('click', () => {
+        document.getElementById('sound-control').addEventListener('click', (e) => {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             soundEnabled = !soundEnabled;
-            document.getElementById('icon-on').style.display = soundEnabled ? 'block' : 'none';
-            document.getElementById('icon-off').style.display = soundEnabled ? 'none' : 'block';
+            e.currentTarget.innerHTML = soundEnabled ? '<svg viewBox="0 0 24 24"><path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.85 14,18.71V20.77C18.01,19.86 21,16.28 21,12C21,7.72 18.01,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16.02C15.5,15.29 16.5,13.77 16.5,12M3,9V15H7L12,20V4L7,9H3Z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18.01,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,11.53 16.42,11.08 16.28,10.66L14,8.38V15.54L15.36,14.18C16.08,13.63 16.5,12.87 16.5,12Z"/></svg>';
         });
 
         function getDir() {
@@ -58,29 +56,24 @@
             return d === 'left' ? {xPercent:-100,yPercent:0} : d === 'right' ? {xPercent:100,yPercent:0} : d === 'top' ? {xPercent:0,yPercent:-100} : {xPercent:0,yPercent:100};
         }
 
+        // --- 통합 엔진 루프 ---
         function engine() {
             const now = new Date();
             const s = now.getSeconds();
-            const ms = now.getMilliseconds();
 
             if (s !== lastSecond) {
                 lastSecond = s;
                 document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
                 playTick();
 
-                if (!isQuotePhase) {
+                if (!isAnimating) {
                     cycleCounter++;
-                    if (cycleCounter >= 6) {
-                        isQuotePhase = true;
-                        triggerQuoteIn();
+                    if (cycleCounter === 6) {
+                        isAnimating = true;
+                        triggerQuoteSequence();
                     } else {
                         triggerBg();
                     }
-                } else if (isQuotePhase && cycleCounter === 10) { 
-                    // 문장이 정확히 4초(6,7,8,9초 경과 후 10초 정각) 되었을 때 퇴장 시작
-                    triggerQuoteOut();
-                } else if (isQuotePhase) {
-                    cycleCounter++;
                 }
             }
             requestAnimationFrame(engine);
@@ -89,7 +82,7 @@
         function triggerBg() {
             const nextColor = customColors[Math.floor(Math.random() * customColors.length)];
             gsap.fromTo("#main-bg", getDir(), { 
-                xPercent: 0, yPercent: 0, backgroundColor: nextColor, duration: 0.6, ease: "power4.out",
+                xPercent: 0, yPercent: 0, backgroundColor: nextColor, duration: 0.5, ease: "power2.out",
                 onStart: () => {
                     const c = nextColor === '#000000' ? '#fff' : '#000';
                     document.getElementById('clock').style.color = c;
@@ -98,29 +91,31 @@
             });
         }
 
-        function triggerQuoteIn() {
+        function triggerQuoteSequence() {
             const data = (typeof quoteData !== 'undefined') ? quoteData : [];
             const q = data[Math.floor(Math.random() * data.length)];
             document.getElementById('target-quote').innerText = q?.text || "";
             document.getElementById('target-source').innerText = q?.source || "";
 
-            gsap.timeline()
-                .set("#quote-display", { visibility: "visible", ...getDir(), opacity: 1 })
-                .to("#clock-wrapper", { opacity: 0, duration: 0.2 })
-                .to("#quote-display", { xPercent: 0, yPercent: 0, duration: 0.6, ease: "power4.out" });
-        }
+            const inDir = getDir();
+            const outDir = getDir();
 
-        function triggerQuoteOut() {
-            gsap.to("#quote-display", { 
-                ...getDir(), duration: 0.6, ease: "power4.in",
+            // 모든 모션을 하나의 타임라인에 묶어 버벅임을 원천 봉쇄
+            const tl = gsap.timeline({
                 onComplete: () => {
-                    gsap.set("#quote-display", { visibility: "hidden" });
-                    isQuotePhase = false;
+                    isAnimating = false;
                     cycleCounter = 0;
-                    triggerBg(); // 퇴장과 동시에 다음 배경 바로 진입 (공백 차단)
-                    gsap.to("#clock-wrapper", { opacity: 1, duration: 0.3 });
+                    gsap.set("#quote-display", { visibility: "hidden" });
+                    triggerBg(); // 복귀하자마자 다음 배경 슬라이드 실행
                 }
             });
+
+            tl.set("#quote-display", { visibility: "visible", ...inDir, opacity: 1 })
+              .to("#clock-wrapper", { opacity: 0, duration: 0.2 })
+              .to("#quote-display", { xPercent: 0, yPercent: 0, duration: 0.6, ease: "power3.out" })
+              .to({}, { duration: 4.0 }) // 문장 감상
+              .to("#quote-display", { ...outDir, duration: 0.6, ease: "power3.in" })
+              .to("#clock-wrapper", { opacity: 1, duration: 0.2 }, "-=0.2");
         }
 
         window.onload = engine;
