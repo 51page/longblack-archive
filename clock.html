@@ -41,8 +41,16 @@
             padding: 0 12%; box-sizing: border-box;
         }
         .quote-text {
-            font-family: 'Nanum Myeongjo', serif; font-size: 4.2vw; font-weight: 800;
-            color: #fff; text-align: center; line-height: 1.5; word-break: keep-all;
+    /* 헬베티카 폰트로 변경 및 산세리프 계열 지정 */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+    font-size: 4.2vw; 
+    font-weight: 800;
+    color: #fff; 
+    text-align: center; 
+    line-height: 1.3; /* 산세리프 폰트에 맞춰 행간을 살짝 조절했습니다 */
+    word-break: keep-all;
+    letter-spacing: -0.02em; /* 헬베티카 특유의 세련된 자간을 위해 추가 */
+}
         }
 
         .brand { position: fixed; top: 40px; left: 40px; color: #fff; font-weight: 900; font-size: 1.5rem; z-index: 1000; mix-blend-mode: difference; }
