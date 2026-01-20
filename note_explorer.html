@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Insight Collector</title>
+    <title>LongBlack Archive - Responsive V12</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
@@ -11,8 +11,12 @@
         :root {
             --bg: #000;
             --accent: #FF4E00;
-            --tile-w: 130px; --tile-h: 185px; --gap: 12px;
-            --nav-h: 100px;
+            /* 모바일 대응을 위해 기본 크기를 약간 축소 */
+            --tile-w: 110px; --tile-h: 155px; --gap: 10px;
+            --nav-h: 90px;
+        }
+        @media (min-width: 768px) {
+            --tile-w: 135px; --tile-h: 190px; --gap: 15px;
         }
 
         body, html {
@@ -21,26 +25,25 @@
             font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
         }
 
-        /* 상단 볼드 내비게이션 */
+        /* 상단 내비게이션 */
         #category-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-h);
-            display: flex; align-items: center; justify-content: center;
-            gap: 25px; padding: 0 40px; z-index: 100;
-            background: linear-gradient(to bottom, #000 40%, transparent);
+            display: flex; align-items: center; justify-content: flex-start;
+            gap: 20px; padding: 0 30px; z-index: 100;
+            background: linear-gradient(to bottom, #000 50%, transparent);
             overflow-x: auto; scrollbar-width: none;
         }
         #category-nav::-webkit-scrollbar { display: none; }
+        @media (min-width: 1024px) { #category-nav { justify-content: center; } }
 
         .nav-item {
-            font-size: 0.85rem; font-weight: 900; color: #555;
+            font-size: 0.8rem; font-weight: 900; color: #555;
             cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            white-space: nowrap; flex-shrink: 0;
+            transition: all 0.4s ease; white-space: nowrap; flex-shrink: 0;
         }
-        .nav-item:hover, .nav-item.active { color: #fff; transform: translateY(-2px); }
-        .nav-item.active { color: var(--accent); }
+        .nav-item.active { color: var(--accent); transform: scale(1.1); }
 
-        /* 그리드 시스템 */
+        /* 그리드 컨테이너 */
         #grid-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center;
@@ -51,30 +54,45 @@
         .tile {
             width: var(--tile-w); height: var(--tile-h);
             background: #111; border-radius: 4px; overflow: hidden;
-            cursor: pointer; flex-shrink: 0;
-            filter: brightness(0.4) grayscale(1);
-            transition: filter 0.5s ease;
-            -webkit-tap-highlight-color: transparent;
+            cursor: pointer; flex-shrink: 0; filter: brightness(0.4) grayscale(1);
+            transition: filter 0.5s ease; -webkit-tap-highlight-color: transparent;
         }
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* 필터링 상태 스타일 */
-        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0.5); }
+        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0.3); }
         body.is-filtered .tile.matched { filter: brightness(1.1) grayscale(0); z-index: 50; }
 
         /* 하이라이트 오버레이 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); backdrop-filter: blur(20px);
+            background: rgba(0,0,0,0.96); backdrop-filter: blur(25px);
             display: flex; align-items: center; justify-content: center;
             z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
-        .focus-content { width: 90%; max-width: 450px; text-align: center; }
-        .focus-img { width: 100%; max-height: 35vh; border-radius: 8px; object-fit: contain; margin-bottom: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
-        .focus-quote { font-family: 'Nanum Myeongjo', serif; font-size: 1.3rem; font-weight: 800; line-height: 1.6; margin-bottom: 15px; }
-        .focus-title { font-size: 0.85rem; opacity: 0.5; margin-bottom: 30px; }
-        .view-btn { display: inline-block; padding: 14px 35px; background: var(--accent); color: #fff; text-decoration: none; font-size: 0.75rem; font-weight: 700; border-radius: 50px; letter-spacing: 2px; }
+
+        .focus-content {
+            width: 88%; max-width: 440px; text-align: center;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .focus-img { width: 100%; max-height: 32vh; border-radius: 8px; object-fit: contain; margin-bottom: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+        
+        /* 상세 정보 스타일 */
+        .focus-quote { font-family: 'Nanum Myeongjo', serif; font-size: 1.2rem; font-weight: 800; line-height: 1.6; margin-bottom: 12px; word-break: keep-all; }
+        .focus-title { font-size: 0.85rem; font-weight: 600; opacity: 0.9; margin-bottom: 8px; color: #ddd; }
+        
+        .focus-meta { display: flex; align-items: center; gap: 15px; font-size: 0.75rem; color: #888; margin-bottom: 30px; }
+        .rating { color: #FFB800; font-weight: 700; }
+        .author { color: #aaa; position: relative; }
+        .author::before { content: "|"; margin-right: 15px; opacity: 0.3; }
+
+        .view-btn { 
+            display: inline-block; padding: 14px 40px; background: var(--accent); 
+            color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 800; 
+            border-radius: 50px; letter-spacing: 2px; transition: transform 0.2s;
+        }
+        .view-btn:active { transform: scale(0.95); }
+        .close-hint { margin-top: 35px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
     </style>
 </head>
 <body style="opacity: 0; transition: opacity 0.8s;">
@@ -87,7 +105,6 @@
         <span class="nav-item" data-cat="자기계발">Growth</span>
         <span class="nav-item" data-cat="테크">Tech</span>
         <span class="nav-item" data-cat="책 리뷰">Book</span>
-        <span class="nav-item" data-cat="웰니스">Wellness</span>
         <span class="nav-item" data-cat="예술">Art</span>
     </nav>
 
@@ -98,12 +115,17 @@
             <img id="focus-img" src="" class="focus-img">
             <p id="focus-quote" class="focus-quote"></p>
             <h3 id="focus-title" class="focus-title"></h3>
-            <a id="focus-link" href="#" target="_blank" class="view-btn">READ FULL NOTE</a>
+            <div class="focus-meta">
+                <span class="rating">★ 4.8</span>
+                <span class="author">저자 홍길동</span>
+            </div>
+            <a id="focus-link" href="https://www.longblack.co/" target="_blank" class="view-btn">READ NOTE</a>
+            <p class="close-hint">CLOSE</p>
         </div>
     </div>
 
     <script>
-        // 1. 데이터 세분화 (각 카테고리별 다른 썸네일 매칭)
+        // 1. 데이터 구성
         const images = [
             "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384619eac446d2cac1af75e09af270aaacb279.png",
             "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384603edcd73ebd53934bf6a377eedc43790ec.png",
@@ -118,15 +140,13 @@
         ];
         const cats = ["브랜딩", "사업기획", "디자인", "자기계발", "테크", "책 리뷰", "웰니스", "예술"];
         
-        // 풍부한 샘플 데이터 생성
         let noteData = [];
         for(let i=0; i<60; i++) {
             noteData.push({
                 cat: cats[i % cats.length],
                 title: `LongBlack Archive Vol.${i+1}`,
                 quote: "사소한 기록이 모여 당신만의 고유한 서사가 됩니다.",
-                img: images[i % images.length],
-                url: "https://www.longblack.co/"
+                img: images[i % images.length]
             });
         }
 
@@ -135,7 +155,7 @@
         const navItems = document.querySelectorAll('.nav-item');
         let timelines = [], allTiles = [], isFiltered = false;
 
-        // 2. 초기 그리드 구축
+        // 2. 초기 그리드 생성
         function initGrid() {
             container.innerHTML = ''; timelines = []; allTiles = [];
             const rowCount = 5;
@@ -150,19 +170,18 @@
                     tile.className = 'tile';
                     tile.innerHTML = `<img src="${data.img}" loading="lazy">`;
                     tile.dataset.cat = data.cat;
-                    tile.dataset.id = r * perRow + i;
                     tile.onclick = (e) => { e.stopPropagation(); if(isFiltered && !tile.classList.contains('matched')) return; showFocus(data); };
                     row.appendChild(tile);
                     allTiles.push(tile);
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 40 + r*10, ease: "none", repeat: -1 });
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 50 + r*10, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-30%"});
                 timelines.push(tl);
             }
         }
 
-        // 3. "헤쳐모여" 그리드 정렬 로직 (핵심!)
+        // 3. 반응형 헤쳐모여 로직 (Mobile Optimized)
         function organizeGrid(category) {
             isFiltered = category !== 'all';
             document.body.classList.toggle('is-filtered', isFiltered);
@@ -171,57 +190,55 @@
                 timelines.forEach(tl => tl.play());
                 allTiles.forEach(tile => {
                     tile.classList.remove('matched', 'dimmed');
-                    gsap.to(tile, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power2.inOut" });
+                    gsap.to(tile, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8, ease: "expo.out" });
                 });
             } else {
                 timelines.forEach(tl => tl.pause());
                 const matched = allTiles.filter(t => t.dataset.cat === category);
                 const unmatched = allTiles.filter(t => t.dataset.cat !== category);
 
-                gsap.to(unmatched, { opacity: 0, scale: 0.5, duration: 0.4 });
+                gsap.to(unmatched, { opacity: 0, scale: 0.3, duration: 0.4 });
 
-                // 정갈한 중앙 타일 그리드 계산 (예: 4열 배치)
-                const cols = 4;
-                const tw = 130 + 12; // 가로 + 간격
-                const th = 185 + 12; // 세로 + 간격
-                const startX = (window.innerWidth - (cols * tw)) / 2;
-                const startY = (window.innerHeight - (Math.ceil(matched.length / cols) * th)) / 2 + 50;
+                // 반응형 열 개수 계산
+                const winW = window.innerWidth;
+                const cols = winW < 600 ? 2 : (winW < 1024 ? 3 : 4);
+                
+                // 타일 실측 크기 가져오기
+                const tileW = matched[0].offsetWidth;
+                const tileH = matched[0].offsetHeight;
+                const gap = parseInt(getComputedStyle(container).gap);
+
+                // 전체 그리드 크기 계산
+                const totalW = (cols * tileW) + ((cols - 1) * gap);
+                const rows = Math.ceil(matched.length / cols);
+                const totalH = (rows * tileH) + ((rows - 1) * gap);
+
+                // 시작 좌표 (정중앙 배치)
+                const startX = (winW - totalW) / 2;
+                const startY = (window.innerHeight - totalH) / 2 + 30;
 
                 matched.forEach((tile, idx) => {
                     tile.classList.add('matched');
                     tile.classList.remove('dimmed');
                     
                     const rect = tile.getBoundingClientRect();
-                    const targetX = startX + (idx % cols) * tw - rect.left;
-                    const targetY = startY + Math.floor(idx / cols) * th - rect.top;
+                    const targetX = startX + (idx % cols) * (tileW + gap) - rect.left;
+                    const targetY = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
 
                     gsap.to(tile, {
-                        x: targetX, y: targetY, scale: 1.1, opacity: 1,
-                        duration: 1, ease: "expo.out", delay: idx * 0.03
+                        x: targetX, y: targetY, scale: 1, opacity: 1,
+                        duration: 1.2, ease: "expo.out", delay: idx * 0.02
                     });
                 });
             }
         }
 
-        // 인터랙션 바인딩
         navItems.forEach(item => {
             item.onclick = () => {
                 navItems.forEach(n => n.classList.remove('active'));
                 item.classList.add('active');
                 organizeGrid(item.dataset.cat);
             };
-        });
-
-        gsap.registerPlugin(Observer);
-        Observer.create({
-            target: window, type: "wheel,touch,pointer",
-            onChange: (self) => {
-                if (isFiltered) return;
-                const v = Math.abs(self.deltaY) * 0.05;
-                timelines.forEach(tl => {
-                    gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 1.2 }) });
-                });
-            }
         });
 
         function showFocus(data) {
@@ -232,8 +249,21 @@
         }
         overlay.onclick = () => overlay.classList.remove('active');
 
+        gsap.registerPlugin(Observer);
+        Observer.create({
+            target: window, type: "wheel,touch,pointer",
+            onChange: (self) => {
+                if (isFiltered) return;
+                const v = Math.abs(self.deltaY) * 0.05;
+                timelines.forEach(tl => {
+                    gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 1.5 }) });
+                });
+            }
+        });
+
         initGrid();
         window.onload = () => document.body.style.opacity = "1";
+        window.onresize = () => { if(!isFiltered) initGrid(); else organizeGrid(document.querySelector('.nav-item.active').dataset.cat); };
     </script>
 </body>
 </html>
