@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Interactive Flow</title>
+    <title>LongBlack High-Velocity Mosaic</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
@@ -11,9 +11,9 @@
         :root {
             --bg: #010101;
             --accent: #FF4E00;
-            --tile-w: 140px;
-            --tile-h: 200px;
-            --gap: 10px;
+            --tile-w: 130px; /* 조금 더 작게 조정 */
+            --tile-h: 180px;
+            --gap: 12px;
         }
 
         body, html {
@@ -22,7 +22,7 @@
             background-color: var(--bg);
             color: #fff; font-family: 'Montserrat', sans-serif;
             overflow: hidden;
-            touch-action: none; /* 브라우저 기본 스크롤 방지 (중요) */
+            touch-action: none; /* 시스템 스크롤 방지 */
         }
 
         #grid-container {
@@ -47,20 +47,15 @@
             overflow: hidden; cursor: pointer;
             flex-shrink: 0;
             filter: brightness(0.4) grayscale(1);
-            transition: filter 0.5s ease;
+            transition: filter 0.4s ease;
         }
-
-        .tile:hover {
-            filter: brightness(1.1) grayscale(0);
-            z-index: 10;
-        }
-
+        .tile:hover { filter: brightness(1.1) grayscale(0); }
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
         /* 하이라이트 레이어 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.96);
             backdrop-filter: blur(25px);
             display: flex; align-items: center; justify-content: center;
             z-index: 100; opacity: 0; pointer-events: none;
@@ -75,7 +70,7 @@
         }
 
         .focus-img {
-            width: auto; height: 320px;
+            width: auto; height: 300px;
             border-radius: 8px; object-fit: contain;
             margin-bottom: 25px;
             box-shadow: 0 30px 80px rgba(0,0,0,0.8);
@@ -83,20 +78,12 @@
 
         .focus-quote {
             font-family: 'Nanum Myeongjo', serif;
-            font-size: 1.3rem; font-weight: 800; line-height: 1.6;
-            color: #fff; margin: 0 0 20px 0; word-break: keep-all;
-            padding: 0 10px;
+            font-size: 1.25rem; font-weight: 800; line-height: 1.6;
+            margin: 0 0 15px 0; word-break: keep-all;
         }
 
         .focus-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.85rem; font-weight: 500;
-            opacity: 0.6; margin: 0; letter-spacing: 1px;
-        }
-
-        .focus-source {
-            color: var(--accent); letter-spacing: 3px; font-size: 0.7rem; font-weight: 600;
-            margin-top: 15px;
+            font-size: 0.8rem; font-weight: 500; opacity: 0.6; margin: 0;
         }
 
         .close-hint {
@@ -113,8 +100,7 @@
             <img id="focus-img" src="" class="focus-img">
             <p id="focus-quote" class="focus-quote"></p>
             <h3 id="focus-title" class="focus-title"></h3>
-            <span class="focus-source">LONGBLACK ARCHIVE</span>
-            <p class="close-hint">TOUCH ANYWHERE TO RETURN</p>
+            <p class="close-hint">TAP ANYWHERE TO RETURN</p>
         </div>
     </div>
 
@@ -135,10 +121,10 @@
 
         const container = document.getElementById('grid-container');
         const overlay = document.getElementById('focus-overlay');
-        const timelines = []; // 각 줄의 애니메이션 저장
+        const timelines = [];
 
         // 1. 그리드 생성
-        const rowCount = 5;
+        const rowCount = 6; // 타일이 작아졌으므로 줄 수를 늘림
         for (let r = 0; r < rowCount; r++) {
             const row = document.createElement('div');
             row.className = 'grid-row';
@@ -147,41 +133,52 @@
                 const tile = document.createElement('div');
                 tile.className = 'tile';
                 tile.innerHTML = `<img src="${data.img}" alt="">`;
-                tile.onclick = (e) => { e.stopPropagation(); showFocus(data); };
+                // 데이터 태그 저장 (클릭 시 사용)
+                tile.dataset.info = JSON.stringify(data);
                 row.appendChild(tile);
             });
             container.appendChild(row);
 
-            // 무한 루프 타임라인 생성
             const tl = gsap.to(row, {
                 x: r % 2 === 0 ? "-50%" : "0%",
-                duration: 60 + (r * 15),
+                duration: 50 + (r * 10),
                 ease: "none",
-                repeat: -1,
-                paused: false
+                repeat: -1
             });
             if(r % 2 !== 0) gsap.set(row, {x: "-50%"});
-            timelines.push({tl, row, dir: r % 2 === 0 ? 1 : -1});
+            timelines.push({tl, dir: r % 2 === 0 ? 1 : -1});
         }
 
-        // 2. 스크롤 인터랙션 제어 (Observer)
+        // 2. 통합 인터랙션 (Observer)
         gsap.registerPlugin(Observer);
 
-        let scrollVelocity = 0;
         Observer.create({
             target: window,
             type: "wheel,touch,pointer",
             onChange: (self) => {
-                // 스크롤 속도 감지 (PC 휠 및 모바일 스와이프 통합)
-                scrollVelocity = self.deltaY * 0.05;
-                
-                // 각 줄의 타임라인 시간을 스크롤에 맞춰 강제로 조정
+                // 스크롤 방향과 세기에 따라 속도 대폭 증가 (Multiplier 강화)
+                const power = Math.abs(self.deltaY) * 0.015;
+                const scrollDir = self.deltaY > 0 ? 1 : -1;
+
                 timelines.forEach((item) => {
-                    const currentProgress = item.tl.progress();
-                    // 스크롤 방향에 따라 진척도 조절
-                    let newProgress = currentProgress + (scrollVelocity * 0.001 * item.dir);
-                    item.tl.progress(gsap.utils.wrap(0, 1, newProgress));
+                    // 현재 진행 방향에 스크롤 힘을 실어줌
+                    gsap.to(item.tl, {
+                        timeScale: 1 + (power * 5), // 기본 속도 1에 스크롤 힘을 5배 가속하여 더함
+                        duration: 0.2,
+                        overwrite: true,
+                        onComplete: () => {
+                            gsap.to(item.tl, { timeScale: 1, duration: 1.5, ease: "power2.out" }); // 다시 부드럽게 감속
+                        }
+                    });
                 });
+            },
+            // 모바일 클릭 이슈 해결: Observer가 탭 이벤트를 직접 관리하도록 설정
+            onClick: (self) => {
+                const target = self.event.target.closest('.tile');
+                if (target) {
+                    const data = JSON.parse(target.dataset.info);
+                    showFocus(data);
+                }
             }
         });
 
