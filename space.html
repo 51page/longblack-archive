@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Modern Typography Art</title>
+    <title>LongBlack Modern Typography Art - Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@200;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #020204; /* 더 깊고 차분한 블랙 */
-            --text-particle: #ffffff;
-            --accent: #FF3C00; /* 더 쨍하고 현대적인 오렌지 */
+            --bg-color: #020204;
+            --accent: #FF3C00;
         }
 
         body, html {
@@ -20,118 +19,194 @@
             font-family: 'Montserrat', sans-serif;
         }
 
-        /* 캔버스 (배경 애니메이션) */
         #canvas-container {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 1;
-            /* 응집 시 미세한 빛 번짐 효과 */
-            transition: filter 0.3s ease-out;
-        }
-        body.converging #canvas-container {
-            filter: brightness(1.2) blur(2px);
         }
 
-        /* 안내 문구 (미니멀하게 변경) */
         #instruction {
             position: absolute;
             bottom: 40px; left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.4);
             font-size: 0.75rem; letter-spacing: 4px;
-            font-weight: 200;
             text-transform: uppercase;
             z-index: 10;
             pointer-events: none;
-            transition: opacity 0.5s;
         }
-        body.converging #instruction { opacity: 0; }
 
-        /* 완성된 문장 컨테이너 (현대적인 타이포그래피 레이아웃) */
         #final-quote-container {
             position: absolute;
             top: 50%; left: 50%;
-            transform: translate(-50%, -45%); /* 약간 위에서 아래로 등장 */
+            transform: translate(-50%, -45%);
             width: 85%; max-width: 900px;
             text-align: center;
             z-index: 20;
             opacity: 0;
             pointer-events: none;
-            /* 극적인 등장을 위한 커스텀 베지어 곡선 */
             transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-            filter: blur(10px);
         }
+
         #final-quote-container.active {
             opacity: 1;
             transform: translate(-50%, -50%);
-            filter: blur(0px);
-            pointer-events: auto;
         }
 
-        /* 완성된 문장 스타일 (임팩트 강조) */
         #final-text {
             font-family: 'Nanum Myeongjo', serif;
-            font-size: clamp(2rem, 5vw, 4rem); /* 반응형 거대 폰트 */
+            font-size: clamp(1.8rem, 5vw, 3.5rem);
             font-weight: 800;
-            line-height: 1.3;
+            line-height: 1.4;
             color: #fff;
-            margin: 0 0 40px 0;
+            margin-bottom: 30px;
             word-break: keep-all;
-            /* 현대적인 느낌의 미세한 그라데이션 텍스트 */
-            background: linear-gradient(to bottom right, #ffffff, #aaaaaa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
-        /* 출처 스타일 (세련된 구분선과 함께) */
-        #final-source-wrap {
-            display: inline-flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .source-line {
-            width: 30px; height: 1px; background: var(--accent);
-        }
         #final-source {
             font-family: 'Montserrat', sans-serif;
             font-size: 0.9rem; font-weight: 600;
             color: var(--accent);
             letter-spacing: 3px;
-            text-transform: uppercase;
         }
 
-        /* 순간적인 플래시 효과 레이어 */
-        #flash-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; opacity: 0; z-index: 15; pointer-events: none;
-            transition: opacity 0.1s ease-out;
+        /* 로딩 화면 (폰트 불러오기 전까지 대기) */
+        #loader {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: #000; color: #fff; display: flex; align-items: center;
+            justify-content: center; z-index: 100; font-size: 0.8rem; letter-spacing: 2px;
         }
-        body.flash #flash-overlay { opacity: 0.15; }
-
     </style>
 </head>
 <body>
 
+    <div id="loader">LOADING INSIGHT...</div>
     <canvas id="canvas-container"></canvas>
-    <div id="flash-overlay"></div>
     <div id="instruction">Enter into Insight</div>
 
     <div id="final-quote-container">
         <h1 id="final-text"></h1>
-        <div id="final-source-wrap">
-            <div class="source-line"></div>
-            <span id="final-source"></span>
-            <div class="source-line"></div>
-        </div>
+        <span id="final-source"></span>
     </div>
 
     <script src="quote_data.js"></script>
+
     <script>
+        // 데이터가 없을 경우를 대비한 대체 텍스트
+        const fallbackTexts = ["INSIGHT", "DATA", "SENSE", "GROW", "CONNECT", "LONGBLACK", "ARCHIVE", "MIND"];
+        
         const canvas = document.getElementById('canvas-container');
         const ctx = canvas.getContext('2d');
+        const loader = document.getElementById('loader');
         const finalContainer = document.getElementById('final-quote-container');
         const finalText = document.getElementById('final-text');
         const finalSource = document.getElementById('final-source');
 
-        let width, height;
-        let
+        let width, height, particles = [], isConverging = false;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor(text) {
+                this.text = text;
+                this.reset();
+            }
+            reset() {
+                this.x = (Math.random() - 0.5) * width * 2;
+                this.y = (Math.random() - 0.5) * height * 2;
+                this.z = Math.random() * 1500 + 200;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = (Math.random() - 0.5) * 1;
+                this.vz = Math.random() * 1.5 + 0.5;
+                this.opacity = 0;
+            }
+            update() {
+                if (isConverging) {
+                    this.x *= 0.85; this.y *= 0.85; this.z *= 0.85;
+                    this.opacity -= 0.05;
+                } else {
+                    this.x += this.vx; this.y += this.vy; this.z -= this.vz;
+                    if (this.z < 10) this.reset();
+                    if (this.opacity < 0.7) this.opacity += 0.02;
+                }
+            }
+            draw() {
+                if (this.opacity <= 0) return;
+                const scale = 800 / (800 + this.z);
+                const x2d = width / 2 + this.x * scale;
+                const y2d = height / 2 + this.y * scale;
+                
+                // 블러 필터가 성능 저하를 일으킬 수 있으므로, 
+                // 텍스트가 충분히 보일 때만 렌더링
+                ctx.globalAlpha = this.opacity;
+                ctx.font = `${600} ${20 * scale}px Montserrat`;
+                ctx.fillStyle = "#fff";
+                ctx.fillText(this.text, x2d, y2d);
+            }
+        }
+
+        function init() {
+            let words = [];
+            // quoteData가 정의되어 있는지 안전하게 확인
+            if (typeof quoteData !== 'undefined' && Array.isArray(quoteData)) {
+                quoteData.forEach(q => words.push(...q.text.split(' ')));
+            }
+            if (words.length === 0) words = fallbackTexts;
+
+            for (let i = 0; i < 120; i++) {
+                particles.push(new Particle(words[Math.floor(Math.random() * words.length)]));
+            }
+            
+            loader.style.display = 'none'; // 로딩 화면 제거
+            animate();
+        }
+
+        function animate() {
+            // 잔상 효과
+            ctx.fillStyle = 'rgba(2, 2, 4, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        function trigger() {
+            if (isConverging) return;
+            isConverging = true;
+            
+            let q = { text: "Insight is everywhere.", source: "LongBlack" };
+            if (typeof quoteData !== 'undefined' && quoteData.length > 0) {
+                q = quoteData[Math.floor(Math.random() * quoteData.length)];
+            }
+
+            setTimeout(() => {
+                finalText.innerText = q.text;
+                finalSource.innerText = `— ${q.source}`;
+                finalContainer.classList.add('active');
+            }, 700);
+        }
+
+        function reset() {
+            isConverging = false;
+            finalContainer.classList.remove('active');
+            particles.forEach(p => p.reset());
+        }
+
+        // 폰트가 로드된 후 실행
+        document.fonts.ready.then(() => {
+            init();
+        });
+
+        window.addEventListener('keydown', e => { if(e.code === 'Enter') isConverging ? reset() : trigger(); });
+        window.addEventListener('click', () => isConverging ? reset() : trigger());
+    </script>
+</body>
+</html>
