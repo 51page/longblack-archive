@@ -3,27 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Insight - Precision Loop</title>
+    <title>LongBlack - Smart Color Loop</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Nanum+Myeongjo:wght@800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --fg: #fff; --accent: #FF4E00; }
+        :root { 
+            --bg: #000; 
+            --fg: #fff; 
+        }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
 
         /* 배경 레이어 */
         #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; }
 
-        /* 시계 레이어 */
+        /* 시계 레이어 (테두리 제거) */
         #clock-wrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             z-index: 10;
         }
         .digital-clock {
-            background: #000; color: #fff; padding: 20px 50px;
-            font-size: 4rem; font-weight: 900; letter-spacing: 10px;
-            border: 5px solid #fff;
+            color: #fff; /* 초기값 */
+            font-size: 6rem; /* 테두리가 없으므로 크기를 조금 더 키움 */
+            font-weight: 900; 
+            letter-spacing: 5px;
+            transition: color 0.3s ease; /* 컬러 전환 부드럽게 */
         }
 
         /* 문장 노출 레이어 */
@@ -31,7 +36,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             z-index: 100;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.97);
             opacity: 0; visibility: hidden;
             padding: 0 12%; box-sizing: border-box;
         }
@@ -57,44 +62,56 @@
     </div>
 
     <script>
-        // 데이터 백업
+        // 요청하신 지정 컬러셋
+        const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
         if (typeof quotes === 'undefined') {
             var quotes = ["기록은 기억을 이긴다.", "본질은 변하지 않는 것이다.", "사소한 관찰이 위대한 발견이 된다."];
         }
 
-        const colors = ['#FF4E00', '#00E5FF', '#FFEE00', '#FF007A', '#00FF41', '#7000FF'];
         let isQuoteShowing = false;
 
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = 
                 `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-            if (!isQuoteShowing) gsap.fromTo("#clock", { scale: 1.05 }, { scale: 1, duration: 0.2 });
+            if (!isQuoteShowing) gsap.fromTo("#clock", { scale: 1.02 }, { scale: 1, duration: 0.2 });
         }
 
         function slideBg() {
             if (isQuoteShowing) return;
             const bg = document.getElementById('main-bg');
-            const nextColor = colors[Math.floor(Math.random() * colors.length)];
+            const clock = document.getElementById('clock');
+            
+            const nextColor = customColors[Math.floor(Math.random() * customColors.length)];
             const dir = Math.random() > 0.5 ? 'xPercent' : 'yPercent';
             const start = Math.random() > 0.5 ? 100 : -100;
 
+            // 배경 슬라이드 애니메이션
             gsap.fromTo(bg, 
                 { [dir]: start, backgroundColor: nextColor },
-                { [dir]: 0, duration: 0.8, ease: "power3.out" }
+                { 
+                    [dir]: 0, 
+                    duration: 0.8, 
+                    ease: "power3.out",
+                    onStart: () => {
+                        // 블랙(#000000)일 때만 화이트, 나머지는 블랙으로 시계 색상 변경
+                        if (nextColor === '#000000') {
+                            clock.style.color = '#ffffff';
+                        } else {
+                            clock.style.color = '#000000';
+                        }
+                    }
+                }
             );
         }
 
-        // 핵심: 5초 대기 - 2초 노출 무한 루프 엔진
         function runMasterLoop() {
             const master = gsap.timeline({ repeat: -1 });
 
             master
-                // 1. 5초 동안 시계 상태 유지
                 .add(() => { isQuoteShowing = false; }, 0)
                 .to({}, { duration: 5 }) // 5초 대기
 
-                // 2. 문장 노출 시작
                 .add(() => {
                     isQuoteShowing = true;
                     const selected = quotes[Math.floor(Math.random() * quotes.length)];
@@ -105,21 +122,16 @@
                 .to("#clock-wrapper", { opacity: 0, duration: 0.3 }, "<")
                 .fromTo("#target-quote", { y: 40, scale: 0.9 }, { y: 0, scale: 1, duration: 0.6, ease: "back.out(1.5)" }, "<")
 
-                // 3. 2초 동안 노출 유지
-                .to({}, { duration: 2 })
+                .to({}, { duration: 2 }) // 2초 노출
 
-                // 4. 문장 제거 및 복귀
                 .to("#quote-display", { opacity: 0, duration: 0.5 })
                 .to("#clock-wrapper", { opacity: 1, duration: 0.3 }, "<")
                 .set("#quote-display", { visibility: "hidden" });
         }
 
         window.onload = () => {
-            // 시계 업데이트와 배경 슬라이드는 별도 인터벌로 (흐름 방해 방지)
             setInterval(updateClock, 1000);
             setInterval(slideBg, 1000);
-            
-            // 마스터 루프 실행
             runMasterLoop();
         };
     </script>
