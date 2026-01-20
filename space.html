@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LongBlack Cosmos Archive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-space: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            --accent-glow: 255, 78, 0; /* 롱블랙 오렌지 */
+            --text-light: #fff;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: var(--bg-space);
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        /* 우주 배경 레이어 */
+        #universe-container {
+            position: absolute;
+            width: 100%; height: 100%;
+            perspective: 1000px;
+            z-index: 1;
+        }
+
+        /* 떠다니는 별 (문장 오브제) */
+        .star-orb {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: rgba(var(--accent-glow), 0.8);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 
+                0 0 10px rgba(var(--accent-glow), 0.6),
+                0 0 30px rgba(var(--accent-glow), 0.3),
+                0 0 60px rgba(var(--accent-glow), 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            will-change: transform;
+        }
+        .star-orb:hover {
+            transform: scale(1.5) !important; /* hover 시 약간 커짐 */
+            box-shadow: 
+                0 0 15px rgba(var(--accent-glow), 1),
+                0 0 50px rgba(var(--accent-glow), 0.6);
+            z-index: 100;
+        }
+
+        /* 포커스 오버레이 (모달) */
+        #focus-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; /* 초기엔 숨김 */
+            transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 1000;
+        }
+        #focus-overlay.active {
+            opacity: 1; pointer-events: auto;
+        }
+
+        /* 포커스된 문장 카드 */
+        .focus-card {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid rgba(var(--accent-glow), 0.3);
+            padding: 50px;
+            max-width: 600px; width: 85%;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            color: var(--text-light);
+        }
+        #focus-overlay.active .focus-card {
+            transform: translateY(0) scale(1);
+        }
+
+        #focus-text {
+            font-family: 'Gowun Batang', serif;
+            font-size: 1.6rem; line-height: 1.7; margin-bottom: 30px;
+            word-break: keep-all;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        #focus-source {
+            font-size: 0.9rem; opacity: 0.6; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .close-guide {
+            margin-top: 40px; font-size: 0.7rem; opacity: 0.3;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="universe-container"></div>
+
+    <div id="focus-overlay">
+        <div class="focus-card">
+            <p id="focus-text"></p>
+            <span id="focus-source"></span>
+            <p class="close-guide">Click anywhere to close</p>
+        }
+    </div>
+
+    <script src="quote_data.js"></script>
+
+    <script>
+        const universe = document.getElementById('universe-container');
+        const overlay = document.getElementById('focus-overlay');
+        const focusText = document.getElementById('focus-text');
+        const focusSource = document.getElementById('focus-source');
+
+        // 별(Star) 클래스 정의
+        class Star {
+            constructor(data) {
+                this.data = data;
+                this.element = document.createElement('div');
+                this.element.className = 'star-orb';
+                
+                // 초기 위치 랜덤 설정
+                this.x = Math.random() * window.innerWidth;
+                this.y = Math.random() * window.innerHeight;
+                this.z = Math.random() * 500; // 깊이감
+
+                // 이동 속도 및 방향 (천천히 표류)
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = (Math.random() - 0.5) * 0.4;
+
+                // 크기 랜덤 (멀리 있는 건 작게)
+                this.size = (1 - this.z / 1000) * 8 + 3;
+                this.element.style.width = `${this.size}px`;
+                this.element.style.height = `${this.size}px`;
+
+                universe.appendChild(this.element);
+
+                // 클릭 이벤트
+                this.element.addEventListener('click', () => this.focus());
+            }
+
+            update(mouseX, mouseY) {
+                // 기본 표류 이동
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 화면 밖으로 나가면 반대편으로 이동 (무한 루프)
+                if (this.x > window.innerWidth + 50) this.x = -50;
+                if (this.x < -50) this.x = window.innerWidth + 50;
+                if (this.y > window.innerHeight + 50) this.y = -50;
+                if (this.y < -50) this.y = window.innerHeight + 50;
+
+                // 마우스 파랄락스 효과 (깊이에 따라 다르게 움직임)
+                const parallaxX = (mouseX - window.innerWidth / 2) * (this.z / 1000) * 0.1;
+                const parallaxY = (mouseY - window.innerHeight / 2) * (this.z / 1000) * 0.1;
+
+                this.element.style.transform = `translate3d(${this.x + parallaxX}px, ${this.y + parallaxY}px, ${this.z}px)`;
+            }
+
+            focus() {
+                isPaused = true; // 애니메이션 일시 정지
+                focusText.innerText = this.data.text;
+                focusSource.innerText = `— ${this.data.source}`;
+                overlay.classList.add('active');
+            }
+        }
+
+        // --- 초기화 및 메인 루프 ---
+        let stars = [];
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let isPaused = false;
+
+        // 데이터가 있으면 별 생성
+        if (typeof quoteData !== 'undefined') {
+            // 너무 많으면 성능 저하되므로 최대 50개만 생성 (랜덤 섞기)
+            const shuffledData = [...quoteData].sort(() => 0.5 - Math.random()).slice(0, 50);
+            stars = shuffledData.map(data => new Star(data));
+        }
+
+        // 마우스 움직임 추적
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // 애니메이션 루프
+        function animate() {
+            if (!isPaused) {
+                stars.forEach(star => star.update(mouseX, mouseY));
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // 오버레이 닫기
+        overlay.addEventListener('click', () => {
+            overlay.classList.remove('active');
+            isPaused = false; // 애니메이션 재개
+        });
+
+        // 창 크기 변경 대응
+        window.addEventListener('resize', () => {
+            mouseX = window.innerWidth / 2;
+            mouseY = window.innerHeight / 2;
+        });
+    </script>
+</body>
+</html>
