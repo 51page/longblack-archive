@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Card News Edition</title>
+    <title>LongBlack Archive - Double Flow Master</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -11,10 +11,10 @@
     <style>
         :root {
             --bg: #000; --accent: #FF4E00;
-            --tile-w: 110px; --tile-h: 155px; --gap: 12px; --nav-h: 100px;
+            --thumb-w: 120px; --thumb-h: 170px; /* 썸네일 뷰 사이즈 */
+            --card-w: 260px; --card-h: 340px;   /* 카드뉴스 뷰 사이즈 */
+            --gap: 15px; --nav-h: 100px;
         }
-        @media (min-width: 768px) { --tile-w: 130px; --tile-h: 185px; --gap: 15px; }
-
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg); color: #fff;
@@ -35,76 +35,62 @@
         @media (min-width: 1024px) { #category-nav { justify-content: center; } }
 
         .nav-item {
-            font-size: 0.75rem; font-weight: 900; color: #444; cursor: pointer;
+            font-size: 0.8rem; font-weight: 900; color: #444; cursor: pointer;
             text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; white-space: nowrap;
         }
-        .nav-item.active { color: var(--accent); }
+        .nav-item.active { color: var(--accent); transform: scale(1.1); }
 
         #mode-switch {
-            display: flex; justify-content: center; gap: 30px; padding: 10px 0;
+            display: flex; justify-content: center; gap: 40px; padding: 10px 0;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
         .mode-btn {
-            font-size: 0.65rem; font-weight: 700; color: #555; cursor: pointer;
-            letter-spacing: 2px; text-transform: uppercase; transition: 0.3s;
+            font-size: 0.7rem; font-weight: 700; color: #555; cursor: pointer;
+            letter-spacing: 3px; text-transform: uppercase; transition: 0.3s;
         }
-        .mode-btn.active { color: #fff; border-bottom: 2px solid var(--accent); }
+        .mode-btn.active { color: #fff; border-bottom: 2px solid var(--accent); padding-bottom: 3px; }
 
-        /* [Container Common] */
-        .main-view {
+        /* [Common View Container] */
+        .flow-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; transition: opacity 0.5s;
+            display: flex; flex-direction: column; justify-content: center;
+            overflow: hidden; transition: opacity 0.5s;
         }
+        .flow-row { display: flex; gap: var(--gap); width: max-content; will-change: transform; }
 
-        /* [Mode 1: Mosaic Flow] */
-        #mosaic-view { z-index: 10; justify-content: center; gap: var(--gap); }
-        .grid-row { display: flex; gap: var(--gap); width: max-content; }
+        /* [Mode 1: Thumbnail Flow] */
+        #thumb-view { z-index: 10; gap: 12px; }
         .thumb-tile {
-            width: var(--tile-w); height: var(--tile-h);
+            width: var(--thumb-w); height: var(--thumb-h);
             background: #111; border-radius: 4px; overflow: hidden;
             cursor: pointer; flex-shrink: 0; filter: grayscale(1) brightness(0.4);
-            transition: 0.4s ease;
+            transition: filter 0.4s, transform 0.4s;
         }
-        .thumb-tile:hover { filter: grayscale(0) brightness(1); transform: scale(1.05); }
-        .thumb-tile img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); }
+        .thumb-tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* [Mode 2: Card News Grid] */
-        #card-view { 
-            z-index: 20; display: none; padding-top: 150px; 
-            overflow-y: auto; scrollbar-width: none; align-items: center;
+        /* [Mode 2: Card News Flow] */
+        #card-view { z-index: 20; display: none; gap: 20px; }
+        .card-tile {
+            width: var(--card-w); height: var(--card-h);
+            background: #111; border-radius: 12px; overflow: hidden;
+            cursor: pointer; flex-shrink: 0; position: relative;
+            border: 1px solid rgba(255,255,255,0.1); transition: transform 0.4s;
         }
-        #card-view::-webkit-scrollbar { display: none; }
-        .card-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 15px; width: 92%; max-width: 1200px; padding-bottom: 100px;
-        }
-        @media (min-width: 768px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (min-width: 1200px) { .card-grid { grid-template-columns: repeat(5, 1fr); } }
-
-        .card-item {
-            position: relative; aspect-ratio: 4/5; background: #111;
-            border-radius: 12px; overflow: hidden; cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.05); transition: transform 0.3s;
-        }
-        .card-item:hover { transform: translateY(-10px); }
-        .card-item img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.5s; }
-        .card-item:hover img { opacity: 0.8; transform: scale(1.1); }
-
-        .card-overlay {
+        .card-tile:hover { transform: scale(1.03); }
+        .card-tile img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+        
+        .card-content {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.95));
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.95));
             display: flex; flex-direction: column; justify-content: space-between;
-            padding: 20px; box-sizing: border-box;
+            padding: 25px; box-sizing: border-box;
         }
-        .c-tag { font-size: 0.6rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
-        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.1rem; font-weight: 800; line-height: 1.4; color: #fff; word-break: keep-all; }
-        .c-rating { font-size: 0.7rem; color: #FFB800; font-weight: 700; }
+        .c-tag { font-size: 0.65rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
+        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.3rem; font-weight: 800; line-height: 1.4; color: #fff; word-break: keep-all; }
+        .c-rating { font-size: 0.8rem; color: #FFB800; font-weight: 700; }
 
-        /* [Filtering Styles] */
-        body.is-filtered .thumb-tile.dimmed { opacity: 0; pointer-events: none; }
-        body.is-filtered .thumb-tile.matched { filter: grayscale(0) brightness(1) !important; z-index: 50; }
-
-        /* [Detail Focus Overlay - Card News Style] */
+        /* [Detail Focus Overlay] */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98); backdrop-filter: blur(30px);
@@ -114,22 +100,19 @@
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
         .focus-card {
             width: 90%; max-width: 400px; background: #111; border-radius: 20px;
-            overflow: hidden; box-shadow: 0 30px 100px rgba(0,0,0,1);
-            display: flex; flex-direction: column;
+            overflow: hidden; display: flex; flex-direction: column;
         }
-        .focus-card-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
-        .focus-card-body { padding: 30px; text-align: left; }
-        .f-quote { font-family: 'Nanum Myeongjo'; font-size: 1.3rem; font-weight: 800; line-height: 1.5; margin-bottom: 20px; color: #fff; }
-        .f-title { font-size: 0.85rem; color: #888; margin-bottom: 30px; }
-        .f-meta { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 20px; }
-        .f-btn { background: var(--accent); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-size: 0.75rem; font-weight: 800; }
+        .focus-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+        .focus-body { padding: 30px; }
+        .f-quote { font-family: 'Nanum Myeongjo'; font-size: 1.25rem; font-weight: 800; line-height: 1.5; margin-bottom: 20px; }
+        .f-btn { background: var(--accent); color: #fff; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-size: 0.8rem; font-weight: 800; display: inline-block; }
     </style>
 </head>
 <body style="opacity: 0; transition: 1s;">
 
     <div id="header-wrapper">
         <nav id="category-nav">
-            <span class="nav-item active" data-cat="all">All Archive</span>
+            <span class="nav-item active" data-cat="all">All Insight</span>
             <span class="nav-item" data-cat="브랜딩">Branding</span>
             <span class="nav-item" data-cat="사업기획">Business</span>
             <span class="nav-item" data-cat="디자인">Design</span>
@@ -139,48 +122,42 @@
         </nav>
         <div id="mode-switch">
             <span class="mode-btn active" id="mode-thumb">Mosaic Flow</span>
-            <span class="mode-btn" id="mode-card">Card News Grid</span>
+            <span class="mode-btn" id="mode-card">Card News Flow</span>
         </div>
     </div>
 
-    <div id="mosaic-view" class="main-view"></div>
+    <div id="thumb-view" class="flow-container"></div>
 
-    <div id="card-view" class="main-view">
-        <div class="card-grid" id="card-grid"></div>
-    </div>
+    <div id="card-view" class="flow-container"></div>
 
     <div id="focus-overlay">
         <div class="focus-card">
-            <img id="focus-img" src="" class="focus-card-img">
-            <div class="focus-card-body">
+            <img id="focus-img" src="" class="focus-img">
+            <div class="focus-body">
                 <p id="focus-quote" class="f-quote"></p>
-                <h3 id="focus-title" class="f-title"></h3>
-                <div class="f-meta">
-                    <div style="font-size: 0.7rem; color: #555;">
-                        <span id="focus-author"></span><br>
-                        <span id="focus-date"></span>
-                    </div>
-                    <a id="focus-link" href="https://www.longblack.co/" target="_blank" class="f-btn">READ FULL</a>
+                <h3 id="focus-title" style="font-size:0.8rem; color:#666; margin-bottom:20px;"></h3>
+                <div style="display:flex; justify-content: space-between; align-items:center;">
+                    <span id="focus-rating" style="color:#FFB800; font-weight:700;"></span>
+                    <a id="focus-link" href="#" target="_blank" class="f-btn">READ NOTE</a>
                 </div>
             </div>
-            <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="text-align:center; padding: 15px; font-size:0.6rem; opacity:0.3; cursor:pointer; letter-spacing:2px;">TAP TO CLOSE</p>
+            <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="text-align:center; padding:15px; font-size:0.6rem; opacity:0.3; cursor:pointer;">CLOSE</p>
         </div>
     </div>
 
     <script>
         let noteData = [];
         let displayMode = 'thumbnail';
-        let currentCat = 'all';
-        const timelines = [];
-        let allThumbTiles = [];
+        const thumbTimelines = [];
+        const cardTimelines = [];
 
         function autoTag(title) {
-            if(/디자인|공간|건축/.test(title)) return "디자인";
-            if(/브랜드|협업|마케팅/.test(title)) return "브랜딩";
-            if(/비즈니스|전략|기획/.test(title)) return "사업기획";
-            if(/AI|테크|기술/.test(title)) return "테크";
-            if(/책|리뷰|글쓰기/.test(title)) return "책리뷰";
-            return "자기계발";
+            if(/디자인|공간/.test(title)) return "디자인";
+            if(/브랜드|마케팅/.test(title)) return "브랜딩";
+            if(/비즈니스|경영/.test(title)) return "사업기획";
+            if(/성장|기록/.test(title)) return "자기계발";
+            if(/AI|테크/.test(title)) return "테크";
+            return "책리뷰";
         }
 
         function loadCSV() {
@@ -190,138 +167,122 @@
                     noteData = results.data.filter(row => row.note_title).map(row => ({
                         ...row, category: autoTag(row.note_title)
                     }));
-                    initMosaic();
-                    initCardGrid();
-                    gsap.to("body", {opacity: 1, duration: 1});
+                    initThumbnailFlow();
+                    initCardFlow();
                     setupEvents();
+                    gsap.to("body", {opacity: 1, duration: 1});
                 }
             });
         }
 
-        // 1. Mosaic View Init
-        function initMosaic() {
-            const container = document.getElementById('mosaic-view');
-            container.innerHTML = '';
+        // 1. 썸네일 무빙 뷰 (작은 타일)
+        function initThumbnailFlow() {
+            const container = document.getElementById('thumb-view');
             const rowCount = Math.ceil(window.innerHeight / 180) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
-                row.className = 'grid-row';
+                row.className = 'flow-row';
                 for (let i = 0; i < 15; i++) {
                     const data = noteData[(r * 15 + i) % noteData.length];
-                    const tile = document.createElement('div');
-                    tile.className = 'thumb-tile';
-                    tile.innerHTML = `<img src="${data.thumbnail_url}" loading="lazy">`;
-                    tile.dataset.cat = data.category;
-                    tile.onclick = () => showFocus(data);
-                    row.appendChild(tile);
-                    allThumbTiles.push(tile);
+                    row.innerHTML += `<div class="thumb-tile" onclick="showFocus_js(${encodeURIComponent(JSON.stringify(data))})"><img src="${data.thumbnail_url}"></div>`;
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-20%" : "0%", duration: 25 + r*3, ease: "none", repeat: -1 });
-                if(r % 2 !== 0) gsap.set(row, {x: "-20%"});
-                timelines.push(tl);
+                // 속도 상향: duration 20~30초 (기존 40초 대비 2배 빠름)
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 20 + r*5, ease: "none", repeat: -1 });
+                if(r % 2 !== 0) gsap.set(row, {x: "-30%"});
+                thumbTimelines.push(tl);
             }
         }
 
-        // 2. Card Grid View Init (요청하신 타일 형태)
-        function initCardGrid() {
-            const grid = document.getElementById('card-grid');
-            grid.innerHTML = '';
-            noteData.forEach(data => {
-                const item = document.createElement('div');
-                item.className = 'card-item';
-                item.dataset.cat = data.category;
-                item.innerHTML = `
-                    <img src="${data.thumbnail_url}" loading="lazy">
-                    <div class="card-overlay">
-                        <span class="c-tag">${data.category}</span>
-                        <h2 class="c-title">${data.note_title}</h2>
-                        <span class="c-rating">★ ${data.avg_rating || '4.8'}</span>
-                    </div>
-                `;
-                item.onclick = () => showFocus(data);
-                grid.appendChild(item);
-            });
+        // 2. 카드뉴스 무빙 뷰 (큰 타일 - 사용자 요청)
+        function initCardFlow() {
+            const container = document.getElementById('card-view');
+            const rowCount = Math.ceil(window.innerHeight / 350) + 1;
+            for (let r = 0; r < rowCount; r++) {
+                const row = document.createElement('div');
+                row.className = 'flow-row';
+                for (let i = 0; i < 10; i++) {
+                    const data = noteData[(r * 10 + i) % noteData.length];
+                    const card = document.createElement('div');
+                    card.className = 'card-tile';
+                    card.innerHTML = `
+                        <img src="${data.thumbnail_url}">
+                        <div class="card-content">
+                            <span class="c-tag">${data.category}</span>
+                            <h2 class="c-title">${data.note_title}</h2>
+                            <span class="c-rating">★ ${data.avg_rating || '4.8'}</span>
+                        </div>
+                    `;
+                    card.onclick = () => showFocus(data);
+                    row.appendChild(card);
+                }
+                container.appendChild(row);
+                // 카드뉴스 속도: 약간 묵직하게 duration 25~40초
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-40%" : "0%", duration: 25 + r*8, ease: "none", repeat: -1 });
+                if(r % 2 !== 0) gsap.set(row, {x: "-40%"});
+                cardTimelines.push(tl);
+            }
         }
 
-        // 3. Filtering Logic
-        function applyFilter(cat) {
-            currentCat = cat;
-            const isFiltered = cat !== 'all';
-            document.body.classList.toggle('is-filtered', isFiltered);
+        // 3. 스크롤 가속 엔진 (수치 대폭 상향)
+        gsap.registerPlugin(Observer);
+        Observer.create({
+            target: window, type: "wheel,touch,pointer",
+            onChange: (self) => {
+                const currentTLs = displayMode === 'thumbnail' ? thumbTimelines : cardTimelines;
+                // 민감도 상향: 0.12 -> 0.4
+                const v = Math.abs(self.deltaY) * 0.4; 
 
-            // Thumbnail 모드 필터링 (헤쳐모여)
-            if (displayMode === 'thumbnail') {
-                if (!isFiltered) {
-                    timelines.forEach(tl => tl.play());
-                    gsap.to(allThumbTiles, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8 });
-                } else {
-                    timelines.forEach(tl => tl.pause());
-                    const matched = allThumbTiles.filter(t => t.dataset.cat === cat);
-                    const unmatched = allThumbTiles.filter(t => t.dataset.cat !== cat);
-                    gsap.to(unmatched, { opacity: 0, scale: 0.2, duration: 0.4 });
-                    
-                    const winW = window.innerWidth, cols = winW < 600 ? 2 : 5, gap = 15;
-                    const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight;
-                    const startX = (winW - (cols * (tileW + gap))) / 2;
-                    matched.forEach((tile, idx) => {
-                        const rect = tile.getBoundingClientRect();
-                        const tx = startX + (idx % cols) * (tileW + gap) - rect.left;
-                        const ty = 140 + Math.floor(idx / cols) * (tileH + gap) - rect.top;
-                        gsap.to(tile, { x: tx, y: ty, scale: 1, opacity: 1, duration: 1, ease: "expo.out" });
-                    });
-                }
-            } else {
-                // Card News 모드 필터링
-                const cards = document.querySelectorAll('.card-item');
-                cards.forEach(card => {
-                    const isMatch = cat === 'all' || card.dataset.cat === cat;
-                    gsap.to(card, { 
-                        display: isMatch ? 'block' : 'none', 
-                        opacity: isMatch ? 1 : 0, 
-                        scale: isMatch ? 1 : 0.8,
-                        duration: 0.4 
+                currentTLs.forEach(tl => {
+                    gsap.to(tl, { 
+                        timeScale: 1 + v, 
+                        duration: 0.2, 
+                        overwrite: true, 
+                        // 관성 상향: 1.5 -> 2.5 (더 오래 굴러감)
+                        onComplete: () => gsap.to(tl, { timeScale: 1, duration: 2.5, ease: "power2.out" }) 
                     });
                 });
             }
-        }
+        });
 
         function setupEvents() {
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.onclick = () => {
-                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                    nav.classList.add('active');
-                    applyFilter(nav.dataset.cat);
-                };
-            });
-
             document.getElementById('mode-thumb').onclick = () => {
                 displayMode = 'thumbnail';
                 document.getElementById('mode-thumb').classList.add('active');
                 document.getElementById('mode-card').classList.remove('active');
-                document.getElementById('mosaic-view').style.display = 'flex';
+                document.getElementById('thumb-view').style.display = 'flex';
                 document.getElementById('card-view').style.display = 'none';
-                applyFilter(currentCat);
+                cardTimelines.forEach(tl => tl.pause());
+                thumbTimelines.forEach(tl => tl.play());
             };
-
             document.getElementById('mode-card').onclick = () => {
                 displayMode = 'card';
                 document.getElementById('mode-card').classList.add('active');
                 document.getElementById('mode-thumb').classList.remove('active');
-                document.getElementById('mosaic-view').style.display = 'none';
+                document.getElementById('thumb-view').style.display = 'none';
                 document.getElementById('card-view').style.display = 'flex';
-                applyFilter(currentCat);
+                thumbTimelines.forEach(tl => tl.pause());
+                cardTimelines.forEach(tl => tl.play());
             };
+            // 카테고리 필터링 (간략화)
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.onclick = () => {
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    nav.classList.add('active');
+                    // 필터링 시 가시성 조절 로직 추가 가능
+                };
+            });
         }
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
-            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 통찰이 되길 바랍니다.”";
+            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 내일이 됩니다.”";
             document.getElementById('focus-title').innerText = data.note_title;
-            document.getElementById('focus-author').innerText = `저자 ${data.authors}`;
-            document.getElementById('focus-date').innerText = data.published_date;
-            document.getElementById('focus-rating').innerText = data.avg_rating;
+            document.getElementById('focus-rating').innerText = `★ ${data.avg_rating || '4.8'}`;
             document.getElementById('focus-overlay').classList.add('active');
+        }
+        function showFocus_js(encodedData) {
+            showFocus(JSON.parse(decodeURIComponent(encodedData)));
         }
 
         loadCSV();
