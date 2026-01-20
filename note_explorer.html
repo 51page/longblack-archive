@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Insight Mosaic</title>
+    <title>LongBlack Interactive Flow</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #010101;
             --accent: #FF4E00;
-            --tile-w: 150px; /* 타일 크기 미세 조정 */
-            --tile-h: 210px;
-            --gap: 12px;
+            --tile-w: 140px;
+            --tile-h: 200px;
+            --gap: 10px;
         }
 
         body, html {
@@ -21,9 +22,9 @@
             background-color: var(--bg);
             color: #fff; font-family: 'Montserrat', sans-serif;
             overflow: hidden;
+            touch-action: none; /* 브라우저 기본 스크롤 방지 (중요) */
         }
 
-        /* 배경 그리드 컨테이너 */
         #grid-container {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -41,32 +42,26 @@
         }
 
         .tile {
-            width: var(--tile-w);
-            height: var(--tile-h);
-            background: #111;
-            border-radius: 4px;
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
+            width: var(--tile-w); height: var(--tile-h);
+            background: #111; border-radius: 4px;
+            overflow: hidden; cursor: pointer;
             flex-shrink: 0;
             filter: brightness(0.4) grayscale(1);
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: filter 0.5s ease;
         }
 
         .tile:hover {
             filter: brightness(1.1) grayscale(0);
-            transform: scale(1.15);
             z-index: 10;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
         }
 
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* 하이라이트 포커스 레이어 */
+        /* 하이라이트 레이어 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.93);
-            backdrop-filter: blur(20px);
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(25px);
             display: flex; align-items: center; justify-content: center;
             z-index: 100; opacity: 0; pointer-events: none;
             transition: opacity 0.5s ease;
@@ -74,43 +69,38 @@
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
 
         .focus-content {
-            width: 85%; max-width: 550px;
+            width: 90%; max-width: 500px;
             text-align: center;
             display: flex; flex-direction: column; align-items: center;
         }
 
         .focus-img {
-            width: auto; height: 350px; /* 이미지 높이 고정하여 레이아웃 안정화 */
+            width: auto; height: 320px;
             border-radius: 8px; object-fit: contain;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             box-shadow: 0 30px 80px rgba(0,0,0,0.8);
         }
 
-        /* 새로 추가된 문장 스타일 */
         .focus-quote {
             font-family: 'Nanum Myeongjo', serif;
-            font-size: 1.35rem; font-weight: 800; line-height: 1.5;
-            color: #fff;
-            margin: 0 0 20px 0;
-            word-break: keep-all;
-            padding: 0 20px;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            font-size: 1.3rem; font-weight: 800; line-height: 1.6;
+            color: #fff; margin: 0 0 20px 0; word-break: keep-all;
+            padding: 0 10px;
         }
 
         .focus-title {
             font-family: 'Montserrat', sans-serif;
-            font-size: 0.9rem; font-weight: 500;
-            opacity: 0.7;
-            margin: 0 0 10px 0; letter-spacing: 1px;
+            font-size: 0.85rem; font-weight: 500;
+            opacity: 0.6; margin: 0; letter-spacing: 1px;
         }
 
         .focus-source {
-            color: var(--accent); letter-spacing: 3px; font-size: 0.75rem; font-weight: 600;
-            text-transform: uppercase; margin-top: 15px;
+            color: var(--accent); letter-spacing: 3px; font-size: 0.7rem; font-weight: 600;
+            margin-top: 15px;
         }
 
         .close-hint {
-            margin-top: 40px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 3px; cursor: pointer;
+            margin-top: 40px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 2px;
         }
     </style>
 </head>
@@ -123,15 +113,12 @@
             <img id="focus-img" src="" class="focus-img">
             <p id="focus-quote" class="focus-quote"></p>
             <h3 id="focus-title" class="focus-title"></h3>
-            <div style="width: 30px; height: 1px; background: var(--accent); margin-top:10px;"></div>
             <span class="focus-source">LONGBLACK ARCHIVE</span>
-            <p class="close-hint">CLICK ANYWHERE TO RETURN</p>
+            <p class="close-hint">TOUCH ANYWHERE TO RETURN</p>
         </div>
     </div>
 
     <script>
-        // 업데이트된 데이터 (새로운 이미지 + 임시 문장 및 제목)
-        // 실제 서비스시에는 이 부분에 정확한 DB 데이터가 연동되어야 합니다.
         const noteData = [
             { title: "영감의 탄생, 그 찰나", quote: "위대한 영감은 우연을 가장한 필연적인 축적의 결과물이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/176656503563a1934c51b320fe95469a34126b5418.png" },
             { title: "비즈니스의 본질을 묻다", quote: "결국 모든 비즈니스는 사람의 마음을 얻는 과정이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251217/1765962945ee9b56524b06910d3698879edb452464.png" },
@@ -148,47 +135,60 @@
 
         const container = document.getElementById('grid-container');
         const overlay = document.getElementById('focus-overlay');
-        const focusquote = document.getElementById('focus-quote');
-        
-        // 5줄의 촘촘한 그리드 생성
+        const timelines = []; // 각 줄의 애니메이션 저장
+
+        // 1. 그리드 생성
         const rowCount = 5;
         for (let r = 0; r < rowCount; r++) {
             const row = document.createElement('div');
             row.className = 'grid-row';
-            
-            // 데이터를 랜덤하게 섞고 충분히 반복하여 배치
-            const shuffledData = [...noteData, ...noteData, ...noteData].sort(() => Math.random() - 0.5);
-            
-            shuffledData.forEach(data => {
+            const repeatedData = [...noteData, ...noteData, ...noteData, ...noteData];
+            repeatedData.forEach(data => {
                 const tile = document.createElement('div');
                 tile.className = 'tile';
                 tile.innerHTML = `<img src="${data.img}" alt="">`;
-                tile.onclick = () => showFocus(data);
+                tile.onclick = (e) => { e.stopPropagation(); showFocus(data); };
                 row.appendChild(tile);
             });
             container.appendChild(row);
 
-            // 줄마다 서로 다른 속도와 방향으로 무한 루프
-            const duration = 70 + (r * 15);
-            const moveDirection = r % 2 === 0 ? "-50%" : "0%";
-            const startPos = r % 2 === 0 ? "0%" : "-50%";
-
-            gsap.fromTo(row, 
-                { x: startPos },
-                {
-                    x: moveDirection,
-                    duration: duration,
-                    ease: "none",
-                    repeat: -1
-                }
-            );
+            // 무한 루프 타임라인 생성
+            const tl = gsap.to(row, {
+                x: r % 2 === 0 ? "-50%" : "0%",
+                duration: 60 + (r * 15),
+                ease: "none",
+                repeat: -1,
+                paused: false
+            });
+            if(r % 2 !== 0) gsap.set(row, {x: "-50%"});
+            timelines.push({tl, row, dir: r % 2 === 0 ? 1 : -1});
         }
+
+        // 2. 스크롤 인터랙션 제어 (Observer)
+        gsap.registerPlugin(Observer);
+
+        let scrollVelocity = 0;
+        Observer.create({
+            target: window,
+            type: "wheel,touch,pointer",
+            onChange: (self) => {
+                // 스크롤 속도 감지 (PC 휠 및 모바일 스와이프 통합)
+                scrollVelocity = self.deltaY * 0.05;
+                
+                // 각 줄의 타임라인 시간을 스크롤에 맞춰 강제로 조정
+                timelines.forEach((item) => {
+                    const currentProgress = item.tl.progress();
+                    // 스크롤 방향에 따라 진척도 조절
+                    let newProgress = currentProgress + (scrollVelocity * 0.001 * item.dir);
+                    item.tl.progress(gsap.utils.wrap(0, 1, newProgress));
+                });
+            }
+        });
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.img;
             document.getElementById('focus-title').innerText = data.title;
-            // 문장에 따옴표 추가하여 강조
-            focusquote.innerText = `“${data.quote}”`;
+            document.getElementById('focus-quote').innerText = `“${data.quote}”`;
             overlay.classList.add('active');
         }
 
