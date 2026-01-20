@@ -3,27 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Spotlight Credits</title>
+    <title>LongBlack Archive - Final Master</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@300;600;900&family=Playfair+Display:ital,wght@0,700;1,900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #000; --accent: #FF4E00;
-            --tile-w: 115px; --tile-h: 165px; --gap: 15px; --nav-h: 90px;
+            --tile-w: 110px; --tile-h: 155px; --gap: 12px; --nav-h: 100px;
         }
+        @media (min-width: 768px) { --tile-w: 130px; --tile-h: 185px; --gap: 15px; }
+
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg); color: #fff;
             font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
         }
 
-        /* 헤더 컨트롤 */
+        /* [상단 내비게이션] */
         #header-wrapper {
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 2000;
             background: linear-gradient(to bottom, #000 80%, transparent);
-            padding-bottom: 20px;
+            padding-bottom: 10px;
         }
         #category-nav {
             display: flex; align-items: center; justify-content: flex-start;
@@ -33,22 +35,22 @@
         @media (min-width: 1024px) { #category-nav { justify-content: center; } }
 
         .nav-item {
-            font-size: 0.8rem; font-weight: 900; color: #444; cursor: pointer;
+            font-size: 0.85rem; font-weight: 900; color: #444; cursor: pointer;
             text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; white-space: nowrap;
         }
-        .nav-item.active { color: var(--accent); }
+        .nav-item.active { color: var(--accent); transform: scale(1.1); }
 
         #mode-switch {
-            display: flex; justify-content: center; gap: 40px; padding: 5px 0;
+            display: flex; justify-content: center; gap: 40px; padding: 10px 0;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
         .mode-btn {
-            font-size: 0.7rem; font-weight: 700; color: #666; cursor: pointer;
+            font-size: 0.7rem; font-weight: 700; color: #555; cursor: pointer;
             letter-spacing: 3px; text-transform: uppercase; transition: 0.3s;
         }
-        .mode-btn.active { color: #fff; text-decoration: underline; text-underline-offset: 5px; }
+        .mode-btn.active { color: #fff; border-bottom: 2px solid #fff; padding-bottom: 2px; }
 
-        /* [모드 1] 썸네일 그리드 */
+        /* [모드 1: 썸네일 그리드] */
         #grid-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center;
@@ -59,88 +61,79 @@
             width: var(--tile-w); height: var(--tile-h);
             background: #111; border-radius: 4px; overflow: hidden;
             cursor: pointer; flex-shrink: 0; filter: grayscale(1) brightness(0.4);
-            transition: filter 0.4s, transform 0.4s;
+            transition: filter 0.4s; will-change: transform, opacity;
         }
         .tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); }
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* [모드 2] 스포트라이트 크레딧 (개선됨) */
-        #credit-container {
+        /* 필터링 모드 */
+        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0.2); }
+        body.is-filtered .tile.matched { filter: grayscale(0) brightness(1.1) !important; z-index: 50; }
+
+        /* [모드 2: 타이포그래피 리스트] */
+        #typo-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: none; justify-content: center; align-items: center;
-            z-index: 20; overflow: hidden;
+            display: none; justify-content: center; align-items: center; z-index: 20;
         }
-        .credit-list {
-            position: relative; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center;
-            will-change: transform;
-        }
-        .credit-item {
-            position: absolute; width: 90%; max-width: 850px;
-            display: flex; flex-direction: column; align-items: center;
-            text-align: center; cursor: pointer;
-            padding: 40px 0; transition: color 0.3s;
-            /* 초기 상태: 흐림 */
-            filter: blur(10px); opacity: 0; transform: scale(0.8);
-        }
-        .credit-item .c-cat {
-            font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 800;
-            color: var(--accent); letter-spacing: 5px; text-transform: uppercase;
-            margin-bottom: 15px;
-        }
-        .credit-item .c-title {
-            font-family: 'Nanum Myeongjo', serif; font-size: clamp(1.5rem, 5vw, 3rem);
-            font-weight: 800; color: #fff; line-height: 1.3; word-break: keep-all;
-        }
-        .credit-item .c-rating {
-            font-family: 'Montserrat'; font-size: 0.9rem; font-weight: 700;
-            color: #FFB800; margin-top: 15px; letter-spacing: 2px;
+        .typo-list { position: relative; width: 100%; height: 100%; will-change: transform; }
+        .typo-item {
+            position: absolute; width: 90%; max-width: 900px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            cursor: pointer; padding: 20px 0;
         }
 
-        /* 상세 팝업 */
+        /* 폰트 변주 스타일들 */
+        .style-hero { font-family: 'Nanum Myeongjo'; font-size: clamp(2rem, 6vw, 4rem); font-weight: 800; }
+        .style-italic { font-family: 'Playfair Display'; font-style: italic; font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 900; }
+        .style-modern { font-family: 'Montserrat'; font-size: clamp(1.2rem, 3vw, 2.5rem); font-weight: 300; text-transform: uppercase; letter-spacing: -1px; }
+        .style-bold { font-family: 'Montserrat'; font-size: clamp(1.5rem, 5vw, 3.5rem); font-weight: 900; color: var(--accent); }
+
+        .typo-info { font-size: 0.7rem; font-weight: 700; color: var(--accent); margin-bottom: 10px; letter-spacing: 3px; }
+        .typo-rating { font-size: 0.8rem; font-weight: 600; color: #FFB800; margin-top: 10px; }
+
+        /* [상세 팝업] */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98); backdrop-filter: blur(30px);
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s ease;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
         .focus-content { width: 88%; max-width: 440px; text-align: center; }
-        .focus-img { width: 100%; max-height: 32vh; border-radius: 8px; object-fit: contain; margin-bottom: 20px; }
+        .focus-img { width: 100%; max-height: 32vh; border-radius: 8px; object-fit: contain; margin-bottom: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
     </style>
 </head>
 <body style="opacity: 0; transition: 1s;">
 
     <div id="header-wrapper">
         <nav id="category-nav">
-            <span class="nav-item active" data-cat="all">All Archive</span>
+            <span class="nav-item active" data-cat="all">All Library</span>
             <span class="nav-item" data-cat="브랜딩">Branding</span>
             <span class="nav-item" data-cat="사업기획">Business</span>
             <span class="nav-item" data-cat="디자인">Design</span>
             <span class="nav-item" data-cat="자기계발">Growth</span>
             <span class="nav-item" data-cat="테크">Tech</span>
             <span class="nav-item" data-cat="책리뷰">Book</span>
+            <span class="nav-item" data-cat="예술">Art</span>
         </nav>
         <div id="mode-switch">
-            <span class="mode-btn active" id="mode-thumb">Thumbnail Flow</span>
-            <span class="mode-btn" id="mode-typo">Spotlight Credits</span>
+            <span class="mode-btn active" id="mode-thumb">Mosaic</span>
+            <span class="mode-btn" id="mode-typo">Typography</span>
         </div>
     </div>
 
     <div id="grid-container"></div>
-    <div id="credit-container">
-        <div class="credit-list" id="credit-list"></div>
-    </div>
+    <div id="typo-container"><div class="typo-list" id="typo-list"></div></div>
 
     <div id="focus-overlay">
         <div class="focus-content">
             <img id="focus-img" src="" class="focus-img">
             <p id="focus-quote" style="font-family:'Nanum Myeongjo'; font-size:1.2rem; font-weight:800; line-height:1.6; margin-bottom:12px;"></p>
-            <h3 id="focus-title" style="font-size:0.8rem; margin-bottom:8px; color:#ccc;"></h3>
-            <div style="font-size:0.7rem; color:#666; margin-bottom:20px;">
+            <h3 id="focus-title" style="font-size:0.85rem; margin-bottom:8px;"></h3>
+            <div style="font-size:0.7rem; color:#888; margin-bottom:25px;">
                 <span id="focus-date"></span> | <span id="focus-author"></span> | ★ <span id="focus-rating"></span>
             </div>
-            <a id="focus-link" href="https://www.longblack.co/" target="_blank" style="display:inline-block; padding:14px 40px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.75rem; font-weight:800; border-radius:50px; letter-spacing:2px;">READ FULL NOTE</a>
+            <a id="focus-link" href="https://www.longblack.co/" target="_blank" style="display:inline-block; padding:14px 45px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.8rem; font-weight:800; border-radius:50px; letter-spacing:2px;">READ FULL NOTE</a>
             <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="margin-top:30px; font-size:0.6rem; opacity:0.3; letter-spacing:2px; cursor:pointer;">CLOSE</p>
         </div>
     </div>
@@ -148,13 +141,13 @@
     <script>
         let noteData = [];
         let displayMode = 'thumbnail';
-        let scrollY = 0; // Credits 수동 스크롤용
+        let currentCat = 'all';
+        let typoY = 0;
+        let typoItems = [];
         const gridContainer = document.getElementById('grid-container');
-        const creditContainer = document.getElementById('credit-container');
-        const creditList = document.getElementById('credit-list');
-        const overlay = document.getElementById('focus-overlay');
-        const timelines = []; 
-        let items = [];
+        const typoList = document.getElementById('typo-list');
+        const timelines = [];
+        let allTiles = [];
 
         function autoTag(title) {
             if(/디자인|공간/.test(title)) return "디자인";
@@ -173,15 +166,17 @@
                         ...row, category: autoTag(row.note_title)
                     }));
                     initGrid();
-                    initCredits();
+                    initTypography();
                     gsap.to("body", {opacity: 1, duration: 1});
+                    setupNav();
                 }
             });
         }
 
+        // 1. 썸네일 그리드
         function initGrid() {
             gridContainer.innerHTML = '';
-            const rowCount = Math.ceil(window.innerHeight / 200) + 1;
+            const rowCount = Math.ceil(window.innerHeight / 180) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
                 row.className = 'grid-row';
@@ -190,8 +185,10 @@
                     const tile = document.createElement('div');
                     tile.className = 'tile';
                     tile.innerHTML = `<img src="${data.thumbnail_url}" loading="lazy">`;
+                    tile.dataset.cat = data.category;
                     tile.onclick = () => showFocus(data);
                     row.appendChild(tile);
+                    allTiles.push(tile);
                 }
                 gridContainer.appendChild(row);
                 const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 40 + r*8, ease: "none", repeat: -1 });
@@ -200,110 +197,138 @@
             }
         }
 
-        // 스포트라이트 크레딧 초기화
-        function initCredits() {
-            creditList.innerHTML = '';
-            items = [];
+        // 2. 타이포그래피 (강약 조절 버전)
+        function initTypography() {
+            typoList.innerHTML = '';
+            typoItems = [];
+            const styles = ['style-hero', 'style-italic', 'style-modern', 'style-bold'];
+            
             noteData.forEach((data, idx) => {
                 const item = document.createElement('div');
-                item.className = 'credit-item';
+                item.className = 'typo-item';
+                const style = styles[idx % styles.length];
                 item.innerHTML = `
-                    <span class="c-cat">${data.category}</span>
-                    <span class="c-title">${data.note_title}</span>
-                    <span class="c-rating">★ ${data.avg_rating || '4.8'}</span>
+                    <span class="typo-info">${data.category}</span>
+                    <span class="${style}">${data.note_title}</span>
+                    <span class="typo-rating">★ ${data.avg_rating || '4.8'}</span>
                 `;
                 item.onclick = () => showFocus(data);
-                creditList.appendChild(item);
-                items.push(item);
+                typoList.appendChild(item);
+                typoItems.push(item);
             });
-            updateCredits(); // 초기 위치 잡기
+            updateTypoPositions();
         }
 
-        // [핵심] 중앙 스포트라이트 로직
-        function updateCredits() {
+        function updateTypoPositions() {
             const center = window.innerHeight / 2;
-            const spacing = 350; // 아이템 간 간격
+            const spacing = 320; // 텍스트 덩어리 간격
 
-            items.forEach((item, idx) => {
-                // 스크롤 위치에 따른 각 아이템의 y 좌표 계산
-                const y = (idx * spacing) - (scrollY % (items.length * spacing));
-                
-                // 화면 위아래 루프 처리를 위한 보정
-                let finalY = y;
-                if (finalY < -spacing) finalY += items.length * spacing;
-                if (finalY > window.innerHeight + spacing) finalY -= items.length * spacing;
+            typoItems.forEach((item, idx) => {
+                let y = (idx * spacing) - (typoY % (typoItems.length * spacing));
+                if (y < -spacing) y += typoItems.length * spacing;
+                if (y > window.innerHeight + spacing) y -= typoItems.length * spacing;
 
-                // 중앙으로부터의 거리 계산 (0에 가까울수록 중앙)
-                const distanceFromCenter = Math.abs(finalY + 100 - center);
-                const normalizedDist = Math.min(distanceFromCenter / (window.innerHeight / 2), 1);
-
-                // 거리에 따른 스타일 변화 (Spotlight 효과)
-                const opacity = 1 - normalizedDist;
-                const blur = normalizedDist * 15;
-                const scale = 1.2 - (normalizedDist * 0.4);
+                const dist = Math.abs(y + 100 - center);
+                const norm = Math.min(dist / (window.innerHeight / 1.5), 1);
 
                 gsap.set(item, {
-                    y: finalY,
-                    opacity: opacity < 0.1 ? 0 : opacity,
-                    filter: `blur(${blur}px)`,
-                    scale: scale,
-                    zIndex: Math.round(opacity * 100)
+                    y: y,
+                    opacity: 1 - norm,
+                    filter: `blur(${norm * 12}px)`,
+                    scale: 1.2 - (norm * 0.4),
+                    zIndex: Math.round((1 - norm) * 100)
                 });
             });
         }
 
-        // 자동 흐름 애니메이션 (Credits 모드)
-        let autoScroll = gsap.ticker.add(() => {
-            if (displayMode === 'typo') {
-                scrollY += 1.5; // 기본 흐르는 속도
-                updateCredits();
-            }
-        });
+        // 3. 필터링 로직 (완벽 개선)
+        function applyFilter(cat) {
+            currentCat = cat;
+            const isFiltered = cat !== 'all';
+            document.body.classList.toggle('is-filtered', isFiltered);
 
-        function switchMode(mode) {
-            displayMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === `mode-${mode === 'thumbnail' ? 'thumb' : 'typo'}`));
-            if(mode === 'thumbnail') {
-                gridContainer.style.display = 'flex'; creditContainer.style.display = 'none';
+            if (!isFiltered) {
                 timelines.forEach(tl => tl.play());
+                gsap.to(allTiles, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8 });
             } else {
-                gridContainer.style.display = 'none'; creditContainer.style.display = 'flex';
                 timelines.forEach(tl => tl.pause());
-                gsap.from(items, { opacity: 0, duration: 1, stagger: 0.05 });
+                const matched = allTiles.filter(t => t.dataset.cat === cat);
+                const unmatched = allTiles.filter(t => t.dataset.cat !== cat);
+                gsap.to(unmatched, { opacity: 0, scale: 0.2, duration: 0.4 });
+
+                const winW = window.innerWidth;
+                const cols = winW < 600 ? 2 : 5;
+                const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight, gap = 15;
+                const startX = (winW - (cols * (tileW + gap))) / 2;
+                const startY = 140;
+
+                matched.forEach((tile, idx) => {
+                    const rect = tile.getBoundingClientRect();
+                    const targetX = startX + (idx % cols) * (tileW + gap) - rect.left;
+                    const targetY = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
+                    gsap.to(tile, { x: targetX, y: targetY, scale: 1, opacity: 1, duration: 1, ease: "expo.out" });
+                });
             }
         }
 
-        document.getElementById('mode-thumb').onclick = () => switchMode('thumbnail');
-        document.getElementById('mode-typo').onclick = () => switchMode('typo');
+        // 4. 이벤트 및 모드 전환
+        function setupNav() {
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.addEventListener('click', (e) => {
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    nav.classList.add('active');
+                    applyFilter(nav.dataset.cat);
+                });
+            });
+
+            document.getElementById('mode-thumb').onclick = () => {
+                displayMode = 'thumbnail';
+                document.getElementById('mode-thumb').classList.add('active');
+                document.getElementById('mode-typo').classList.remove('active');
+                gridContainer.style.display = 'flex';
+                document.getElementById('typo-container').style.display = 'none';
+                timelines.forEach(tl => tl.play());
+            };
+
+            document.getElementById('mode-typo').onclick = () => {
+                displayMode = 'typo';
+                document.getElementById('mode-typo').classList.add('active');
+                document.getElementById('mode-thumb').classList.remove('active');
+                gridContainer.style.display = 'none';
+                document.getElementById('typo-container').style.display = 'flex';
+                timelines.forEach(tl => tl.pause());
+            }
+        }
+
+        gsap.ticker.add(() => {
+            if (displayMode === 'typo') { typoY += 1.5; updateTypoPositions(); }
+        });
 
         gsap.registerPlugin(Observer);
         Observer.create({
             target: window, type: "wheel,touch,pointer",
             onChange: (self) => {
-                if (displayMode === 'thumbnail') {
-                    const v = Math.abs(self.deltaY) * 0.1;
+                if (displayMode === 'thumbnail' && currentCat === 'all') {
+                    const v = Math.abs(self.deltaY) * 0.12;
                     timelines.forEach(tl => {
                         gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 1.5 }) });
                     });
-                } else {
-                    // 크레딧 스크롤 제어
-                    const power = self.deltaY * 0.5;
-                    scrollY += power;
-                    updateCredits();
+                } else if (displayMode === 'typo') {
+                    typoY += self.deltaY * 0.6;
+                    updateTypoPositions();
                 }
             }
         });
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
-            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 내일을 바꿉니다.”";
+            document.getElementById('focus-quote').innerText = "“오늘의 통찰이 당신의 내일이 되길.”";
             document.getElementById('focus-title').innerText = data.note_title;
             document.getElementById('focus-date').innerText = data.published_date;
             document.getElementById('focus-author').innerText = `저자 ${data.authors}`;
             document.getElementById('focus-rating').innerText = data.avg_rating;
-            overlay.classList.add('active');
+            document.getElementById('focus-overlay').classList.add('active');
         }
-        overlay.onclick = () => overlay.classList.remove('active');
 
         loadCSV();
     </script>
