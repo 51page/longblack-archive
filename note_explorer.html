@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Mobile Tactile Edition</title>
+    <title>LongBlack Archive - 3D Kinetic Master</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -11,77 +11,72 @@
     <style>
         :root {
             --bg: #000; --accent: #FF4E00;
-            --tile-w: 240px; --tile-h: 340px; /* 모바일에서 잘 보이도록 크게 설정 */
-            --nav-h: 80px;
+            --tile-w: 120px; --tile-h: 170px; --gap: 15px; --nav-h: 100px;
         }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg); color: #fff;
             font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
+            perspective: 2000px; /* 3D 효과를 위한 원근감 설정 */
         }
 
-        /* 상단 카테고리 (가로 스크롤 강화) */
+        /* 내비게이션 */
         #category-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-h);
-            display: flex; align-items: center; gap: 20px; padding: 0 20px; z-index: 1000;
+            display: flex; align-items: center; justify-content: flex-start;
+            gap: 20px; padding: 0 30px; z-index: 1000;
             background: linear-gradient(to bottom, #000 70%, transparent);
-            overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+            overflow-x: auto; scrollbar-width: none;
         }
         #category-nav::-webkit-scrollbar { display: none; }
+        @media (min-width: 1024px) { #category-nav { justify-content: center; } }
+
         .nav-item {
-            font-size: 0.85rem; font-weight: 900; color: #444;
-            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-            transition: 0.3s; white-space: nowrap; flex-shrink: 0;
+            font-size: 0.8rem; font-weight: 900; color: #444;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            transition: all 0.4s ease; white-space: nowrap; flex-shrink: 0;
         }
         .nav-item.active { color: var(--accent); transform: scale(1.1); }
 
-        /* 배경 흐르는 모드 컨테이너 */
-        #bg-flow {
+        /* 그리드 및 스택 컨테이너 */
+        #grid-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center;
-            gap: 10px; opacity: 1; transition: opacity 0.5s;
+            gap: var(--gap); z-index: 10;
+            transform-style: preserve-3d;
         }
-        .flow-row { display: flex; gap: 10px; width: max-content; }
-        .flow-tile { width: 80px; height: 110px; border-radius: 4px; overflow: hidden; opacity: 0.3; filter: grayscale(1); }
-        .flow-tile img { width: 100%; height: 100%; object-fit: cover; }
+        .grid-row { display: flex; gap: var(--gap); width: max-content; transform-style: preserve-3d; }
 
-        /* 필터링된 카드 스택 (모바일 전용) */
-        #stack-container {
-            position: absolute; top: 55%; left: 50%;
-            transform: translate(-50%, -50%);
+        .tile {
             width: var(--tile-w); height: var(--tile-h);
-            z-index: 100; display: none;
-        }
-        .stack-card {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #111; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            background: #111; border-radius: 6px; overflow: hidden;
+            cursor: pointer; flex-shrink: 0; filter: brightness(0.4) grayscale(1);
+            transition: filter 0.5s ease;
             will-change: transform, opacity;
-            border: 1px solid rgba(255,255,255,0.1);
         }
-        .stack-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        .card-info {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            padding: 20px; box-sizing: border-box;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-        }
-        .card-title { font-size: 0.9rem; font-weight: 700; margin: 0; line-height: 1.4; }
+        .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* 하이라이트 상세 팝업 */
+        /* 필터링 모드 스타일 */
+        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0) translateZ(-1000px); }
+        body.is-filtered .tile.matched { filter: brightness(1.1) grayscale(0) !important; z-index: 100; }
+
+        /* 상세 팝업 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98); backdrop-filter: blur(25px);
+            background: rgba(0,0,0,0.98); backdrop-filter: blur(30px);
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.4s;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
-        .focus-content { width: 85%; text-align: center; }
-        .focus-img { width: 100%; max-height: 35vh; border-radius: 10px; object-fit: contain; margin-bottom: 20px; }
-        .view-btn { display: inline-block; padding: 14px 40px; background: var(--accent); color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 800; border-radius: 50px; }
+        .focus-content { width: 88%; max-width: 440px; text-align: center; }
+        .focus-img { width: 100%; max-height: 35vh; border-radius: 10px; object-fit: contain; margin-bottom: 20px; box-shadow: 0 30px 100px rgba(0,0,0,0.8); }
+        .focus-quote { font-family: 'Nanum Myeongjo', serif; font-size: 1.25rem; font-weight: 800; line-height: 1.6; margin-bottom: 12px; }
+        .focus-title { font-size: 0.85rem; font-weight: 600; opacity: 0.8; margin-bottom: 25px; color: #ccc; }
+        .view-btn { display: inline-block; padding: 15px 45px; background: var(--accent); color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 800; border-radius: 50px; letter-spacing: 2px; }
+        .close-hint { margin-top: 35px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
     </style>
 </head>
-<body style="opacity: 0; transition: 1s;">
+<body style="opacity: 0; transition: opacity 1s;">
 
     <nav id="category-nav">
         <span class="nav-item active" data-cat="all">All (Loading...)</span>
@@ -91,40 +86,44 @@
         <span class="nav-item" data-cat="자기계발">Growth</span>
         <span class="nav-item" data-cat="테크">Tech</span>
         <span class="nav-item" data-cat="책리뷰">Book</span>
+        <span class="nav-item" data-cat="예술">Art</span>
     </nav>
 
-    <div id="bg-flow"></div>
-
-    <div id="stack-container"></div>
+    <div id="grid-container"></div>
 
     <div id="focus-overlay">
         <div class="focus-content">
             <img id="focus-img" src="" class="focus-img">
-            <p id="focus-quote" style="font-family:'Nanum Myeongjo'; font-size:1.1rem; line-height:1.6; margin-bottom:15px;"></p>
-            <h3 id="focus-title" style="font-size:0.8rem; opacity:0.6; margin-bottom:30px;"></h3>
-            <a id="focus-link" href="https://www.longblack.co/" target="_blank" class="view-btn">READ NOTE</a>
-            <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="margin-top:30px; font-size:0.6rem; opacity:0.3; letter-spacing:2px;">CLOSE</p>
+            <p id="focus-quote" class="focus-quote"></p>
+            <h3 id="focus-title" class="focus-title"></h3>
+            <div style="display: flex; gap: 15px; justify-content: center; font-size: 0.7rem; color: #888; margin-bottom: 25px;">
+                <span id="focus-date"></span> | <span id="focus-author"></span> | <span style="color: #FFB800; font-weight: 700;">★ <span id="focus-rating"></span></span>
+            </div>
+            <a id="focus-link" href="https://www.longblack.co/" target="_blank" class="view-btn">READ FULL NOTE</a>
+            <p class="close-hint">CLOSE</p>
         </div>
     </div>
 
     <script>
         let noteData = [];
-        const bgFlow = document.getElementById('bg-flow');
-        const stackContainer = document.getElementById('stack-container');
+        const container = document.getElementById('grid-container');
         const overlay = document.getElementById('focus-overlay');
-        let timelines = [];
-        let currentStackData = [];
-        let stackIdx = 0;
+        const timelines = [];
+        let allTiles = [], isFiltered = false;
+        let stackIndex = 0; // 스택 모드에서의 현재 카드 번호
 
+        // 1. 카테고리 태깅
         function autoTag(title) {
-            if(/디자인|공간/.test(title)) return "디자인";
-            if(/브랜드|마케팅/.test(title)) return "브랜딩";
-            if(/비즈니스|전략/.test(title)) return "사업기획";
-            if(/기록|성장/.test(title)) return "자기계발";
-            if(/책|리뷰/.test(title)) return "책리뷰";
-            return "테크";
+            if(/디자인|공간|건축/.test(title)) return "디자인";
+            if(/브랜드|협업|마케팅/.test(title)) return "브랜딩";
+            if(/비즈니스|경영|기획/.test(title)) return "사업기획";
+            if(/AI|테크|기술/.test(title)) return "테크";
+            if(/책|리뷰|글쓰기/.test(title)) return "책리뷰";
+            if(/기록|메모|성장/.test(title)) return "자기계발";
+            return "예술";
         }
 
+        // 2. CSV 로드
         function loadCSV() {
             Papa.parse("notedata.csv", {
                 download: true, header: true,
@@ -133,101 +132,141 @@
                         ...row, category: autoTag(row.note_title)
                     }));
                     document.querySelector('[data-cat="all"]').innerText = `All (${noteData.length})`;
-                    initBackgroundFlow();
+                    initGrid();
                     gsap.to("body", {opacity: 1, duration: 1});
                 }
             });
         }
 
-        // 1. 전체 보기 (배경 흐름)
-        function initBackgroundFlow() {
-            bgFlow.innerHTML = ''; timelines.length = 0;
-            const rowCount = 8;
+        function initGrid() {
+            container.innerHTML = ''; timelines.length = 0; allTiles = [];
+            const winH = window.innerHeight;
+            const rowCount = Math.ceil(winH / 200) + 1;
+            const itemsPerRow = Math.ceil(noteData.length / rowCount);
+
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
-                row.className = 'flow-row';
-                for (let i = 0; i < 15; i++) {
-                    const data = noteData[(r * 15 + i) % noteData.length];
-                    row.innerHTML += `<div class="flow-tile"><img src="${data.thumbnail_url}"></div>`;
+                row.className = 'grid-row';
+                for (let i = 0; i < itemsPerRow; i++) {
+                    const data = noteData[(r * itemsPerRow + i) % noteData.length];
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.innerHTML = `<img src="${data.thumbnail_url}" loading="lazy">`;
+                    tile.dataset.cat = data.category;
+                    tile.onclick = (e) => {
+                        e.stopPropagation();
+                        if(isFiltered && !tile.classList.contains('matched')) return;
+                        showFocus(data);
+                    };
+                    row.appendChild(tile);
+                    allTiles.push(tile);
                 }
-                bgFlow.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 30 + r*5, ease: "none", repeat: -1 });
+                container.appendChild(row);
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 45 + r*10, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-30%"});
                 timelines.push(tl);
             }
         }
 
-        // 2. 카테고리 클릭 시: 벗겨내는 카드 스택으로 전환
-        function filterMode(category) {
-            if (category === 'all') {
-                gsap.to(bgFlow, { opacity: 1, duration: 0.5 });
-                stackContainer.style.display = 'none';
+        // 3. 진화된 "헤쳐모여" - 3D 스택 레이아웃
+        function organizeGrid(category) {
+            isFiltered = category !== 'all';
+            document.body.classList.toggle('is-filtered', isFiltered);
+            stackIndex = 0; // 카테고리 변경 시 첫 카드로 리셋
+
+            if (!isFiltered) {
                 timelines.forEach(tl => tl.play());
-                return;
+                allTiles.forEach(tile => {
+                    tile.classList.remove('matched', 'dimmed');
+                    gsap.to(tile, { x: 0, y: 0, z: 0, rotationY: 0, rotationX: 0, scale: 1, opacity: 1, duration: 1, ease: "expo.out" });
+                });
+            } else {
+                timelines.forEach(tl => tl.pause());
+                const matched = allTiles.filter(t => t.dataset.cat === category);
+                const unmatched = allTiles.filter(t => t.dataset.cat !== category);
+
+                gsap.to(unmatched, { opacity: 0, scale: 0, z: -1000, duration: 0.5 });
+
+                updateStack(matched);
             }
+        }
 
-            timelines.forEach(tl => tl.pause());
-            gsap.to(bgFlow, { opacity: 0.1, duration: 0.5 });
-            
-            stackContainer.innerHTML = '';
-            stackContainer.style.display = 'block';
-            currentStackData = noteData.filter(d => d.category === category).slice(0, 15); // 최대 15장
-            stackIdx = 0;
+        // 스택 모드에서 카드들의 위치를 업데이트하는 함수 (3D 효과)
+        function updateStack(matchedTiles) {
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
 
-            currentStackData.reverse().forEach((data, i) => {
-                const card = document.createElement('div');
-                card.className = 'stack-card';
-                card.innerHTML = `
-                    <img src="${data.thumbnail_url}">
-                    <div class="card-info"><p class="card-title">${data.note_title}</p></div>
-                `;
-                card.onclick = () => showFocus(data);
-                stackContainer.appendChild(card);
+            matchedTiles.forEach((tile, idx) => {
+                tile.classList.add('matched');
+                tile.classList.remove('dimmed');
                 
-                // 초기 스택 쌓기 애니메이션
-                gsap.from(card, {
-                    y: 500, rotation: 10, opacity: 0, 
-                    duration: 0.6, delay: i * 0.05, ease: "back.out(1.7)"
+                const relativeIdx = idx - stackIndex;
+                const rect = tile.getBoundingClientRect();
+                
+                // 중앙 좌표 기준 오프셋
+                const targetX = (winW / 2) - (135 / 2) - rect.left;
+                const targetY = (winH / 2) - (190 / 2) - rect.top;
+                
+                // 스택 깊이 조절 (뒤로 갈수록 작아지고 흐려짐)
+                const zPos = relativeIdx * -50;
+                const yOffset = relativeIdx * 10;
+                const opacity = relativeIdx < 0 ? 0 : Math.max(0, 1 - (relativeIdx * 0.2));
+                const visibility = relativeIdx < 0 ? "hidden" : "visible";
+
+                gsap.to(tile, {
+                    x: targetX,
+                    y: targetY + yOffset,
+                    z: zPos,
+                    rotationX: -5,
+                    opacity: opacity,
+                    autoAlpha: relativeIdx < 0 ? 0 : 1, // 앞에 지난 카드는 숨김
+                    duration: 0.8,
+                    ease: "power3.out",
+                    delay: isFiltered ? 0 : idx * 0.01 // 처음 모일 때만 딜레이
                 });
             });
         }
 
-        // 3. 카드 벗겨내기 (Swipe Up 액션)
-        function peelOff() {
-            const cards = stackContainer.querySelectorAll('.stack-card');
-            if (cards.length === 0) return;
-            
-            const topCard = cards[cards.length - 1]; // 가장 위에 있는 카드
-            gsap.to(topCard, {
-                y: -800, rotation: -20, opacity: 0, 
-                duration: 0.7, ease: "power4.in",
-                onComplete: () => topCard.remove()
-            });
-        }
-
-        // 4. 터치 제어 (Observer)
+        // 4. 스크롤 인터랙션 (All 모드: 가속 / 스택 모드: 카드 넘기기)
         gsap.registerPlugin(Observer);
         Observer.create({
             target: window, type: "wheel,touch,pointer",
             onChange: (self) => {
-                if (stackContainer.style.display === 'block' && self.deltaY > 5) {
-                    peelOff(); // 아래로 스크롤/스와이프 하면 위로 벗겨내기
+                if (!isFiltered) {
+                    const v = Math.abs(self.deltaY) * 0.12;
+                    timelines.forEach(tl => {
+                        gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 2.0 }) });
+                    });
+                } else {
+                    // 스택 모드에서 카드 넘기기
+                    const matched = allTiles.filter(t => t.dataset.cat === document.querySelector('.nav-item.active').dataset.cat);
+                    if (self.deltaY > 0 && stackIndex < matched.length - 1) {
+                        stackIndex++;
+                        updateStack(matched);
+                    } else if (self.deltaY < 0 && stackIndex > 0) {
+                        stackIndex--;
+                        updateStack(matched);
+                    }
                 }
             }
         });
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
-            document.getElementById('focus-quote').innerText = "“이 통찰이 당신의 감각을 깨우길 바랍니다.”";
+            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 내일을 바꿉니다.”";
             document.getElementById('focus-title').innerText = data.note_title;
+            document.getElementById('focus-date').innerText = data.published_date;
+            document.getElementById('focus-author').innerText = `저자 ${data.authors}`;
+            document.getElementById('focus-rating').innerText = data.avg_rating;
             overlay.classList.add('active');
         }
+        overlay.onclick = () => overlay.classList.remove('active');
 
         document.querySelectorAll('.nav-item').forEach(item => {
             item.onclick = () => {
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 item.classList.add('active');
-                filterMode(item.dataset.cat);
+                organizeGrid(item.dataset.cat);
             };
         });
 
