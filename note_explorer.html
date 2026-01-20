@@ -56,14 +56,16 @@
         }
         .flow-row { display: flex; gap: var(--gap); width: max-content; will-change: transform; }
 
+        /* 썸네일 타일 수정: 이미지 잘림 방지 및 고정 크기 */
         .thumb-tile {
             width: var(--thumb-w); height: var(--thumb-h);
             background: #111; border-radius: 4px; overflow: hidden;
             cursor: pointer; flex-shrink: 0; filter: grayscale(1) brightness(0.4);
             transition: filter 0.4s, transform 0.4s;
+            position: relative;
         }
-        .thumb-tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); }
         .thumb-tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .thumb-tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); }
 
         .card-tile {
             width: var(--card-w); height: var(--card-h);
@@ -71,7 +73,6 @@
             cursor: pointer; flex-shrink: 0; position: relative;
             border: 1px solid rgba(255,255,255,0.1); transition: transform 0.4s;
         }
-        .card-tile:hover { transform: scale(1.03); }
         .card-tile img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
         
         .card-content {
@@ -81,10 +82,10 @@
             padding: 25px; box-sizing: border-box;
         }
         .c-tag { font-size: 0.65rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
-        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.3rem; font-weight: 800; line-height: 1.4; color: #fff; word-break: keep-all; }
+        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.1rem; font-weight: 800; line-height: 1.4; color: #fff; word-break: keep-all; }
         .c-rating { font-size: 0.8rem; color: #FFB800; font-weight: 700; }
 
-        /* [Filter state classes] */
+        /* Filter state classes */
         body.is-filtered .thumb-tile, body.is-filtered .card-tile { opacity: 0.1; filter: grayscale(1) brightness(0.2); pointer-events: none; }
         body.is-filtered .thumb-tile.matched, body.is-filtered .card-tile.matched { opacity: 1; filter: grayscale(0) brightness(1.1) !important; pointer-events: auto; z-index: 100; }
 
@@ -216,7 +217,6 @@
             }
         }
 
-        // [필터링 기능 추가 - 원본 코드 구조 유지]
         function applyFilter(cat) {
             currentCat = cat;
             const isFiltered = cat !== 'all';
@@ -228,21 +228,19 @@
             if (!isFiltered) {
                 currentTLs.forEach(tl => tl.play());
                 gsap.to(tiles, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power2.out", clearProps: "all" });
-                tiles.forEach(t => t.classList.remove('matched'));
             } else {
                 currentTLs.forEach(tl => tl.pause());
                 const matched = tiles.filter(t => t.dataset.cat === cat);
                 
-                const winW = window.innerWidth, winH = window.innerHeight;
+                const winW = window.innerWidth;
                 const cols = displayMode === 'thumbnail' ? (winW < 600 ? 2 : 5) : (winW < 600 ? 1 : 3);
                 const gap = 15;
-                const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight;
+                const tileW = matched[0].offsetWidth;
+                const tileH = matched[0].offsetHeight;
                 const startX = (winW - (cols * (tileW + gap))) / 2;
                 const startY = 150;
 
-                tiles.forEach(t => t.classList.remove('matched'));
                 matched.forEach((tile, idx) => {
-                    tile.classList.add('matched');
                     const rect = tile.getBoundingClientRect();
                     const tx = startX + (idx % cols) * (tileW + gap) - rect.left;
                     const ty = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
@@ -298,11 +296,6 @@
             document.getElementById('focus-title').innerText = data.note_title;
             document.getElementById('focus-rating').innerText = `★ ${data.avg_rating || '4.8'}`;
             document.getElementById('focus-overlay').classList.add('active');
-        }
-
-        // 기존 함수 유지용
-        function showFocus_js(encodedData) {
-            showFocus(JSON.parse(decodeURIComponent(encodedData)));
         }
 
         loadCSV();
