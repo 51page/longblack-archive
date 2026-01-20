@@ -3,90 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Vivid Quote Pulse</title>
+    <title>LongBlack - Focused Insight</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="quote_data.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Nanum+Myeongjo:wght@800&display=swap" rel="stylesheet">
+    <script src="quote_data.js"></script> <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Nanum+Myeongjo:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #000; --fg: #fff;
-            --vivid-colors: #FF4E00, #00E5FF, #FFEE00, #FF007A, #00FF41, #7000FF;
+            --bg-color: #000;
+            --fg-color: #fff;
+            --main-accent: #FF4E00; /* 롱블랙 오렌지 */
         }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg-color); overflow: hidden; font-family: 'Montserrat', sans-serif; }
 
-        /* [비비드 슬라이드 레이어] */
-        #slide-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; }
-        .slide-row { display: flex; width: 100%; height: 50%; overflow: hidden; }
-        .slide-panel { flex: 1; height: 100%; will-change: transform, background-color; }
+        /* [단일 컬러 슬라이드 배경] */
+        #main-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); /* 초기 배경 */
+            will-change: transform, background-color;
+        }
 
         /* [중앙 디지털 시계] */
-        #clock-layer {
+        #clock-wrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            z-index: 500; pointer-events: none;
+            z-index: 500;
         }
         .digital-clock {
             background: #000; color: #fff; padding: 15px 40px;
             font-size: 3rem; font-weight: 900; letter-spacing: 8px;
-            border: 4px solid #fff;
+            border: 4px solid var(--fg-color);
+            transform: scale(1); will-change: transform;
         }
 
         /* [명언(Quote) 노출 레이어] */
-        #quote-layer {
+        #quote-display {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            z-index: 1000; pointer-events: none; padding: 0 10%; box-sizing: border-box;
+            z-index: 1000; opacity: 0; pointer-events: none;
+            padding: 0 10%; box-sizing: border-box;
         }
         .quote-text {
             font-family: 'Nanum Myeongjo', serif; font-size: 5vw; font-weight: 800;
             color: #fff; text-align: center; line-height: 1.3; word-break: keep-all;
             text-shadow: 0 0 30px rgba(0,0,0,0.5);
-            opacity: 0; mix-blend-mode: difference;
+            transform: scale(0.8); will-change: transform, opacity;
         }
 
-        .brand-logo { position: fixed; top: 40px; left: 40px; color: #fff; font-weight: 900; font-size: 1.5rem; letter-spacing: 5px; z-index: 2000; mix-blend-mode: difference; }
+        .brand-logo { position: fixed; top: 40px; left: 40px; color: var(--fg-color); font-weight: 900; font-size: 1.5rem; letter-spacing: 5px; z-index: 2000; mix-blend-mode: difference; }
     </style>
 </head>
 <body>
 
     <div class="brand-logo">LONGBLACK</div>
 
-    <div id="slide-wrapper">
-        <div class="slide-row">
-            <div class="slide-panel" id="p1"></div>
-            <div class="slide-panel" id="p2"></div>
-        </div>
-        <div class="slide-row">
-            <div class="slide-panel" id="p3"></div>
-            <div class="slide-panel" id="p4"></div>
-        </div>
-    </div>
+    <div id="main-background"></div>
 
-    <div id="quote-layer">
-        <div id="target-quote" class="quote-text"></div>
-    </div>
-
-    <div id="clock-layer">
+    <div id="clock-wrapper">
         <div class="digital-clock" id="clock">00:00:00</div>
     </div>
 
-    <script>
-        const colors = ['#FF4E00', '#00E5FF', '#FFEE00', '#FF007A', '#00FF41', '#7000FF', '#FFFFFF', '#000000'];
-        let secondCounter = 0;
+    <div id="quote-display">
+        <div id="target-quote" class="quote-text"></div>
+    </div>
 
-        // quote_data.js 파일의 구조가 다음과 같다고 가정합니다:
-        // const quotes = ["문장1", "문장2", ...];
-        // 만약 구조가 다르다면 (예: quotes[0].text) 아래 showQuote 함수 내 변수를 수정해야 합니다.
+    <script>
+        // 비비드 컬러 팔레트 (다양한 대비색상)
+        const vividColors = ['#FF4E00', '#00E5FF', '#FFEE00', '#FF007A', '#00FF41', '#7000FF'];
+        let secondCounter = 0;
+        let currentQuoteIndex = -1; // 현재 노출된 인덱스 추적
+
+        // quote_data.js 파일에 const quotes = ["문장1", "문장2", ...]; 형태의 배열이 있다고 가정
 
         function init() {
-            // 시계 및 슬라이드 시작
+            // 초기 시계 표시
+            updateClock();
+            
+            // 1초마다 시계, 배경, 5초 주기 이벤트 업데이트
             setInterval(() => {
                 updateClock();
-                triggerVividSlide();
+                triggerSingleColorSlide();
                 
                 secondCounter++;
                 if (secondCounter % 5 === 0) {
-                    showQuote();
+                    showNewQuote();
                 }
             }, 1000);
         }
@@ -96,64 +94,86 @@
             const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             document.getElementById('clock').innerText = timeStr;
             
-            // 시계 반응형 모션
-            gsap.fromTo("#clock", { scale: 1.05 }, { scale: 1, duration: 0.2 });
+            // 시계 박동 애니메이션 (약간의 트위스트 효과 추가)
+            gsap.fromTo("#clock", 
+                { scale: 1.05, rotationZ: Math.random() * 2 - 1 }, // 약간의 랜덤 회전
+                { scale: 1, rotationZ: 0, duration: 0.2, ease: "back.out(1.7)" }
+            );
         }
 
-        function triggerVividSlide() {
-            const panels = ['#p1', '#p2', '#p3', '#p4'];
-            const direction = Math.random() > 0.5 ? 'X' : 'Y';
-            
-            panels.forEach(id => {
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                const moveVal = (Math.random() > 0.5 ? 100 : -100);
+        function triggerSingleColorSlide() {
+            const backgroundEl = document.getElementById('main-background');
+            const randomColor = vividColors[Math.floor(Math.random() * vividColors.length)];
+            const direction = Math.random() > 0.5 ? 'x' : 'y'; // x축 또는 y축 슬라이드
+            const startVal = (Math.random() > 0.5 ? 100 : -100); // 왼쪽/오른쪽 또는 위/아래
 
-                gsap.fromTo(id, 
-                    { [direction === 'X' ? 'xPercent' : 'yPercent']: moveVal },
-                    { 
-                        [direction === 'X' ? 'xPercent' : 'yPercent']: 0, 
-                        backgroundColor: randomColor,
-                        duration: 0.6, 
-                        ease: "expo.out" 
+            // 이전 배경 컬러로 설정된 위치에서 새로운 컬러가 슬라이딩되어 들어옴
+            gsap.fromTo(backgroundEl, 
+                { 
+                    [direction + 'Percent']: startVal, // 시작 위치
+                    backgroundColor: randomColor // 새로운 컬러
+                },
+                { 
+                    [direction + 'Percent']: 0, // 원래 위치로 이동
+                    duration: 0.8, 
+                    ease: "power3.out",
+                    onComplete: () => {
+                        // 애니메이션 완료 후 배경 컬러를 확정
+                        backgroundEl.style.backgroundColor = randomColor;
+                        gsap.set(backgroundEl, { xPercent: 0, yPercent: 0 }); // 위치 초기화
                     }
-                );
-            });
+                }
+            );
         }
 
-        function showQuote() {
-            // quote_data.js에 정의된 quotes 배열에서 랜덤 추출
-            if (typeof quotes === 'undefined' || quotes.length === 0) return;
+        function showNewQuote() {
+            // 문장이 나타날 때는 배경 슬라이드 애니메이션을 멈추고 단색으로 고정
+            gsap.killTweensOf("#main-background");
+            gsap.to("#main-background", { backgroundColor: "#000", duration: 0.2 }); // 문장 등장 시 배경을 잠시 검정색으로
+
+            gsap.to("#clock-wrapper", { opacity: 0, duration: 0.3, ease: "power2.in" }); // 시계 숨기기
 
             const quoteEl = document.getElementById('target-quote');
-            const randomIndex = Math.floor(Math.random() * quotes.length);
             
-            // 데이터 형식이 객체일 경우(quotes[i].text)와 문자열일 경우를 모두 대응
-            const selectedData = quotes[randomIndex];
+            // 이전에 보여준 문장은 다시 보여주지 않도록 인덱스 관리 (전체 문장 수보다 작을 경우)
+            if (quotes.length > 1) {
+                let newIndex;
+                do {
+                    newIndex = Math.floor(Math.random() * quotes.length);
+                } while (newIndex === currentQuoteIndex);
+                currentQuoteIndex = newIndex;
+            } else {
+                currentQuoteIndex = 0; // 문장이 하나밖에 없으면 계속 그것만 보여줌
+            }
+
+            const selectedData = quotes[currentQuoteIndex];
             const textToDisplay = typeof selectedData === 'string' ? selectedData : selectedData.text;
             
             quoteEl.innerText = textToDisplay;
 
-            const tl = gsap.timeline();
-            tl.to(quoteEl, { 
-                opacity: 1, 
-                y: -20,
-                duration: 0.5, 
-                ease: "expo.out",
-                onStart: () => {
-                    // 문장 등장 시 임팩트: 모든 패널을 일시적으로 대비색으로 변경
-                    gsap.to(".slide-panel", { backgroundColor: "#000", duration: 0.1 });
+            // 문장 등장 애니메이션
+            gsap.fromTo("#quote-display", 
+                { opacity: 0, scale: 0.9, y: 30 },
+                { 
+                    opacity: 1, scale: 1, y: 0, 
+                    duration: 0.7, 
+                    ease: "back.out(1.7)",
+                    onComplete: () => {
+                        // 2초 후 문장 사라지고 시계 다시 표시
+                        gsap.to("#quote-display", { 
+                            opacity: 0, scale: 1.1, y: -30, 
+                            delay: 2, 
+                            duration: 0.5, 
+                            ease: "power2.in",
+                            onComplete: () => {
+                                gsap.to("#clock-wrapper", { opacity: 1, duration: 0.3, ease: "power2.out" });
+                            }
+                        });
+                    }
                 }
-            })
-            .to(quoteEl, { 
-                opacity: 0, 
-                y: -50,
-                delay: 2.5, // 문장이 머무는 시간
-                duration: 0.8, 
-                ease: "power4.in" 
-            });
+            );
         }
 
-        // 스크립트 실행
         window.onload = init;
     </script>
 </body>
