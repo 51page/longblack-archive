@@ -3,28 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Cinematic Credits</title>
+    <title>LongBlack Archive - Spotlight Credits</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #000; --accent: #FF4E00;
-            --tile-w: 115px; --tile-h: 165px; --gap: 12px; --nav-h: 90px;
+            --tile-w: 115px; --tile-h: 165px; --gap: 15px; --nav-h: 90px;
         }
-        @media (min-width: 768px) { --tile-w: 135px; --tile-h: 190px; --gap: 15px; }
-
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg); color: #fff;
             font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
         }
 
-        /* 헤더 및 모드 컨트롤 */
+        /* 헤더 컨트롤 */
         #header-wrapper {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
-            background: linear-gradient(to bottom, #000 70%, transparent);
+            background: linear-gradient(to bottom, #000 80%, transparent);
             padding-bottom: 20px;
         }
         #category-nav {
@@ -35,9 +33,8 @@
         @media (min-width: 1024px) { #category-nav { justify-content: center; } }
 
         .nav-item {
-            font-size: 0.8rem; font-weight: 900; color: #444;
-            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-            transition: 0.4s; white-space: nowrap; flex-shrink: 0;
+            font-size: 0.8rem; font-weight: 900; color: #444; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; white-space: nowrap;
         }
         .nav-item.active { color: var(--accent); }
 
@@ -64,41 +61,48 @@
             cursor: pointer; flex-shrink: 0; filter: grayscale(1) brightness(0.4);
             transition: filter 0.4s, transform 0.4s;
         }
-        .tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); z-index: 100; }
+        .tile:hover { filter: grayscale(0) brightness(1.1); transform: scale(1.05); }
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-        /* [모드 2] 엔딩 크레딧 타이포그래피 */
+        /* [모드 2] 스포트라이트 크레딧 (개선됨) */
         #credit-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: none; justify-content: center; align-items: flex-start;
-            z-index: 20; padding-top: 120px; overflow: hidden;
+            display: none; justify-content: center; align-items: center;
+            z-index: 20; overflow: hidden;
         }
-        .credit-column {
+        .credit-list {
+            position: relative; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center;
-            width: 90%; max-width: 800px; gap: 40px; will-change: transform;
+            will-change: transform;
         }
         .credit-item {
-            font-family: 'Nanum Myeongjo', serif;
-            font-size: clamp(1.4rem, 4vw, 2.8rem); font-weight: 800;
-            text-align: center; color: #fff; cursor: pointer;
-            transition: color 0.3s, transform 0.3s; word-break: keep-all;
-            opacity: 0.8;
+            position: absolute; width: 90%; max-width: 850px;
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; cursor: pointer;
+            padding: 40px 0; transition: color 0.3s;
+            /* 초기 상태: 흐림 */
+            filter: blur(10px); opacity: 0; transform: scale(0.8);
         }
-        .credit-item:hover { color: var(--accent); transform: scale(1.05); opacity: 1; }
-        .credit-item .credit-sub {
-            display: block; font-family: 'Montserrat'; font-size: 0.7rem;
-            letter-spacing: 4px; color: var(--accent); margin-bottom: 8px; font-weight: 600;
+        .credit-item .c-cat {
+            font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 800;
+            color: var(--accent); letter-spacing: 5px; text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .credit-item .c-title {
+            font-family: 'Nanum Myeongjo', serif; font-size: clamp(1.5rem, 5vw, 3rem);
+            font-weight: 800; color: #fff; line-height: 1.3; word-break: keep-all;
+        }
+        .credit-item .c-rating {
+            font-family: 'Montserrat'; font-size: 0.9rem; font-weight: 700;
+            color: #FFB800; margin-top: 15px; letter-spacing: 2px;
         }
 
-        /* 필터링 및 팝업 */
-        body.is-filtered .tile.dimmed { opacity: 0; pointer-events: none; transform: scale(0.2); }
-        body.is-filtered .tile.matched { filter: grayscale(0) brightness(1.1) !important; z-index: 50; }
-
+        /* 상세 팝업 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98); backdrop-filter: blur(30px);
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s ease;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
         .focus-content { width: 88%; max-width: 440px; text-align: center; }
@@ -109,24 +113,23 @@
 
     <div id="header-wrapper">
         <nav id="category-nav">
-            <span class="nav-item active" data-cat="all">All Insight</span>
+            <span class="nav-item active" data-cat="all">All Archive</span>
             <span class="nav-item" data-cat="브랜딩">Branding</span>
             <span class="nav-item" data-cat="사업기획">Business</span>
             <span class="nav-item" data-cat="디자인">Design</span>
             <span class="nav-item" data-cat="자기계발">Growth</span>
             <span class="nav-item" data-cat="테크">Tech</span>
             <span class="nav-item" data-cat="책리뷰">Book</span>
-            <span class="nav-item" data-cat="예술">Art</span>
         </nav>
         <div id="mode-switch">
             <span class="mode-btn active" id="mode-thumb">Thumbnail Flow</span>
-            <span class="mode-btn" id="mode-typo">Cinematic Credits</span>
+            <span class="mode-btn" id="mode-typo">Spotlight Credits</span>
         </div>
     </div>
 
     <div id="grid-container"></div>
     <div id="credit-container">
-        <div class="credit-column" id="credit-column"></div>
+        <div class="credit-list" id="credit-list"></div>
     </div>
 
     <div id="focus-overlay">
@@ -145,13 +148,13 @@
     <script>
         let noteData = [];
         let displayMode = 'thumbnail';
+        let scrollY = 0; // Credits 수동 스크롤용
         const gridContainer = document.getElementById('grid-container');
         const creditContainer = document.getElementById('credit-container');
-        const creditColumn = document.getElementById('credit-column');
+        const creditList = document.getElementById('credit-list');
         const overlay = document.getElementById('focus-overlay');
-        const timelines = []; // Horizontal timelines
-        let creditTimeline; // Vertical credit timeline
-        let allTiles = [];
+        const timelines = []; 
+        let items = [];
 
         function autoTag(title) {
             if(/디자인|공간/.test(title)) return "디자인";
@@ -159,8 +162,7 @@
             if(/비즈니스|경영/.test(title)) return "사업기획";
             if(/AI|테크/.test(title)) return "테크";
             if(/책|리뷰/.test(title)) return "책리뷰";
-            if(/기록|성장/.test(title)) return "자기계발";
-            return "예술";
+            return "자기계발";
         }
 
         function loadCSV() {
@@ -177,10 +179,8 @@
             });
         }
 
-        // 1. Thumbnail Grid (Horizontal Flow)
         function initGrid() {
-            gridContainer.innerHTML = ''; timelines.forEach(tl => tl.kill());
-            timelines.length = 0;
+            gridContainer.innerHTML = '';
             const rowCount = Math.ceil(window.innerHeight / 200) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
@@ -190,10 +190,8 @@
                     const tile = document.createElement('div');
                     tile.className = 'tile';
                     tile.innerHTML = `<img src="${data.thumbnail_url}" loading="lazy">`;
-                    tile.dataset.cat = data.category;
                     tile.onclick = () => showFocus(data);
                     row.appendChild(tile);
-                    allTiles.push(tile);
                 }
                 gridContainer.appendChild(row);
                 const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 40 + r*8, ease: "none", repeat: -1 });
@@ -202,82 +200,110 @@
             }
         }
 
-        // 2. Cinematic Credits (Vertical Infinite Loop)
+        // 스포트라이트 크레딧 초기화
         function initCredits() {
-            creditColumn.innerHTML = '';
-            // For a seamless loop, we repeat the list
-            const creditList = [...noteData, ...noteData];
-            creditList.forEach((data, idx) => {
+            creditList.innerHTML = '';
+            items = [];
+            noteData.forEach((data, idx) => {
                 const item = document.createElement('div');
                 item.className = 'credit-item';
-                item.innerHTML = `<span class="credit-sub">${data.category}</span>${data.note_title}`;
+                item.innerHTML = `
+                    <span class="c-cat">${data.category}</span>
+                    <span class="c-title">${data.note_title}</span>
+                    <span class="c-rating">★ ${data.avg_rating || '4.8'}</span>
+                `;
                 item.onclick = () => showFocus(data);
-                creditColumn.appendChild(item);
+                creditList.appendChild(item);
+                items.push(item);
             });
+            updateCredits(); // 초기 위치 잡기
+        }
 
-            // GSAP Vertical Loop
-            creditTimeline = gsap.to(creditColumn, {
-                yPercent: -50,
-                duration: noteData.length * 2.5, // Adjust speed based on data length
-                ease: "none",
-                repeat: -1
+        // [핵심] 중앙 스포트라이트 로직
+        function updateCredits() {
+            const center = window.innerHeight / 2;
+            const spacing = 350; // 아이템 간 간격
+
+            items.forEach((item, idx) => {
+                // 스크롤 위치에 따른 각 아이템의 y 좌표 계산
+                const y = (idx * spacing) - (scrollY % (items.length * spacing));
+                
+                // 화면 위아래 루프 처리를 위한 보정
+                let finalY = y;
+                if (finalY < -spacing) finalY += items.length * spacing;
+                if (finalY > window.innerHeight + spacing) finalY -= items.length * spacing;
+
+                // 중앙으로부터의 거리 계산 (0에 가까울수록 중앙)
+                const distanceFromCenter = Math.abs(finalY + 100 - center);
+                const normalizedDist = Math.min(distanceFromCenter / (window.innerHeight / 2), 1);
+
+                // 거리에 따른 스타일 변화 (Spotlight 효과)
+                const opacity = 1 - normalizedDist;
+                const blur = normalizedDist * 15;
+                const scale = 1.2 - (normalizedDist * 0.4);
+
+                gsap.set(item, {
+                    y: finalY,
+                    opacity: opacity < 0.1 ? 0 : opacity,
+                    filter: `blur(${blur}px)`,
+                    scale: scale,
+                    zIndex: Math.round(opacity * 100)
+                });
             });
         }
 
-        // 3. Mode Switching
-        document.getElementById('mode-thumb').onclick = () => switchMode('thumbnail');
-        document.getElementById('mode-typo').onclick = () => switchMode('typo');
+        // 자동 흐름 애니메이션 (Credits 모드)
+        let autoScroll = gsap.ticker.add(() => {
+            if (displayMode === 'typo') {
+                scrollY += 1.5; // 기본 흐르는 속도
+                updateCredits();
+            }
+        });
 
         function switchMode(mode) {
             displayMode = mode;
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === `mode-${mode === 'thumbnail' ? 'thumb' : 'typo'}`));
-            
             if(mode === 'thumbnail') {
-                gridContainer.style.display = 'flex';
-                creditContainer.style.display = 'none';
+                gridContainer.style.display = 'flex'; creditContainer.style.display = 'none';
                 timelines.forEach(tl => tl.play());
-                creditTimeline.pause();
             } else {
-                gridContainer.style.display = 'none';
-                creditContainer.style.display = 'flex';
+                gridContainer.style.display = 'none'; creditContainer.style.display = 'flex';
                 timelines.forEach(tl => tl.pause());
-                creditTimeline.play();
-                gsap.from(".credit-item", { opacity: 0, y: 100, stagger: 0.05, duration: 1.5, ease: "power4.out" });
+                gsap.from(items, { opacity: 0, duration: 1, stagger: 0.05 });
             }
         }
 
-        // 4. Scroll Control (Observer)
+        document.getElementById('mode-thumb').onclick = () => switchMode('thumbnail');
+        document.getElementById('mode-typo').onclick = () => switchMode('typo');
+
         gsap.registerPlugin(Observer);
         Observer.create({
             target: window, type: "wheel,touch,pointer",
             onChange: (self) => {
                 if (displayMode === 'thumbnail') {
-                    const v = Math.abs(self.deltaY) * 0.12;
+                    const v = Math.abs(self.deltaY) * 0.1;
                     timelines.forEach(tl => {
                         gsap.to(tl, { timeScale: 1 + v, duration: 0.2, overwrite: true, onComplete: () => gsap.to(tl, { timeScale: 1, duration: 1.5 }) });
                     });
                 } else {
-                    // Credit Control: Speed up or Slow down based on scroll
-                    const v = self.deltaY * 0.01;
-                    gsap.to(creditTimeline, { 
-                        timeScale: 1 + v * 5, 
-                        duration: 0.3, 
-                        overwrite: true,
-                        onComplete: () => gsap.to(creditTimeline, { timeScale: 1, duration: 2.0, ease: "power2.out" })
-                    });
+                    // 크레딧 스크롤 제어
+                    const power = self.deltaY * 0.5;
+                    scrollY += power;
+                    updateCredits();
                 }
             }
         });
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
-            document.getElementById('focus-quote').innerText = "“이 통찰의 조각이 당신의 내일을 풍요롭게 하길.”";
+            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 내일을 바꿉니다.”";
             document.getElementById('focus-title').innerText = data.note_title;
             document.getElementById('focus-date').innerText = data.published_date;
             document.getElementById('focus-author').innerText = `저자 ${data.authors}`;
             document.getElementById('focus-rating').innerText = data.avg_rating;
             overlay.classList.add('active');
         }
+        overlay.onclick = () => overlay.classList.remove('active');
 
         loadCSV();
     </script>
