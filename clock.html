@@ -3,34 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Brand Sequence V62</title>
+    <title>LongBlack - Spin Sequence V63</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --fg: #fff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
         #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; will-change: transform; }
         
-        /* 시계 및 로고 레이어 */
+        /* 시계 영역 */
         #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
-        .digital-clock { color: #fff; font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 800; letter-spacing: -0.05em; line-height: 1; transition: color 0.4s; }
+        .digital-clock { 
+            color: #fff; 
+            font-size: clamp(3.5rem, 15vw, 8rem); 
+            font-weight: 600; /* 시계 두께를 적절히 얇게 조정 */
+            letter-spacing: -0.03em; 
+            line-height: 1; 
+        }
         
         .logo-img { 
-            margin-top: 20px; 
-            width: clamp(120px, 25vw, 220px); 
+            margin-top: 25px; 
+            width: clamp(120px, 22vw, 200px); 
             height: auto; 
-            filter: brightness(0) invert(1); /* 기본 흰색 로고로 표시 */
+            filter: brightness(0) invert(1);
             transition: filter 0.4s;
         }
 
-        /* 전체 화면 로고 레이어 (5번째 시퀀스용) */
+        /* 5번째 시퀀스: 전체 화면 로고 */
         #full-logo-display { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; align-items: center; justify-content: center; 
-            z-index: 200; background: #000; visibility: hidden; 
+            z-index: 200; background: #000; visibility: hidden; overflow: hidden;
         }
-        .full-logo { width: 60%; max-width: 600px; height: auto; filter: brightness(0) invert(1); }
+        .full-logo { 
+            width: 40%; max-width: 450px; height: auto; 
+            filter: brightness(0) invert(1); 
+            will-change: transform;
+        }
 
         /* 문장 레이어 */
         #quote-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: #000; visibility: hidden; padding: 0 10%; box-sizing: border-box; will-change: transform; }
@@ -44,26 +54,16 @@
 </head>
 <body>
     <div id="sound-control"><svg viewBox="0 0 24 24"><path d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18.01,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,11.53 16.42,11.08 16.28,10.66L14,8.38V15.54L15.36,14.18C16.08,13.63 16.5,12.87 16.5,12Z"/></svg></div>
-    
     <div id="main-bg"></div>
-    
     <div id="clock-wrapper">
         <div id="clock" class="digital-clock">00:00:00</div>
-        <img src="https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png?width=1000&height=203" alt="LongBlack Logo" class="logo-img" id="clock-logo">
+        <img src="https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png?width=1000&height=203" alt="Logo" class="logo-img" id="clock-logo">
     </div>
-
-    <div id="quote-display">
-        <div id="target-quote" class="quote-text"></div>
-        <div id="target-source" class="quote-source"></div>
-    </div>
-
-    <div id="full-logo-display">
-        <img src="https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png?width=1000&height=203" alt="LongBlack Full Logo" class="full-logo">
-    </div>
+    <div id="quote-display"><div id="target-quote" class="quote-text"></div><div id="target-source" class="quote-source"></div></div>
+    <div id="full-logo-display"><img src="https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png?width=1000&height=203" alt="Full Logo" class="full-logo" id="spinning-logo"></div>
 
     <script>
         const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
-        const logoUrl = "https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png?width=1000&height=203";
         let lastDirection = "", lastSecond = -1, isAnimating = false, cycleCounter = 0, quoteCounter = 0, soundEnabled = false;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -102,14 +102,9 @@
                     if (cycleCounter === 6) {
                         isAnimating = true;
                         quoteCounter++;
-                        if (quoteCounter === 5) {
-                            triggerFullLogoSequence();
-                        } else {
-                            triggerQuoteSequence();
-                        }
-                    } else {
-                        triggerBg();
-                    }
+                        if (quoteCounter === 5) triggerFullLogoSequence();
+                        else triggerQuoteSequence();
+                    } else triggerBg();
                 }
             }
             requestAnimationFrame(engine);
@@ -132,16 +127,8 @@
             const q = data[Math.floor(Math.random() * data.length)];
             document.getElementById('target-quote').innerText = q?.text || "";
             document.getElementById('target-source').innerText = q?.source || "";
-            const inDir = getDir();
-            const outDir = getDir();
-            const tl = gsap.timeline({
-                onComplete: () => {
-                    isAnimating = false;
-                    cycleCounter = 0;
-                    gsap.set("#quote-display", { visibility: "hidden" });
-                    triggerBg();
-                }
-            });
+            const inDir = getDir(), outDir = getDir();
+            const tl = gsap.timeline({ onComplete: () => { isAnimating = false; cycleCounter = 0; gsap.set("#quote-display", { visibility: "hidden" }); triggerBg(); } });
             tl.set("#quote-display", { visibility: "visible", ...inDir, opacity: 1 })
               .to("#clock-wrapper", { opacity: 0, duration: 0.2 })
               .to("#quote-display", { xPercent: 0, yPercent: 0, duration: 0.6, ease: "power3.out" })
@@ -151,22 +138,19 @@
         }
 
         function triggerFullLogoSequence() {
-            const inDir = getDir();
-            const outDir = getDir();
-            const tl = gsap.timeline({
-                onComplete: () => {
-                    isAnimating = false;
-                    cycleCounter = 0;
-                    quoteCounter = 0; // 카운터 초기화
-                    gsap.set("#full-logo-display", { visibility: "hidden" });
-                    triggerBg();
-                }
-            });
+            const inDir = getDir(), outDir = getDir();
+            const tl = gsap.timeline({ onComplete: () => { isAnimating = false; cycleCounter = 0; quoteCounter = 0; gsap.set("#full-logo-display", { visibility: "hidden" }); triggerBg(); } });
+            
             tl.set("#full-logo-display", { visibility: "visible", ...inDir, opacity: 1 })
+              .set("#spinning-logo", { rotation: 0 }) // 회전값 초기화
               .to("#clock-wrapper", { opacity: 0, duration: 0.2 })
               .to("#full-logo-display", { xPercent: 0, yPercent: 0, duration: 0.6, ease: "power3.out" })
-              .to({}, { duration: 3.0 }) // 3초간 노출
-              .to("#full-logo-display", { ...outDir, duration: 0.6, ease: "power3.in" })
+              .to("#spinning-logo", { 
+                  rotation: 360, 
+                  duration: 3.0, 
+                  ease: "none" // 시계 바늘처럼 일정한 속도로 회전
+              }, "-=0.2")
+              .to("#full-logo-display", { ...outDir, duration: 0.6, ease: "power3.in" }, "-=0.2")
               .to("#clock-wrapper", { opacity: 1, duration: 0.2 }, "-=0.2");
         }
 
