@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Spin Sequence V63</title>
+    <title>LongBlack - Ticking Sequence V64</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
@@ -14,21 +14,8 @@
         
         /* 시계 영역 */
         #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
-        .digital-clock { 
-            color: #fff; 
-            font-size: clamp(3.5rem, 15vw, 8rem); 
-            font-weight: 600; /* 시계 두께를 적절히 얇게 조정 */
-            letter-spacing: -0.03em; 
-            line-height: 1; 
-        }
-        
-        .logo-img { 
-            margin-top: 25px; 
-            width: clamp(120px, 22vw, 200px); 
-            height: auto; 
-            filter: brightness(0) invert(1);
-            transition: filter 0.4s;
-        }
+        .digital-clock { color: #fff; font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+        .logo-img { margin-top: 25px; width: clamp(120px, 22vw, 200px); height: auto; filter: brightness(0) invert(1); transition: filter 0.4s; }
 
         /* 5번째 시퀀스: 전체 화면 로고 */
         #full-logo-display { 
@@ -142,15 +129,16 @@
             const tl = gsap.timeline({ onComplete: () => { isAnimating = false; cycleCounter = 0; quoteCounter = 0; gsap.set("#full-logo-display", { visibility: "hidden" }); triggerBg(); } });
             
             tl.set("#full-logo-display", { visibility: "visible", ...inDir, opacity: 1 })
-              .set("#spinning-logo", { rotation: 0 }) // 회전값 초기화
+              .set("#spinning-logo", { rotation: 0 }) 
               .to("#clock-wrapper", { opacity: 0, duration: 0.2 })
               .to("#full-logo-display", { xPercent: 0, yPercent: 0, duration: 0.6, ease: "power3.out" })
+              // 핵심: 3초 동안 3단계로 나누어 60도씩(혹은 원하는 각도만큼) '탁 탁 탁' 회전
               .to("#spinning-logo", { 
-                  rotation: 360, 
+                  rotation: 180, // 3초 동안 총 180도 회전 (취향에 따라 360으로 변경 가능)
                   duration: 3.0, 
-                  ease: "none" // 시계 바늘처럼 일정한 속도로 회전
-              }, "-=0.2")
-              .to("#full-logo-display", { ...outDir, duration: 0.6, ease: "power3.in" }, "-=0.2")
+                  ease: "steps(3)" // 3초 동안 3번 끊어서 이동 (1초에 한 번씩 회전)
+              })
+              .to("#full-logo-display", { ...outDir, duration: 0.6, ease: "power3.in" })
               .to("#clock-wrapper", { opacity: 1, duration: 0.2 }, "-=0.2");
         }
 
