@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Perfect Filtering V33</title>
+    <title>LongBlack Archive - Grayscale Card Mode</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -17,7 +17,6 @@
         }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: #fff; font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none; }
 
-        /* Navigation */
         #header-wrapper { position: fixed; top: 0; left: 0; width: 100%; z-index: 5000; background: linear-gradient(to bottom, #000 80%, transparent); padding-bottom: 10px; }
         #category-nav { display: flex; align-items: center; justify-content: flex-start; gap: 15px; padding: 20px 20px 10px; overflow-x: auto; scrollbar-width: none; }
         #category-nav::-webkit-scrollbar { display: none; }
@@ -28,23 +27,35 @@
         .mode-btn { font-size: 0.7rem; font-weight: 700; color: #555; cursor: pointer; letter-spacing: 3px; text-transform: uppercase; transition: 0.3s; }
         .mode-btn.active { color: #fff; border-bottom: 2px solid var(--accent); padding-bottom: 3px; }
 
-        /* Flow Containers */
         .flow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: var(--gap); overflow: hidden; }
         .flow-row { display: flex; gap: var(--gap); width: max-content; will-change: transform; }
 
-        /* Tiles Style */
-        .thumb-tile, .card-tile { cursor: pointer; flex-shrink: 0; background: #111; transition: filter 0.4s; will-change: transform, opacity; }
+        /* Tiles Common */
+        .thumb-tile, .card-tile { cursor: pointer; flex-shrink: 0; background: #111; transition: filter 0.4s, transform 0.4s; will-change: transform, opacity; }
+        
+        /* Thumbnail View: Color on hover */
         .thumb-tile { width: var(--thumb-w); height: var(--thumb-h); border-radius: 4px; filter: grayscale(1) brightness(0.4); }
+        .thumb-tile:hover { filter: grayscale(0) brightness(1); transform: scale(1.05); }
+
+        /* [요청사항] Card News View: Grayscale focus on titles */
         .card-tile { width: var(--card-w); height: var(--card-h); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); position: relative; }
-        .thumb-tile img, .card-tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .card-tile img { 
+            width: 100%; height: 100%; object-fit: cover; 
+            filter: grayscale(1) brightness(0.4); /* 회색톤으로 수정 */
+            transition: 0.5s;
+        }
+        .card-tile:hover img { filter: grayscale(0.5) brightness(0.6); } /* 호버 시에만 살짝 색상 복원 */
+
         .card-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.9)); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; box-sizing: border-box; pointer-events: none; }
-        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.1rem; margin: 0; color: #fff; line-height: 1.3; }
+        .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.1rem; margin: 0; color: #fff; line-height: 1.4; word-break: keep-all; font-weight: 800; }
 
-        /* 필터링 시 전체 타일 투명도 조절 */
+        /* Filter State */
         body.is-filtered .thumb-tile, body.is-filtered .card-tile { opacity: 0 !important; pointer-events: none; }
-        body.is-filtered .thumb-tile.matched, body.is-filtered .card-tile.matched { opacity: 1 !important; filter: grayscale(0) brightness(1.1) !important; pointer-events: auto; z-index: 1000; }
+        body.is-filtered .thumb-tile.matched, body.is-filtered .card-tile.matched { opacity: 1 !important; pointer-events: auto; z-index: 1000; }
+        body.is-filtered .thumb-tile.matched { filter: grayscale(0) brightness(1.1) !important; }
+        body.is-filtered .card-tile.matched img { filter: grayscale(1) brightness(0.6) !important; }
 
-        /* Detail Focus Overlay */
+        /* Focus Overlay */
         #focus-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); backdrop-filter: blur(30px); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s; }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
         .f-card { width: 90%; max-width: 400px; background: #111; border-radius: 20px; overflow: hidden; text-align: center; }
@@ -78,8 +89,8 @@
         <div class="f-card">
             <img id="focus-img" src="" class="f-img">
             <div class="f-body">
-                <p id="focus-quote" style="font-family:'Nanum Myeongjo'; font-size:1.2rem; font-weight:800;"></p>
-                <h3 id="focus-title" style="font-size:0.8rem; color:#666;"></h3>
+                <p id="focus-quote" style="font-family:'Nanum Myeongjo'; font-size:1.2rem; font-weight:800; line-height:1.5;"></p>
+                <h3 id="focus-title" style="font-size:0.8rem; color:#666; margin-top:10px;"></h3>
                 <a id="focus-link" href="#" target="_blank" class="f-btn">READ NOTE</a>
                 <p onclick="document.getElementById('focus-overlay').classList.remove('active')" style="margin-top:20px; font-size:0.6rem; opacity:0.3; cursor:pointer;">CLOSE</p>
             </div>
@@ -119,7 +130,7 @@
 
         function initThumbnailFlow() {
             const container = document.getElementById('thumb-view');
-            const rowCount = Math.ceil(window.innerHeight / 180) + 1;
+            const rowCount = Math.ceil(window.innerHeight / 190) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
                 row.className = 'flow-row';
@@ -133,7 +144,7 @@
                     row.appendChild(tile);
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 20 + r*5, ease: "none", repeat: -1 });
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-30%" : "0%", duration: 25 + r*5, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-30%"});
                 thumbTLs.push(tl);
             }
@@ -141,7 +152,7 @@
 
         function initCardFlow() {
             const container = document.getElementById('card-view');
-            const rowCount = Math.ceil(window.innerHeight / 300) + 1;
+            const rowCount = Math.ceil(window.innerHeight / 290) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
                 row.className = 'flow-row';
@@ -155,13 +166,12 @@
                     row.appendChild(tile);
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-40%" : "0%", duration: 25 + r*8, ease: "none", repeat: -1 });
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-40%" : "0%", duration: 30 + r*8, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-40%"});
                 cardTLs.push(tl);
             }
         }
 
-        // [필터링 로직 수정 - 겹침 오류 해결]
         function applyFilter(cat) {
             currentCat = cat;
             const isFiltered = cat !== 'all';
@@ -170,7 +180,6 @@
             const currentTLs = displayMode === 'thumbnail' ? thumbTLs : cardTLs;
             const tiles = Array.from(document.querySelectorAll(displayMode === 'thumbnail' ? '.thumb-tile' : '.card-tile'));
 
-            // 1. 모든 애니메이션 즉시 중단 및 좌표 원점 초기화 (핵심!)
             gsap.killTweensOf(tiles);
             gsap.set(tiles, { x: 0, y: 0, scale: 1, opacity: isFiltered ? 0 : 1 });
             tiles.forEach(t => t.classList.remove('matched'));
@@ -181,7 +190,7 @@
                 currentTLs.forEach(tl => tl.pause());
                 const matched = tiles.filter(t => t.dataset.cat === cat);
                 
-                const winW = window.innerWidth, winH = window.innerHeight;
+                const winW = window.innerWidth;
                 const cols = displayMode === 'thumbnail' ? (winW < 600 ? 2 : 5) : (winW < 600 ? 1 : 3);
                 const gap = 20;
                 const tileW = matched[0].offsetWidth, tileH = matched[0].offsetHeight;
@@ -191,15 +200,12 @@
 
                 matched.forEach((tile, idx) => {
                     tile.classList.add('matched');
-                    // 현재 흐름 속에서의 물리적 위치 측정
                     const rect = tile.getBoundingClientRect(); 
-                    
-                    // 2. 초기화된 원점(0,0) 상태를 기준으로 정확한 목표 좌표만 계산하여 이동
                     const tx = startX + (idx % cols) * (tileW + gap) - rect.left;
                     const ty = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
 
                     gsap.to(tile, {
-                        x: tx, // '+=' 대신 절대값 tx를 사용하여 겹침 방지
+                        x: tx,
                         y: ty,
                         opacity: 1,
                         duration: 0.8,
@@ -253,7 +259,7 @@
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
-            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 내일을 바꿉니다.”";
+            document.getElementById('focus-quote').innerText = "“깊이 있는 통찰은 차분한 기록에서 시작됩니다.”";
             document.getElementById('focus-title').innerText = data.note_title;
             document.getElementById('focus-overlay').classList.add('active');
         }
