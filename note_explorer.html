@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack Archive - Perfect Filter Fixed</title>
+    <title>LongBlack Archive - Perfect Filtering V33</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -17,6 +17,7 @@
         }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: #fff; font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none; }
 
+        /* Navigation */
         #header-wrapper { position: fixed; top: 0; left: 0; width: 100%; z-index: 5000; background: linear-gradient(to bottom, #000 80%, transparent); padding-bottom: 10px; }
         #category-nav { display: flex; align-items: center; justify-content: flex-start; gap: 15px; padding: 20px 20px 10px; overflow-x: auto; scrollbar-width: none; }
         #category-nav::-webkit-scrollbar { display: none; }
@@ -27,21 +28,23 @@
         .mode-btn { font-size: 0.7rem; font-weight: 700; color: #555; cursor: pointer; letter-spacing: 3px; text-transform: uppercase; transition: 0.3s; }
         .mode-btn.active { color: #fff; border-bottom: 2px solid var(--accent); padding-bottom: 3px; }
 
-        .flow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: var(--gap); overflow: hidden; transition: opacity 0.5s; }
+        /* Flow Containers */
+        .flow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: var(--gap); overflow: hidden; }
         .flow-row { display: flex; gap: var(--gap); width: max-content; will-change: transform; }
 
-        .thumb-tile, .card-tile { cursor: pointer; flex-shrink: 0; overflow: hidden; background: #111; transition: filter 0.4s; will-change: transform, opacity; }
+        /* Tiles Style */
+        .thumb-tile, .card-tile { cursor: pointer; flex-shrink: 0; background: #111; transition: filter 0.4s; will-change: transform, opacity; }
         .thumb-tile { width: var(--thumb-w); height: var(--thumb-h); border-radius: 4px; filter: grayscale(1) brightness(0.4); }
         .card-tile { width: var(--card-w); height: var(--card-h); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); position: relative; }
         .thumb-tile img, .card-tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        
         .card-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.9)); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; box-sizing: border-box; pointer-events: none; }
         .c-title { font-family: 'Nanum Myeongjo'; font-size: 1.1rem; margin: 0; color: #fff; line-height: 1.3; }
 
-        /* 필터 작동 시 타일 상태 */
-        body.is-filtered .thumb-tile, body.is-filtered .card-tile { opacity: 0; pointer-events: none; }
-        body.is-filtered .thumb-tile.matched, body.is-filtered .card-tile.matched { opacity: 1; filter: grayscale(0) brightness(1.1) !important; pointer-events: auto; z-index: 1000; }
+        /* 필터링 시 전체 타일 투명도 조절 */
+        body.is-filtered .thumb-tile, body.is-filtered .card-tile { opacity: 0 !important; pointer-events: none; }
+        body.is-filtered .thumb-tile.matched, body.is-filtered .card-tile.matched { opacity: 1 !important; filter: grayscale(0) brightness(1.1) !important; pointer-events: auto; z-index: 1000; }
 
+        /* Detail Focus Overlay */
         #focus-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); backdrop-filter: blur(30px); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: 0.5s; }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
         .f-card { width: 90%; max-width: 400px; background: #111; border-radius: 20px; overflow: hidden; text-align: center; }
@@ -116,7 +119,6 @@
 
         function initThumbnailFlow() {
             const container = document.getElementById('thumb-view');
-            container.innerHTML = '';
             const rowCount = Math.ceil(window.innerHeight / 180) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
@@ -139,7 +141,6 @@
 
         function initCardFlow() {
             const container = document.getElementById('card-view');
-            container.innerHTML = '';
             const rowCount = Math.ceil(window.innerHeight / 300) + 1;
             for (let r = 0; r < rowCount; r++) {
                 const row = document.createElement('div');
@@ -160,7 +161,7 @@
             }
         }
 
-        // [핵심 필터링 로직 수정본]
+        // [필터링 로직 수정 - 겹침 오류 해결]
         function applyFilter(cat) {
             currentCat = cat;
             const isFiltered = cat !== 'all';
@@ -169,13 +170,13 @@
             const currentTLs = displayMode === 'thumbnail' ? thumbTLs : cardTLs;
             const tiles = Array.from(document.querySelectorAll(displayMode === 'thumbnail' ? '.thumb-tile' : '.card-tile'));
 
-            // 모든 타일 초기화 (강력하게 초기화)
+            // 1. 모든 애니메이션 즉시 중단 및 좌표 원점 초기화 (핵심!)
             gsap.killTweensOf(tiles);
+            gsap.set(tiles, { x: 0, y: 0, scale: 1, opacity: isFiltered ? 0 : 1 });
             tiles.forEach(t => t.classList.remove('matched'));
 
             if (!isFiltered) {
                 currentTLs.forEach(tl => tl.play());
-                gsap.to(tiles, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.6, ease: "power2.inOut", clearProps: "transform" });
             } else {
                 currentTLs.forEach(tl => tl.pause());
                 const matched = tiles.filter(t => t.dataset.cat === cat);
@@ -190,20 +191,20 @@
 
                 matched.forEach((tile, idx) => {
                     tile.classList.add('matched');
-                    const rect = tile.getBoundingClientRect(); // 현재 실시간 물리적 위치 측정
+                    // 현재 흐름 속에서의 물리적 위치 측정
+                    const rect = tile.getBoundingClientRect(); 
                     
-                    // 현재 위치에서 가야 할 목적지까지의 상대 거리 계산
+                    // 2. 초기화된 원점(0,0) 상태를 기준으로 정확한 목표 좌표만 계산하여 이동
                     const tx = startX + (idx % cols) * (tileW + gap) - rect.left;
                     const ty = startY + Math.floor(idx / cols) * (tileH + gap) - rect.top;
 
                     gsap.to(tile, {
-                        x: `+=${tx}`,
-                        y: `+=${ty}`,
-                        scale: 1,
+                        x: tx, // '+=' 대신 절대값 tx를 사용하여 겹침 방지
+                        y: ty,
                         opacity: 1,
                         duration: 0.8,
                         ease: "expo.out",
-                        delay: idx * 0.01 // 버버벅거림 방지를 위한 미세한 순차적 이동
+                        delay: idx * 0.01
                     });
                 });
             }
@@ -252,7 +253,7 @@
 
         function showFocus(data) {
             document.getElementById('focus-img').src = data.thumbnail_url;
-            document.getElementById('focus-quote').innerText = "“사소한 기록이 모여 고유한 서사가 됩니다.”";
+            document.getElementById('focus-quote').innerText = "“오늘의 문장이 당신의 내일을 바꿉니다.”";
             document.getElementById('focus-title').innerText = data.note_title;
             document.getElementById('focus-overlay').classList.add('active');
         }
