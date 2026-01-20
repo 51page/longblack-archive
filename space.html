@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Media Art - Convergence V3</title>
+    <title>LongBlack Media Art - V4 Magnetic Flip</title>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@100;300;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #050507;
+            --bg-color: #030305;
             --accent: #FF4E00;
         }
 
@@ -17,13 +17,14 @@
             overflow: hidden;
             background-color: var(--bg-color);
             font-family: 'Montserrat', sans-serif;
+            cursor: none; /* 커스텀 포인터를 위해 기본 커서 숨김 */
         }
 
-        /* 비네팅 효과 (프로페셔널한 깊이감) */
+        /* 비네팅 및 마우스 글로우 */
         body::after {
             content: "";
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.8) 100%);
+            background: radial-gradient(circle at var(--m-x, 50%) var(--m-y, 50%), transparent 10%, rgba(0,0,0,0.85) 80%);
             pointer-events: none; z-index: 5;
         }
 
@@ -33,81 +34,85 @@
             z-index: 1;
         }
 
-        #instruction {
-            position: absolute;
-            bottom: 40px; left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 0.7rem; letter-spacing: 5px;
-            font-weight: 300;
-            text-transform: uppercase;
-            z-index: 10;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-
-        /* 완성된 문장 레이아웃 (정돈된 형태) */
+        /* 시계 플립 타이핑 효과를 위한 스타일 */
         #final-quote-container {
             position: absolute;
             top: 50%; left: 50%;
-            transform: translate(-50%, -48%);
-            width: 80%; max-width: 850px;
+            transform: translate(-50%, -50%);
+            width: 80%; max-width: 700px;
             text-align: center;
             z-index: 20;
-            opacity: 0;
             pointer-events: none;
-            transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1);
-        }
-
-        #final-quote-container.active {
-            opacity: 1;
-            transform: translate(-50%, -50%);
         }
 
         #final-text {
             font-family: 'Nanum Myeongjo', serif;
-            font-size: clamp(1.8rem, 4.5vw, 3.2rem);
-            font-weight: 800;
-            line-height: 1.5;
+            font-size: clamp(1.2rem, 2.5vw, 2rem); /* 더 작고 정갈하게 */
+            font-weight: 700;
+            line-height: 1.8;
             color: #fff;
-            margin: 0 0 40px 0;
+            margin: 0 0 30px 0;
             word-break: keep-all;
-            letter-spacing: -0.5px;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2px 6px;
+        }
+
+        /* 개별 글자 플립 애니메이션 */
+        .char {
+            display: inline-block;
+            opacity: 0;
+            transform: rotateX(-90deg);
+            transition: all 0.4s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+            backface-visibility: hidden;
+        }
+        .char.flipped {
+            opacity: 1;
+            transform: rotateX(0deg);
         }
 
         #final-source-wrap {
-            display: inline-flex;
+            opacity: 0;
+            transition: opacity 1s ease 0.5s;
+            display: flex;
             align-items: center;
-            gap: 20px;
-            opacity: 0.8;
+            justify-content: center;
+            gap: 15px;
         }
+        #final-source-wrap.active { opacity: 0.7; }
 
-        .line { width: 40px; height: 1px; background: var(--accent); }
-
+        .line { width: 30px; height: 1px; background: var(--accent); }
         #final-source {
             font-family: 'Montserrat', sans-serif;
-            font-size: 0.85rem; font-weight: 600;
-            color: var(--accent);
-            letter-spacing: 4px;
+            font-size: 0.75rem; font-weight: 600;
+            color: var(--accent); letter-spacing: 3px;
             text-transform: uppercase;
+        }
+
+        /* 커스텀 커서 */
+        #cursor {
+            position: fixed; width: 8px; height: 8px; background: var(--accent);
+            border-radius: 50%; pointer-events: none; z-index: 100;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
         }
 
         #loader {
             position: fixed; top:0; left:0; width:100%; height:100%;
             background: #000; color: #fff; display: flex; align-items: center;
-            justify-content: center; z-index: 100; font-size: 0.7rem; letter-spacing: 3px;
+            justify-content: center; z-index: 1000; font-size: 0.7rem; letter-spacing: 3px;
         }
     </style>
 </head>
 <body>
 
-    <div id="loader">INITIATING CONVERGENCE...</div>
+    <div id="loader">CALIBRATING MAGNETIC FIELD...</div>
+    <div id="cursor"></div>
     <canvas id="canvas-container"></canvas>
-    <div id="instruction">Touch to Reveal Insight</div>
 
     <div id="final-quote-container">
-        <h1 id="final-text"></h1>
+        <div id="final-text"></div>
         <div id="final-source-wrap">
             <div class="line"></div>
             <span id="final-source"></span>
@@ -120,14 +125,14 @@
     <script>
         const canvas = document.getElementById('canvas-container');
         const ctx = canvas.getContext('2d');
-        const loader = document.getElementById('loader');
-        const finalContainer = document.getElementById('final-quote-container');
-        const finalText = document.getElementById('final-text');
+        const cursor = document.getElementById('cursor');
+        const finalTextWrap = document.getElementById('final-text');
+        const finalSourceWrap = document.getElementById('final-source-wrap');
         const finalSource = document.getElementById('final-source');
-        const instruction = document.getElementById('instruction');
+        const loader = document.getElementById('loader');
 
         let width, height, particles = [], isConverging = false;
-        let time = 0;
+        let mouse = { x: -1000, y: -1000 };
 
         function resize() {
             width = canvas.width = window.innerWidth;
@@ -145,35 +150,38 @@
             reset() {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.baseX = this.x;
-                this.baseY = this.y;
-                this.size = Math.random() * 12 + 8;
+                this.size = Math.random() * 10 + 6;
                 this.opacity = 0;
-                this.speed = Math.random() * 0.5 + 0.2;
-                this.offset = Math.random() * 1000;
-                this.isFading = false;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.originOpacity = Math.random() * 0.3 + 0.1;
             }
 
             update() {
                 if (isConverging) {
-                    // 중앙으로 모이는 것이 아니라 화면 밖으로 부드럽게 사라짐 (어지러움 방지)
-                    this.opacity -= 0.04;
+                    this.opacity -= 0.05;
                 } else {
-                    // 유기적인 흐름 (Flow Field 느낌의 수식 적용)
-                    time += 0.0001;
-                    const noise = Math.sin(this.x * 0.005 + time + this.offset) * Math.cos(this.y * 0.005 + time);
-                    const angle = noise * Math.PI * 2;
+                    // 마우스와의 거리 계산 (자기장 효과)
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const force = Math.max(0, (150 - dist) / 150);
                     
-                    this.x += Math.cos(angle) * this.speed;
-                    this.y += Math.sin(angle) * this.speed;
+                    // 마우스로부터 멀어지는 힘
+                    if (dist < 150) {
+                        this.x -= (dx / dist) * force * 5;
+                        this.y -= (dy / dist) * force * 5;
+                    }
 
-                    // 경계 처리
+                    this.x += this.vx;
+                    this.y += this.vy;
+
                     if (this.x < 0) this.x = width;
                     if (this.x > width) this.x = 0;
                     if (this.y < 0) this.y = height;
                     if (this.y > height) this.y = 0;
 
-                    if (this.opacity < 0.4) this.opacity += 0.01;
+                    if (this.opacity < this.originOpacity) this.opacity += 0.01;
                 }
             }
 
@@ -187,14 +195,14 @@
         }
 
         function init() {
-            let words = ["INSIGHT", "SENSE", "GROW", "DATA", "ARCHIVE", "LONGBLACK", "MIND", "CONNECT", "FLOW", "STORY"];
-            if (typeof quoteData !== 'undefined' && Array.isArray(quoteData)) {
+            let words = ["INSIGHT", "SENSE", "FLOW", "DATA", "MIND", "CONNECT", "LONGBLACK"];
+            if (typeof quoteData !== 'undefined') {
                 const allWords = [];
                 quoteData.forEach(q => allWords.push(...q.text.split(' ')));
-                if(allWords.length > 0) words = allWords.filter(w => w.length > 1);
+                words = allWords.filter(w => w.length > 1);
             }
 
-            for (let i = 0; i < 80; i++) {
+            for (let i = 0; i < 100; i++) {
                 particles.push(new Particle(words[Math.floor(Math.random() * words.length)]));
             }
             loader.style.display = 'none';
@@ -202,47 +210,73 @@
         }
 
         function animate() {
-            // 고급스러운 잔상 연출
-            ctx.fillStyle = 'rgba(5, 5, 7, 0.15)';
+            ctx.fillStyle = 'rgba(3, 3, 5, 0.2)';
             ctx.fillRect(0, 0, width, height);
-
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
+            particles.forEach(p => { p.update(); p.draw(); });
             requestAnimationFrame(animate);
+        }
+
+        // 플립 타이핑 함수
+        function flipType(text) {
+            finalTextWrap.innerHTML = "";
+            const chars = text.split("");
+            
+            chars.forEach((char, i) => {
+                const span = document.createElement("span");
+                span.innerText = char === " " ? "\u00A0" : char;
+                span.className = "char";
+                finalTextWrap.appendChild(span);
+
+                setTimeout(() => {
+                    span.classList.add("flipped");
+                }, i * 50); // 글자당 0.05초 간격
+            });
         }
 
         function trigger() {
             if (isConverging) return;
             isConverging = true;
-            instruction.style.opacity = "0";
-
-            let q = { text: "통찰은 정돈된 마음에서 시작됩니다.", source: "LongBlack" };
-            if (typeof quoteData !== 'undefined' && quoteData.length > 0) {
+            
+            let q = { text: "모든 데이터는 각자의 궤도를 가집니다.", source: "LongBlack" };
+            if (typeof quoteData !== 'undefined') {
                 q = quoteData[Math.floor(Math.random() * quoteData.length)];
             }
 
-            // 파티클이 사라진 후 깨끗한 상태에서 문장 등장
             setTimeout(() => {
-                finalText.innerText = q.text;
+                flipType(q.text);
                 finalSource.innerText = q.source;
-                finalContainer.classList.add('active');
-            }, 500);
+                finalSourceWrap.classList.add('active');
+            }, 600);
         }
 
         function reset() {
             if (!isConverging) return;
             isConverging = false;
-            finalContainer.classList.remove('active');
-            instruction.style.opacity = "1";
+            finalTextWrap.innerHTML = "";
+            finalSourceWrap.classList.remove('active');
             particles.forEach(p => p.reset());
         }
 
-        document.fonts.ready.then(() => init());
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            document.body.style.setProperty('--m-x', e.clientX + 'px');
+            document.body.style.setProperty('--m-y', e.clientY + 'px');
+        });
+
+        window.addEventListener('mousedown', () => {
+            cursor.style.width = '20px'; cursor.style.height = '20px';
+        });
+        window.addEventListener('mouseup', () => {
+            cursor.style.width = '8px'; cursor.style.height = '8px';
+        });
 
         window.addEventListener('keydown', e => { if(e.code === 'Enter') isConverging ? reset() : trigger(); });
         window.addEventListener('click', () => isConverging ? reset() : trigger());
+
+        document.fonts.ready.then(() => init());
     </script>
 </body>
 </html>
