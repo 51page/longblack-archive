@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LongBlack Note Explorer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@800&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --accent: #FF4E00;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden; /* 스크롤바 숨김 */
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 전체 배경에 깔리는 은은한 텍스처 */
+        .bg-texture {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 100%);
+            z-index: -1;
+        }
+
+        /* 슬라이더 컨테이너 */
+        .slider-wrapper {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            overflow: visible;
+            cursor: grab;
+        }
+        .slider-wrapper:active { cursor: grabbing; }
+
+        .slider-inner {
+            display: flex;
+            gap: 120px;
+            padding: 0 40vw; /* 시작과 끝 여백 */
+            perspective: 1000px;
+        }
+
+        /* 개별 카드 (앨범 커버 스타일) */
+        .note-card {
+            position: relative;
+            min-width: 350px;
+            height: 480px;
+            background: #111;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            transition: box-shadow 0.3s;
+            transform-style: preserve-3d;
+            user-select: none;
+        }
+
+        .note-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(20%) brightness(0.8);
+            transition: filter 0.5s;
+        }
+
+        /* 카드 내 정보 */
+        .note-info {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            padding: 40px 30px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .category {
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .title {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 1.5rem;
+            line-height: 1.4;
+            font-weight: 800;
+            word-break: keep-all;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        /* 하단 가이드 */
+        .guide {
+            position: absolute; bottom: 50px;
+            font-size: 0.6rem; letter-spacing: 4px;
+            opacity: 0.3; text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-texture"></div>
+    
+    <div class="slider-wrapper" id="sliderWrapper">
+        <div class="slider-inner" id="sliderInner">
+            </div>
+    </div>
+
+    <div class="guide">Drag or Scroll to Explore Archive</div>
+
+    <script>
+        // 이전에 사용한 제목 콘텐츠 활용 데이터
+        const noteData = [
+            { title: "픽사, '별로'라는 피드백을 환영하는 이유", cat: "BUSINESS", img: "https://picsum.photos/id/101/800/1000" },
+            { title: "딥마인드 CEO, AI 시대의 창의성을 말하다", cat: "TECH", img: "https://picsum.photos/id/102/800/1000" },
+            { title: "무인양품, 결국 다시 기본으로 돌아가다", cat: "DESIGN", img: "https://picsum.photos/id/103/800/1000" },
+            { title: "통찰은 정돈된 마음에서 시작됩니다", cat: "SENSE", img: "https://picsum.photos/id/104/800/1000" },
+            { title: "모든 데이터는 각자의 궤도를 가집니다", cat: "DATA", img: "https://picsum.photos/id/106/800/1000" },
+            { title: "나를 정의하는 것은 내가 읽은 기록들", cat: "ARCHIVE", img: "https://picsum.photos/id/107/800/1000" },
+            { title: "영감은 우연을 가장한 필연의 결과", cat: "MIND", img: "https://picsum.photos/id/108/800/1000" }
+        ];
+
+        const inner = document.getElementById('sliderInner');
+
+        // 1. 카드 생성
+        noteData.forEach(note => {
+            const card = document.createElement('div');
+            card.className = 'note-card';
+            card.innerHTML = `
+                <img src="${note.img}" alt="">
+                <div class="note-info">
+                    <span class="category">${note.cat}</span>
+                    <h2 class="title">${note.title}</h2>
+                </div>
+            `;
+            inner.appendChild(card);
+        });
+
+        // 2. GSAP 인터랙션 설정
+        gsap.registerPlugin(ScrollTrigger, Draggable);
+
+        const cards = gsap.utils.toArray(".note-card");
+        const loop = horizontalLoop(cards, {
+            draggable: true,
+            center: true,
+            speed: 1.5
+        });
+
+        // 3. 카드 애니메이션 효과 (중앙에 올수록 커지고 선명해짐)
+        cards.forEach((card, i) => {
+            gsap.to(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: "left right", // 카드 왼쪽이 화면 오른쪽 끝에 닿을 때
+                    end: "right left",   // 카드 오른쪽이 화면 왼쪽 끝에 닿을 때
+                    containerAnimation: loop,
+                    scrub: true,
+                },
+                scale: 1.15,
+                filter: "brightness(1) grayscale(0%)",
+                rotationY: 0,
+                duration: 0.5
+            });
+        });
+
+        // --- GSAP 무한 루프 헬퍼 함수 (고급 모션의 핵심) ---
+        function horizontalLoop(items, config) {
+            items = gsap.utils.toArray(items);
+            config = config || {};
+            let tl = gsap.timeline({repeat: config.repeat, paused: config.paused, defaults: {ease: "none"}, onReverseComplete: () => tl.totalTime(tl.rawTime() + tl.duration() * 100)}),
+                length = items.length,
+                startX = items[0].offsetLeft,
+                times = [],
+                widths = [],
+                xPercents = [],
+                curIndex = 0,
+                pixelsPerSecond = (config.speed || 1) * 100,
+                snap = config.snap === false ? v => v : gsap.utils.snap(config.snap || 1),
+                totalWidth, curX, distanceToStart, distanceToLoop, item, i;
+
+            gsap.set(items, {
+                xPercent: (i, el) => {
+                    let w = widths[i] = parseFloat(gsap.getProperty(el, "width", "px"));
+                    xPercents[i] = snap(parseFloat(gsap.getProperty(el, "x", "px")) / w * 100 + gsap.getProperty(el, "xPercent"));
+                    return xPercents[i];
+                }
+            });
+            gsap.set(items, {x: 0});
+            totalWidth = items[length-1].offsetLeft + xPercents[length-1] / 100 * widths[length-1] - startX + items[length-1].offsetWidth * gsap.getProperty(items[length-1], "scaleX") + (parseFloat(config.paddingRight) || 0);
+            for (i = 0; i < length; i++) {
+                item = items[i];
+                curX = xPercents[i] / 100 * widths[i];
+                distanceToStart = item.offsetLeft - startX;
+                distanceToLoop = distanceToStart + widths[i] * gsap.getProperty(item, "scaleX");
+                tl.to(item, {xPercent: snap((curX - distanceToLoop) / widths[i] * 100), duration: distanceToLoop / pixelsPerSecond}, 0)
+                  .fromTo(item, {xPercent: snap((curX - distanceToLoop + totalWidth) / widths[i] * 100)}, {xPercent: xPercents[i], duration: (totalWidth - distanceToLoop + curX) / pixelsPerSecond, immediateRender: false}, distanceToLoop / pixelsPerSecond)
+                  .add("label" + i, distanceToStart / pixelsPerSecond);
+                times[i] = distanceToStart / pixelsPerSecond;
+            }
+
+            function toIndex(index, vars) {
+                vars = vars || {};
+                (Math.abs(index - curIndex) > length / 2) && (index += index > curIndex ? -length : length);
+                let newIndex = gsap.utils.wrap(0, length, index),
+                    time = times[newIndex];
+                if (time > tl.time() !== index > curIndex) {
+                    vars.modifiers = {time: gsap.utils.wrap(0, tl.duration())};
+                    time += tl.duration() * (index > curIndex ? 1 : -1);
+                }
+                curIndex = newIndex;
+                vars.overwrite = true;
+                return tl.tweenTo(time, vars);
+            }
+
+            tl.next = vars => toIndex(curIndex + 1, vars);
+            tl.prev = vars => toIndex(curIndex - 1, vars);
+            tl.current = () => curIndex;
+            tl.toIndex = (index, vars) => toIndex(index, vars);
+            tl.times = times;
+            tl.progress(1, true).progress(0, true);
+            if (config.draggable && typeof(Draggable) === "function") {
+                let proxy = document.createElement("div"),
+                    type = "x",
+                    ratio = 1,
+                    invRatio = 1 / ratio,
+                    align = () => tl.progress(gsap.utils.wrap(0, 1, gsap.getProperty(proxy, "x") * invRatio / totalWidth)),
+                    draggable = Draggable.create(proxy, {
+                        type: type,
+                        trigger: items[0].parentNode,
+                        onDrag: align,
+                        onThrowUpdate: align,
+                        inertia: true,
+                        snap: v => {
+                            let step = totalWidth / length;
+                            return Math.round(v / step) * step;
+                        }
+                    })[0];
+                tl.draggable = draggable;
+            }
+            return tl;
+        }
+    </script>
+</body>
+</html>
