@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Real-Asset Mosaic</title>
+    <title>LongBlack Insight Mosaic</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@800&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #010101;
             --accent: #FF4E00;
-            --tile-w: 160px;
-            --tile-h: 220px;
-            --gap: 15px;
+            --tile-w: 150px; /* 타일 크기 미세 조정 */
+            --tile-h: 210px;
+            --gap: 12px;
         }
 
         body, html {
@@ -49,15 +49,15 @@
             cursor: pointer;
             position: relative;
             flex-shrink: 0;
-            filter: brightness(0.4) grayscale(1); /* 기본 상태: 어둡고 흑백 */
+            filter: brightness(0.4) grayscale(1);
             transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .tile:hover {
-            filter: brightness(1.2) grayscale(0);
-            transform: scale(1.1);
+            filter: brightness(1.1) grayscale(0);
+            transform: scale(1.15);
             z-index: 10;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
         }
 
         .tile img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
@@ -65,39 +65,52 @@
         /* 하이라이트 포커스 레이어 */
         #focus-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(25px);
+            background: rgba(0,0,0,0.93);
+            backdrop-filter: blur(20px);
             display: flex; align-items: center; justify-content: center;
             z-index: 100; opacity: 0; pointer-events: none;
-            transition: opacity 0.6s ease;
+            transition: opacity 0.5s ease;
         }
         #focus-overlay.active { opacity: 1; pointer-events: auto; }
 
         .focus-content {
-            width: 90%; max-width: 480px;
+            width: 85%; max-width: 550px;
             text-align: center;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .focus-img {
-            width: 100%; height: auto;
-            aspect-ratio: 3 / 4;
-            border-radius: 8px; object-fit: cover;
+            width: auto; height: 350px; /* 이미지 높이 고정하여 레이아웃 안정화 */
+            border-radius: 8px; object-fit: contain;
             margin-bottom: 30px;
-            box-shadow: 0 40px 100px rgba(0,0,0,1);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+        }
+
+        /* 새로 추가된 문장 스타일 */
+        .focus-quote {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 1.35rem; font-weight: 800; line-height: 1.5;
+            color: #fff;
+            margin: 0 0 20px 0;
+            word-break: keep-all;
+            padding: 0 20px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
 
         .focus-title {
-            font-family: 'Nanum Myeongjo', serif;
-            font-size: 1.8rem; font-weight: 800; line-height: 1.5;
-            margin: 0 0 15px 0; word-break: keep-all;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem; font-weight: 500;
+            opacity: 0.7;
+            margin: 0 0 10px 0; letter-spacing: 1px;
         }
+
         .focus-source {
-            color: var(--accent); letter-spacing: 4px; font-size: 0.8rem; font-weight: 600;
-            text-transform: uppercase;
+            color: var(--accent); letter-spacing: 3px; font-size: 0.75rem; font-weight: 600;
+            text-transform: uppercase; margin-top: 15px;
         }
 
         .close-hint {
-            margin-top: 50px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 3px;
+            margin-top: 40px; font-size: 0.6rem; opacity: 0.3; letter-spacing: 3px; cursor: pointer;
         }
     </style>
 </head>
@@ -108,30 +121,34 @@
     <div id="focus-overlay">
         <div class="focus-content">
             <img id="focus-img" src="" class="focus-img">
-            <h2 id="focus-title" class="focus-title"></h2>
-            <span id="focus-source" class="focus-source">LONGBLACK ARCHIVE</span>
+            <p id="focus-quote" class="focus-quote"></p>
+            <h3 id="focus-title" class="focus-title"></h3>
+            <div style="width: 30px; height: 1px; background: var(--accent); margin-top:10px;"></div>
+            <span class="focus-source">LONGBLACK ARCHIVE</span>
             <p class="close-hint">CLICK ANYWHERE TO RETURN</p>
         </div>
     </div>
 
     <script>
-        // 제공해주신 실제 롱블랙 썸네일 데이터 적용
+        // 업데이트된 데이터 (새로운 이미지 + 임시 문장 및 제목)
+        // 실제 서비스시에는 이 부분에 정확한 DB 데이터가 연동되어야 합니다.
         const noteData = [
-            { title: "영감의 탄생, 찰나의 순간", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384619eac446d2cac1af75e09af270aaacb279.png" },
-            { title: "비즈니스의 본질을 묻다", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/1768384603edcd73ebd53934bf6a377eedc43790ec.png" },
-            { title: "감각의 아카이빙", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260114/17683845947c75c9555c9bbfe7c994abc37a6785d5.png" },
-            { title: "기록이 쌓이면 통찰이 된다", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260112/1768210148519c8f742204d28d70bf4ace87622432.png" },
-            { title: "시대의 흐름을 읽는 법", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260109/1767946388b29b85abaadfdd3c955d0c2620e4bf5c.png" },
-            { title: "기본으로 돌아가는 용기", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260107/17677774737a16067d49477e7b8b36bec3ab0a9d17.png" },
-            { title: "공간의 미학", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20260107/1767777461941d081fd270caedcf978cc497944277.png" },
-            { title: "디테일의 완성", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251231/176717253930de709dc8885df3385e0f903ac8a80d.png" },
-            { title: "매일의 감각", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251231/176717253129756460f67875e063f5e4e8f3a6d9e1.png" },
-            { title: "미래의 조각들", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/1766565622366b4fa1860195c07097801614456294.png" },
-            { title: "브랜드의 탄생", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/17665656151dbf8b1a9de9bce4e3e696ea2c63b246.svg" }
+            { title: "영감의 탄생, 그 찰나", quote: "위대한 영감은 우연을 가장한 필연적인 축적의 결과물이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251224/176656503563a1934c51b320fe95469a34126b5418.png" },
+            { title: "비즈니스의 본질을 묻다", quote: "결국 모든 비즈니스는 사람의 마음을 얻는 과정이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251217/1765962945ee9b56524b06910d3698879edb452464.png" },
+            { title: "감각의 아카이빙", quote: "나를 정의하는 것은 내가 보고 듣고 읽은 것들의 총합이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251217/1765962275e8eeb5995c8d6addd9153ffc4ec434ce.png" },
+            { title: "기록이 쌓이면 통찰이 된다", quote: "어제의 기록이 오늘의 나를 만들고, 내일의 통찰이 된다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251211/1765433740ebaf8b810d2d1f9ead935299364919a1.png" },
+            { title: "시대의 흐름을 읽는 법", quote: "변화의 파도 속에서 변하지 않는 본질을 보는 눈을 길러야 한다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251211/1765433716be1ad9dbf19817a9573785fe6ae33360.png" },
+            { title: "기본으로 돌아가는 용기", quote: "가장 혁신적인 답은 언제나 가장 기본적인 질문 속에 숨어있다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/176474266585e9885cba40526329edaafbfcc51581.png" },
+            { title: "공간의 미학", quote: "좋은 공간은 머무는 사람의 태도까지 디자인한다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/1764742730aeaf9a1c72017d80b52900534bd50794.png" },
+            { title: "디테일의 완성", quote: "사소한 디테일 하나가 브랜드의 영혼을 결정짓는다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251125/17640579902f4c62d2fbf8001c97c38d02d59e237c.png" },
+            { title: "매일의 감각을 깨우다", quote: "무뎌진 일상의 감각을 깨우는 것이 영감의 시작이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251203/176472681167f136b488d418f792a6f7c62e7d7981.png" },
+            { title: "미래의 조각들", quote: "미래는 예측하는 것이 아니라, 오늘의 조각들로 만들어가는 것이다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251121/1763724643574a7a78e625111f95a9b0bc522eb356.png" },
+            { title: "브랜드의 탄생", quote: "사랑받는 브랜드는 명확한 자기다움에서 시작된다.", img: "https://longblack-contens.s3.ap-northeast-2.amazonaws.com/image/20251112/176294083545516b03ee7bd96747e27648c1080e19.png" }
         ];
 
         const container = document.getElementById('grid-container');
         const overlay = document.getElementById('focus-overlay');
+        const focusquote = document.getElementById('focus-quote');
         
         // 5줄의 촘촘한 그리드 생성
         const rowCount = 5;
@@ -139,7 +156,7 @@
             const row = document.createElement('div');
             row.className = 'grid-row';
             
-            // 이미지들을 랜덤하게 섞어서 배치
+            // 데이터를 랜덤하게 섞고 충분히 반복하여 배치
             const shuffledData = [...noteData, ...noteData, ...noteData].sort(() => Math.random() - 0.5);
             
             shuffledData.forEach(data => {
@@ -151,8 +168,8 @@
             });
             container.appendChild(row);
 
-            // 줄마다 서로 다른 속도로 무한 루프
-            const duration = 60 + (r * 15);
+            // 줄마다 서로 다른 속도와 방향으로 무한 루프
+            const duration = 70 + (r * 15);
             const moveDirection = r % 2 === 0 ? "-50%" : "0%";
             const startPos = r % 2 === 0 ? "0%" : "-50%";
 
@@ -170,6 +187,8 @@
         function showFocus(data) {
             document.getElementById('focus-img').src = data.img;
             document.getElementById('focus-title').innerText = data.title;
+            // 문장에 따옴표 추가하여 강조
+            focusquote.innerText = `“${data.quote}”`;
             overlay.classList.add('active');
         }
 
