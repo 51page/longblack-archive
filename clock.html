@@ -3,44 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Minimalist Quote Pulse V49</title>
+    <title>LongBlack - Precision Insight V50</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <script src="quote_data.js?v=1.1"></script> 
+    <script src="./quote_data.js"></script> 
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --fg: #fff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; }
-
         #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; }
-
-        #clock-wrapper {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10;
-        }
-        .digital-clock {
-            color: #fff; font-size: 8rem; font-weight: 200; letter-spacing: -3px;
-            transition: color 0.4s ease; line-height: 1;
-        }
-        .sub-brand {
-            margin-top: 10px; font-size: 1.2rem; font-weight: 300; letter-spacing: 12px;
-            text-transform: uppercase; transition: color 0.4s ease;
-        }
-
-        #quote-display {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 100; background: rgba(0,0,0,0.98);
-            opacity: 0; visibility: hidden; padding: 0 15%; box-sizing: border-box;
-        }
-        .quote-text {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            font-size: 4vw; font-weight: 800; color: #fff; text-align: center; 
-            line-height: 1.4; word-break: keep-all; letter-spacing: -0.03em;
-        }
-
+        #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .digital-clock { color: #fff; font-size: 8rem; font-weight: 200; letter-spacing: -3px; transition: color 0.4s ease; line-height: 1; }
+        .sub-brand { margin-top: 10px; font-size: 1.2rem; font-weight: 300; letter-spacing: 12px; text-transform: uppercase; transition: color 0.4s ease; }
+        #quote-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; background: rgba(0,0,0,0.98); opacity: 0; visibility: hidden; padding: 0 15%; box-sizing: border-box; }
+        .quote-text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 4vw; font-weight: 800; color: #fff; text-align: center; line-height: 1.4; word-break: keep-all; letter-spacing: -0.03em; }
         .fixed-logo { position: fixed; top: 40px; left: 40px; color: #fff; font-weight: 900; font-size: 1.2rem; z-index: 1000; mix-blend-mode: difference; letter-spacing: 5px; }
     </style>
 </head>
@@ -55,28 +32,41 @@
     </div>
 
     <div id="quote-display">
-        <div id="target-quote" class="quote-text">INSIGHT LOADING...</div>
+        <div id="target-quote" class="quote-text">데이터 로딩 중...</div>
     </div>
 
     <script>
         const customColors = ['#000000', '#FF4B22', '#D6B38E', '#9FE99E', '#555FFF'];
         let quoteList = [];
-
-        window.addEventListener('load', () => {
-            // [데이터 필드 추출 로직]
-            if (typeof quotes !== 'undefined') {
-                quoteList = quotes;
-                console.log("Data loaded successfully:", quoteList.length, "items found.");
-            } else {
-                console.error("quote_data.js not detected. Check file path or variable name.");
-                quoteList = [{text: "데이터 연결에 실패했습니다. 파일명을 확인해주세요."}];
-            }
-            init();
-        });
-
         let isQuoteShowing = false;
 
-        function init() {
+        // [데이터 로드 체크 엔진]
+        function checkData() {
+            // 1. quotes 변수가 존재하는지 확인
+            if (typeof quotes !== 'undefined' && Array.isArray(quotes)) {
+                quoteList = quotes;
+                console.log("✅ 데이터 로드 성공: ", quoteList.length, "개");
+                startApp();
+            } else {
+                console.warn("⏳ 데이터를 기다리는 중...");
+                // 0.5초마다 재시도 (최대 10번)
+                let attempts = 0;
+                const retry = setInterval(() => {
+                    attempts++;
+                    if (typeof quotes !== 'undefined') {
+                        quoteList = quotes;
+                        clearInterval(retry);
+                        startApp();
+                    }
+                    if (attempts > 10) {
+                        clearInterval(retry);
+                        alert("데이터 파일(quote_data.js)을 찾을 수 없거나 형식이 잘못되었습니다.");
+                    }
+                }, 500);
+            }
+        }
+
+        function startApp() {
             setInterval(updateClock, 1000);
             setInterval(slideBg, 1000);
             runMasterLoop();
@@ -115,31 +105,29 @@
 
         function runMasterLoop() {
             const master = gsap.timeline({ repeat: -1 });
-
             master
                 .add(() => { isQuoteShowing = false; }, 0)
-                .to({}, { duration: 5 }) // 5초 대기
-
+                .to({}, { duration: 5 }) 
                 .add(() => {
                     isQuoteShowing = true;
-                    const selected = quoteList[Math.floor(Math.random() * quoteList.length)];
-                    
-                    // [핵심: text 필드 데이터만 뽑기]
-                    const displayText = (typeof selected === 'object') ? selected.text : selected;
-                    
-                    document.getElementById('target-quote').innerText = displayText || "No Text Found";
+                    if(quoteList.length > 0) {
+                        const selected = quoteList[Math.floor(Math.random() * quoteList.length)];
+                        // text 필드만 추출
+                        document.getElementById('target-quote').innerText = selected.text || selected;
+                    }
                 })
                 .set("#quote-display", { visibility: "visible" })
                 .to("#quote-display", { opacity: 1, duration: 0.6 })
                 .to("#clock-wrapper", { opacity: 0, duration: 0.3 }, "<")
                 .fromTo("#target-quote", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: "expo.out" }, "-=0.3")
-
-                .to({}, { duration: 2 }) // 2초 노출
-
+                .to({}, { duration: 2 }) 
                 .to("#quote-display", { opacity: 0, duration: 0.6 })
                 .to("#clock-wrapper", { opacity: 1, duration: 0.4 }, "<")
                 .set("#quote-display", { visibility: "hidden" });
         }
+
+        // 앱 실행
+        checkData();
     </script>
 </body>
 </html>
