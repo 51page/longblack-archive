@@ -217,7 +217,7 @@
                     allThumbTiles.push(tile);
                 }
                 container.appendChild(row);
-                const tl = gsap.to(row, { x: r % 2 === 0 ? "-20%" : "0%", duration: 40 + r*5, ease: "none", repeat: -1 });
+                const tl = gsap.to(row, { x: r % 2 === 0 ? "-20%" : "0%", duration: 25 + r*3, ease: "none", repeat: -1 });
                 if(r % 2 !== 0) gsap.set(row, {x: "-20%"});
                 timelines.push(tl);
             }
