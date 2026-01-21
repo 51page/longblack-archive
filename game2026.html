@@ -3,145 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Insight Discovery</title>
+    <title>LongBlack - Insight Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="quote_data.js"></script> 
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <script src="quote_data.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* 기존 스타일 유지 */
-        :root { --bg: #000; --fg: #fff; --accent: #FF4B22; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; color: #fff; }
-        #main-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1; }
-        #clock-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
-        .digital-clock { font-size: clamp(3.5rem, 15vw, 8rem); font-weight: 600; letter-spacing: -0.03em; }
-        .logo-img { margin-top: 25px; width: clamp(120px, 22vw, 200px); filter: brightness(0) invert(1); }
+        :root { --lb-orange: #FF4B22; --lb-black: #000; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--lb-black); color: #fff; font-family: 'Montserrat', sans-serif; overflow: hidden; }
+        
+        .container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 20px; box-sizing: border-box; }
 
-        /* 테스트 모달 레이어 */
-        #test-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 500; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            padding: 0 10%; box-sizing: border-box;
-        }
-        .question-text { font-size: 2rem; font-weight: 600; text-align: center; margin-bottom: 40px; word-break: keep-all; line-height: 1.4; }
-        .answer-btns { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        /* 화면 단계 제어 */
+        .step { position: absolute; width: 100%; max-width: 600px; display: none; flex-direction: column; align-items: center; text-align: center; opacity: 0; }
+        .step.active { display: flex; }
+
+        /* 타이포그래피 */
+        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 20px; word-break: keep-all; line-height: 1.3; }
+        p { font-size: 1.1rem; opacity: 0.7; margin-bottom: 40px; }
+
+        /* 버튼 디자인 */
+        .btn-group { display: flex; flex-direction: column; width: 100%; gap: 15px; }
         .btn { 
-            padding: 15px 40px; border: 1px solid #fff; background: transparent; color: #fff;
-            cursor: pointer; font-size: 1.1rem; transition: all 0.3s; border-radius: 50px;
+            padding: 20px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: #fff; 
+            font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; border-radius: 4px;
         }
-        .btn:hover { background: #fff; color: #000; transform: translateY(-5px); }
+        .btn:hover { background: #fff; color: #000; border-color: #fff; transform: translateY(-3px); }
+        .btn-main { background: var(--lb-orange); border: none; font-weight: 700; }
 
-        /* 결과 화면 스타일 */
-        #result-display { display: none; text-align: center; }
-        .result-label { color: var(--accent); font-weight: 600; margin-bottom: 10px; letter-spacing: 2px; }
-
-        /* 테스트 시작 버튼 */
-        #test-trigger {
-            position: fixed; bottom: 30px; left: 30px; z-index: 1000;
-            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2); color: #fff;
-            padding: 10px 25px; border-radius: 30px; cursor: pointer; font-size: 0.8rem; letter-spacing: 2px;
-        }
+        /* 결과 화면 전용 */
+        .result-quote { font-size: 1.8rem; font-weight: 700; line-height: 1.5; color: #fff; margin-bottom: 20px; }
+        .result-source { font-size: 1rem; color: var(--lb-orange); margin-bottom: 40px; }
+        
+        #progress { position: fixed; top: 0; left: 0; height: 4px; background: var(--lb-orange); width: 0%; transition: width 0.3s ease; }
     </style>
 </head>
 <body>
 
-    <button id="test-trigger">DISCOVER INSIGHT</button>
-    <div id="main-bg"></div>
+    <div id="progress"></div>
 
-    <div id="clock-wrapper">
-        <div id="clock" class="digital-clock">00:00:00</div>
-        <img src="https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png?width=1000&height=203" class="logo-img">
-    </div>
-
-    <div id="test-overlay">
-        <div id="question-container">
-            <div class="question-text" id="q-text">질문을 불러오는 중...</div>
-            <div class="answer-btns" id="a-container"></div>
+    <div class="container">
+        <div class="step active" id="step-0">
+            <h1>오늘 당신에게<br>필요한 감각은?</h1>
+            <p>3가지 질문을 통해 지금 이 순간<br>당신을 깨울 문장을 찾아드립니다.</p>
+            <button class="btn btn-main" onclick="nextStep(1)">테스트 시작하기</button>
         </div>
-        
-        <div id="result-display">
-            <div class="result-label">TODAY'S INSIGHT FOR YOU</div>
-            <div class="question-text" id="res-quote"></div>
-            <div style="font-size: 1rem; opacity: 0.6; margin-top: 20px;" id="res-source"></div>
-            <button class="btn" style="margin-top: 40px;" onclick="location.reload()">BACK TO CLOCK</button>
+
+        <div class="step" id="step-1">
+            <h1>Q1. 요즘 당신을<br>움직이게 하는 힘은?</h1>
+            <div class="btn-group">
+                <button class="btn" onclick="recordAnswer('inspiration', 2)">새로운 영감과 자극</button>
+                <button class="btn" onclick="recordAnswer('essence', 2)">내면의 단단한 중심</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-2">
+            <h1>Q2. 어떤 고민을<br>가장 많이 하나요?</h1>
+            <div class="btn-group">
+                <button class="btn" onclick="recordAnswer('action', 3)">어떻게 시작할 것인가</button>
+                <button class="btn" onclick="recordAnswer('insight', 3)">무엇이 좋은 것인가 (안목)</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-3">
+            <h1>Q3. 성장이란 무엇에<br>가깝다고 생각하시나요?</h1>
+            <div class="btn-group">
+                <button class="btn" onclick="recordAnswer('accumulation', 'result')">매일의 꾸준한 축적</button>
+                <button class="btn" onclick="recordAnswer('happiness', 'result')">좋아하는 일을 즐기는 마음</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-result">
+            <p style="color: var(--lb-orange); font-weight: 700; margin-bottom: 10px;">당신을 위한 한 문장</p>
+            <div class="result-quote" id="final-quote"></div>
+            <div class="result-source" id="final-source"></div>
+            <button class="btn" onclick="location.reload()">다시 테스트하기</button>
         </div>
     </div>
 
     <script>
-        // 스무고개 스타일 질문 리스트 (성향 분석용)
-        const questions = [
-            {
-                q: "지금 당신의 마음 상태는 어떤가요?",
-                a: [
-                    { text: "새로운 자극이 필요해요", type: "inspiration" },
-                    { text: "차분한 정리가 필요해요", type: "essence" }
-                ]
-            },
-            {
-                q: "성장을 위해 무엇이 더 중요하다고 믿나요?",
-                a: [
-                    { text: "치열한 기록과 관찰", type: "observation" },
-                    { text: "직관적인 감각과 안목", type: "insight" }
-                ]
-            },
-            {
-                q: "당신이 일하는 방식은 어느 쪽에 가깝나요?",
-                a: [
-                    { text: "혼자 깊게 파고드는 타입", type: "individual" },
-                    { text: "세상의 흐름을 읽는 타입", type: "trend" }
-                ]
-            }
-        ];
+        let userChoices = [];
 
-        let currentQ = 0;
-        let scores = { inspiration: 0, essence: 0, observation: 0, insight: 0, individual: 0, trend: 0 };
-
-        // 테스트 시작 함수
-        document.getElementById('test-trigger').addEventListener('click', () => {
-            gsap.to("#test-overlay", { display: 'flex', opacity: 1, duration: 0.5 });
-            showQuestion();
-        });
-
-        function showQuestion() {
-            if (currentQ < questions.length) {
-                const q = questions[currentQ];
-                document.getElementById('q-text').innerText = q.q;
-                const container = document.getElementById('a-container');
-                container.innerHTML = '';
-                
-                q.a.forEach(ans => {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn';
-                    btn.innerText = ans.text;
-                    btn.onclick = () => {
-                        scores[ans.type]++;
-                        currentQ++;
-                        showQuestion();
-                    };
-                    container.appendChild(btn);
-                });
-            } else {
-                showResult();
-            }
-        }
-
-        function showResult() {
-            document.getElementById('question-container').style.display = 'none';
-            document.getElementById('result-display').style.display = 'block';
-
-            // 간단한 추천 로직: 점수가 가장 높은 성향에 맞춰 문장 필터링
-            // 실제 데이터(quoteData)에서 키워드 매칭 (여기서는 예시로 랜덤 추출)
-            const recommendation = quoteData[Math.floor(Math.random() * quoteData.length)];
+        // 화면 전환 애니메이션
+        function nextStep(stepId) {
+            const current = document.querySelector('.step.active');
+            const next = document.getElementById('step-' + stepId);
             
-            document.getElementById('res-quote').innerText = recommendation.text;
-            document.getElementById('res-source').innerText = "— " + recommendation.source;
+            // 진행바 업데이트
+            const totalSteps = 3;
+            if(typeof stepId === 'number') {
+                document.getElementById('progress').style.width = (stepId / totalSteps * 100) + '%';
+            } else {
+                document.getElementById('progress').style.width = '100%';
+            }
 
-            gsap.from("#result-display", { y: 30, opacity: 0, duration: 0.8 });
+            gsap.to(current, { opacity: 0, y: -20, duration: 0.4, onComplete: () => {
+                current.classList.remove('active');
+                next.classList.add('active');
+                gsap.fromTo(next, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 });
+            }});
         }
 
-        // 기존 엔진 코드 (V65 유지)
-        // ... (생략된 시계 엔진 부분은 이전 버전과 동일하게 유지하여 배경 모션과 소리가 작동하게 함)
+        // 답변 기록
+        function recordAnswer(choice, next) {
+            userChoices.push(choice);
+            if (next === 'result') {
+                calculateResult();
+            } else {
+                nextStep(next);
+            }
+        }
+
+        // 결과 도출 로직 (quoteData 기반)
+        function calculateResult() {
+            // 사용자 선택에 따른 간단한 추천 로직
+            // 예: 첫 번째 데이터(조명훈)는 안목(insight), 두 번째(레니)는 실행/시간(action), 세 번째(인재전쟁)는 행복(happiness)
+            let resultIndex = 0;
+
+            if (userChoices.includes('insight')) resultIndex = 0;
+            else if (userChoices.includes('action')) resultIndex = 1;
+            else if (userChoices.includes('happiness')) resultIndex = 2;
+            else resultIndex = Math.floor(Math.random() * quoteData.length); // 매칭 안되면 랜덤
+
+            const finalData = quoteData[resultIndex];
+            
+            document.getElementById('final-quote').innerText = finalData.text;
+            document.getElementById('final-source').innerText = finalData.source;
+
+            nextStep('result');
+        }
     </script>
 </body>
 </html>
