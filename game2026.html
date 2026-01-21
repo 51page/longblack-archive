@@ -226,4 +226,54 @@
             gsap.to(current, { opacity: 0, x: -30, duration: 0.4, onComplete: () => {
                 current.classList.remove('active');
                 next.classList.add('active');
-                gsap.fromTo(next, { opacity: 0, x: 30 }, { opacity: 1, x:
+                gsap.fromTo(next, { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: "power4.out", 
+                    onComplete: () => {
+                        // 질문과 버튼 애니메이션
+                        if (stepId !== 'intro' && stepId !== 'result') {
+                            const questionH1 = next.querySelector('h1');
+                            const optionsDiv = next.querySelector('.options');
+                            if (questionH1) animateQuestionText(questionH1);
+                            if (optionsDiv) animateOptionButtons(optionsDiv);
+                        } else if (stepId === 'result') {
+                            // 결과 화면 텍스트도 애니메이션 적용
+                            gsap.fromTo("#res-quote", { opacity:0, y:20 }, { opacity:1, y:0, duration:0.6, delay:0.2 });
+                            gsap.fromTo("#res-source", { opacity:0, y:20 }, { opacity:1, y:0, duration:0.6, delay:0.3 });
+                        }
+                    }
+                });
+            }});
+        }
+
+        // 답변 선택 함수
+        function select(val, nextStepId) {
+            userChoices.push(val);
+            if(nextStepId === 'result') {
+                showResult();
+            } else {
+                goToStep(nextStepId);
+            }
+        }
+
+        // 결과 도출 로직 (임시: 랜덤 + 가중치)
+        function showResult() {
+            // 사용자 선택을 기반으로 점수화하거나 특정 결과로 매핑할 수 있음
+            // 여기서는 간단히 랜덤으로 noteData에서 하나를 가져옵니다.
+            const randomIndex = Math.floor(Math.random() * noteData.length);
+            const finalData = noteData[randomIndex];
+
+            document.getElementById('result-thumbnail').src = finalData.thumbnail;
+            document.getElementById('res-quote').innerText = finalData.text;
+            document.getElementById('res-source').innerText = finalData.source;
+
+            goToStep('result');
+        }
+
+        // 초기 진입 애니메이션
+        window.onload = () => {
+            gsap.fromTo("#step-intro h1", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.5 });
+            gsap.fromTo("#step-intro p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.7 });
+            gsap.fromTo("#step-intro .start-btn", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.9 });
+        };
+    </script>
+</body>
+</html>
