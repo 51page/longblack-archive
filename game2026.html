@@ -3,134 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack - Insight Test</title>
+    <title>LongBlack | Insight Discovery</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="quote_data.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --lb-orange: #FF4B22; --lb-black: #000; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--lb-black); color: #fff; font-family: 'Montserrat', sans-serif; overflow: hidden; }
+        :root { --accent: #FF4B22; --bg: #000; --text: #fff; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; overflow: hidden; }
         
-        .container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 20px; box-sizing: border-box; }
+        /* Progress Bar */
+        #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.1); z-index: 1000; }
+        #progress-bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
 
-        /* 화면 단계 제어 */
-        .step { position: absolute; width: 100%; max-width: 600px; display: none; flex-direction: column; align-items: center; text-align: center; opacity: 0; }
+        .container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+
+        /* Step Layout */
+        .step { position: absolute; width: 100%; max-width: 500px; padding: 0 30px; box-sizing: border-box; display: none; flex-direction: column; opacity: 0; }
         .step.active { display: flex; }
 
-        /* 타이포그래피 */
-        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 20px; word-break: keep-all; line-height: 1.3; }
-        p { font-size: 1.1rem; opacity: 0.7; margin-bottom: 40px; }
-
-        /* 버튼 디자인 */
-        .btn-group { display: flex; flex-direction: column; width: 100%; gap: 15px; }
-        .btn { 
-            padding: 20px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: #fff; 
-            font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; border-radius: 4px;
-        }
-        .btn:hover { background: #fff; color: #000; border-color: #fff; transform: translateY(-3px); }
-        .btn-main { background: var(--lb-orange); border: none; font-weight: 700; }
-
-        /* 결과 화면 전용 */
-        .result-quote { font-size: 1.8rem; font-weight: 700; line-height: 1.5; color: #fff; margin-bottom: 20px; }
-        .result-source { font-size: 1rem; color: var(--lb-orange); margin-bottom: 40px; }
+        /* Typography */
+        .sub-title { font-size: 0.9rem; font-weight: 300; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 15px; text-transform: uppercase; }
+        h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); font-weight: 800; line-height: 1.3; margin: 0 0 40px 0; word-break: keep-all; }
         
-        #progress { position: fixed; top: 0; left: 0; height: 4px; background: var(--lb-orange); width: 0%; transition: width 0.3s ease; }
+        /* Interaction Elements */
+        .options { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        .option-btn { 
+            padding: 22px 25px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff;
+            text-align: left; font-size: 1.1rem; cursor: pointer; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            border-radius: 0; position: relative; overflow: hidden;
+        }
+        .option-btn:hover { border-color: #fff; padding-left: 35px; background: rgba(255,255,255,0.05); }
+        
+        .start-btn { 
+            align-self: flex-start; padding: 18px 50px; background: var(--accent); color: #fff; 
+            border: none; font-weight: 800; cursor: pointer; font-size: 1rem; letter-spacing: 0.1em;
+        }
+
+        /* Result View */
+        .result-quote { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 600; line-height: 1.5; margin-bottom: 25px; }
+        .result-source { font-size: 0.9rem; opacity: 0.5; margin-bottom: 50px; border-left: 2px solid var(--accent); padding-left: 15px; }
+
+        /* Background Logo */
+        .bg-logo { position: fixed; bottom: 40px; left: 40px; width: 120px; opacity: 0.2; filter: grayscale(1) invert(1); pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div id="progress"></div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <img src="https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png" class="bg-logo">
 
     <div class="container">
-        <div class="step active" id="step-0">
-            <h1>오늘 당신에게<br>필요한 감각은?</h1>
-            <p>3가지 질문을 통해 지금 이 순간<br>당신을 깨울 문장을 찾아드립니다.</p>
-            <button class="btn btn-main" onclick="nextStep(1)">테스트 시작하기</button>
+        <div class="step active" id="step-intro">
+            <div class="sub-title">Curation Service</div>
+            <h1>감각을 깨우는<br>오늘의 문장 찾기</h1>
+            <button class="start-btn" onclick="goToStep(1)">START</button>
         </div>
 
         <div class="step" id="step-1">
-            <h1>Q1. 요즘 당신을<br>움직이게 하는 힘은?</h1>
-            <div class="btn-group">
-                <button class="btn" onclick="recordAnswer('inspiration', 2)">새로운 영감과 자극</button>
-                <button class="btn" onclick="recordAnswer('essence', 2)">내면의 단단한 중심</button>
+            <div class="sub-title">Step 01</div>
+            <h1>지금 당신에게<br>가장 필요한 것은?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="select('insight', 2)">사물을 꿰뚫어 보는 안목</button>
+                <button class="option-btn" onclick="select('action', 2)">지치지 않고 나아가는 실행력</button>
             </div>
         </div>
 
         <div class="step" id="step-2">
-            <h1>Q2. 어떤 고민을<br>가장 많이 하나요?</h1>
-            <div class="btn-group">
-                <button class="btn" onclick="recordAnswer('action', 3)">어떻게 시작할 것인가</button>
-                <button class="btn" onclick="recordAnswer('insight', 3)">무엇이 좋은 것인가 (안목)</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-3">
-            <h1>Q3. 성장이란 무엇에<br>가깝다고 생각하시나요?</h1>
-            <div class="btn-group">
-                <button class="btn" onclick="recordAnswer('accumulation', 'result')">매일의 꾸준한 축적</button>
-                <button class="btn" onclick="recordAnswer('happiness', 'result')">좋아하는 일을 즐기는 마음</button>
+            <div class="sub-title">Step 02</div>
+            <h1>어떤 가치에 더<br>마음이 끌리나요?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="select('essence', 3)">변하지 않는 본질의 힘</button>
+                <button class="option-btn" onclick="select('trend', 3)">시대를 앞서가는 감각</button>
             </div>
         </div>
 
         <div class="step" id="step-result">
-            <p style="color: var(--lb-orange); font-weight: 700; margin-bottom: 10px;">당신을 위한 한 문장</p>
-            <div class="result-quote" id="final-quote"></div>
-            <div class="result-source" id="final-source"></div>
-            <button class="btn" onclick="location.reload()">다시 테스트하기</button>
+            <div class="sub-title">Recommended for you</div>
+            <div id="res-quote" class="result-quote"></div>
+            <div id="res-source" class="result-source"></div>
+            <button class="option-btn" style="text-align:center" onclick="location.reload()">RE-TEST</button>
         </div>
     </div>
 
     <script>
-        let userChoices = [];
+        let choices = [];
+        const totalSteps = 2;
 
-        // 화면 전환 애니메이션
-        function nextStep(stepId) {
+        function goToStep(stepNum) {
             const current = document.querySelector('.step.active');
-            const next = document.getElementById('step-' + stepId);
+            const next = document.getElementById(stepNum === 'result' ? 'step-result' : 'step-' + stepNum);
             
-            // 진행바 업데이트
-            const totalSteps = 3;
-            if(typeof stepId === 'number') {
-                document.getElementById('progress').style.width = (stepId / totalSteps * 100) + '%';
-            } else {
-                document.getElementById('progress').style.width = '100%';
-            }
+            // Progress Bar
+            const percent = stepNum === 'result' ? 100 : (stepNum / (totalSteps + 1)) * 100;
+            document.getElementById('progress-bar').style.width = percent + '%';
 
-            gsap.to(current, { opacity: 0, y: -20, duration: 0.4, onComplete: () => {
+            gsap.to(current, { opacity: 0, x: -30, duration: 0.5, onComplete: () => {
                 current.classList.remove('active');
                 next.classList.add('active');
-                gsap.fromTo(next, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 });
+                gsap.fromTo(next, { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: "power4.out" });
             }});
         }
 
-        // 답변 기록
-        function recordAnswer(choice, next) {
-            userChoices.push(choice);
-            if (next === 'result') {
-                calculateResult();
-            } else {
-                nextStep(next);
-            }
+        function select(val, next) {
+            choices.push(val);
+            if(next === 3) showResult(); // 마지막 질문 후 결과
+            else goToStep(next);
         }
 
-        // 결과 도출 로직 (quoteData 기반)
-        function calculateResult() {
-            // 사용자 선택에 따른 간단한 추천 로직
-            // 예: 첫 번째 데이터(조명훈)는 안목(insight), 두 번째(레니)는 실행/시간(action), 세 번째(인재전쟁)는 행복(happiness)
-            let resultIndex = 0;
+        function showResult() {
+            // quoteData 안전성 체크
+            const data = (typeof quoteData !== 'undefined') ? quoteData : [
+                {text: "데이터를 불러올 수 없습니다.", source: "파일 경로를 확인해주세요."}
+            ];
 
-            if (userChoices.includes('insight')) resultIndex = 0;
-            else if (userChoices.includes('action')) resultIndex = 1;
-            else if (userChoices.includes('happiness')) resultIndex = 2;
-            else resultIndex = Math.floor(Math.random() * quoteData.length); // 매칭 안되면 랜덤
+            // 로직 예시: 선택에 따라 가중치 부여 가능
+            // 여기서는 단순 랜덤 추출 후 데이터 매칭
+            const finalPick = data[Math.floor(Math.random() * data.length)];
 
-            const finalData = quoteData[resultIndex];
-            
-            document.getElementById('final-quote').innerText = finalData.text;
-            document.getElementById('final-source').innerText = finalData.source;
+            document.getElementById('res-quote').innerText = finalPick.text;
+            document.getElementById('res-source').innerText = finalPick.source;
 
-            nextStep('result');
+            goToStep('result');
         }
+
+        // 초기 진입 애니메이션
+        window.onload = () => {
+            gsap.fromTo("#step-intro", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1, delay: 0.5 });
+        };
     </script>
 </body>
 </html>
