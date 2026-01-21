@@ -3,276 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack | Insight Curation Pro</title>
-    <script src="https://cdnjs.googleapis.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script> <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&display=swap" rel="stylesheet">
+    <title>LongBlack | Insight Discovery</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script> 
+    
+    <script>
+        // 외부 quote_data.js 로드가 실패하더라도 동작하게 하는 기본 데이터
+        var quoteData = (typeof quoteData !== 'undefined') ? quoteData : [
+            { text: "감각은 근육과 같다. 계속 사용하지 않으면 퇴화한다.", source: "롱블랙 노트 #001" },
+            { text: "안목은 지식의 양이 아니라, 선택의 질이다.", source: "롱블랙 노트 #002" }
+        ];
+
+        // 썸네일 포함 샘플 데이터
+        var noteData = [
+            { text: "성장은 불편함 속에서 시작됩니다.", source: "롱블랙 #102", thumbnail: "https://images.unsplash.com/photo-1543269865-fbd484433b1e?w=600" },
+            { text: "본질에 집중하면 가짜 바쁨이 사라집니다.", source: "롱블랙 #045", thumbnail: "https://images.unsplash.com/photo-1550987483-e18e6c4e0f11?w=600" },
+            { text: "미래는 예측하는 것이 아니라 창조하는 것입니다.", source: "롱블랙 #212", thumbnail: "https://images.unsplash.com/photo-1517457210943-7f724734563a?w=600" }
+        ];
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #FF4B22; --bg: #000; --text: #fff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; overflow: hidden; }
-        
-        /* Progress Bar */
         #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.1); z-index: 1000; }
-        #progress-bar { width: 0%; height: 100%; background: var(--accent); } /* transition은 JS에서 제어 */
-
+        #progress-bar { width: 0%; height: 100%; background: var(--accent); }
         .container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-
-        /* Step Layout */
-        .step { 
-            position: absolute; width: 100%; max-width: 500px; padding: 0 30px; box-sizing: border-box; 
-            display: none; flex-direction: column; opacity: 0; align-items: flex-start; /* 텍스트 왼쪽 정렬 */
-        }
+        .step { position: absolute; width: 100%; max-width: 500px; padding: 0 30px; box-sizing: border-box; display: none; flex-direction: column; opacity: 0; }
         .step.active { display: flex; }
-
-        /* Typography */
-        .sub-title { font-size: 0.9rem; font-weight: 300; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 15px; text-transform: uppercase; }
-        h1 { 
-            font-size: clamp(1.8rem, 5vw, 2.5rem); font-weight: 800; line-height: 1.3; margin: 0 0 40px 0; 
-            word-break: keep-all; position: relative; overflow: hidden; /* 텍스트 스플릿 애니메이션용 */
-            text-align: left; /* 질문 텍스트 왼쪽 정렬 */
-        }
-        .question-line { display: block; white-space: nowrap; } /* h1 내부 각 줄 */
-        
-        /* Interaction Elements */
-        .options { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-        .option-btn { 
-            padding: 22px 25px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff;
-            text-align: left; font-size: 1.1rem; cursor: pointer; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            border-radius: 0; position: relative; overflow: hidden;
-        }
-        .option-btn:hover { border-color: #fff; padding-left: 35px; background: rgba(255,255,255,0.05); }
-        
-        .start-btn { 
-            align-self: flex-start; padding: 18px 50px; background: var(--accent); color: #fff; 
-            border: none; font-weight: 800; cursor: pointer; font-size: 1rem; letter-spacing: 0.1em;
-        }
-
-        /* Result View */
-        .result-image-wrapper { width: 100%; height: 200px; background: #222; margin-bottom: 30px; overflow: hidden; position: relative; }
-        .result-thumbnail { width: 100%; height: 100%; object-fit: cover; filter: grayscale(80%) brightness(0.6); transition: filter 0.5s; }
-        .result-image-wrapper:hover .result-thumbnail { filter: grayscale(0%) brightness(1); }
-
-        .result-quote { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 600; line-height: 1.5; margin-bottom: 15px; }
-        .result-source { font-size: 0.9rem; opacity: 0.5; margin-bottom: 40px; border-left: 2px solid var(--accent); padding-left: 15px; }
-
-        /* Background Logo */
-        .bg-logo { position: fixed; bottom: 40px; left: 40px; width: 120px; opacity: 0.2; filter: grayscale(1) invert(1); pointer-events: none; }
+        .sub-title { font-size: 0.8rem; font-weight: 300; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 15px; text-transform: uppercase; }
+        h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.3; margin: 0 0 40px 0; word-break: keep-all; }
+        .options { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        .option-btn { padding: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff; text-align: left; font-size: 1rem; cursor: pointer; border-radius: 0; }
+        .start-btn { padding: 18px 50px; background: var(--accent); color: #fff; border: none; font-weight: 800; cursor: pointer; align-self: flex-start; }
+        .result-image-wrapper { width: 100%; height: 220px; background: #222; margin-bottom: 25px; overflow: hidden; }
+        .result-thumbnail { width: 100%; height: 100%; object-fit: cover; }
+        .result-quote { font-size: 1.5rem; font-weight: 600; line-height: 1.5; margin-bottom: 10px; }
+        .result-source { font-size: 0.9rem; opacity: 0.5; border-left: 2px solid var(--accent); padding-left: 10px; }
     </style>
 </head>
 <body>
 
     <div id="progress-container"><div id="progress-bar"></div></div>
-    <img src="https://framerusercontent.com/images/G3w0MVBdonotmXCUq0mU88kIx4.png" class="bg-logo">
 
     <div class="container">
         <div class="step active" id="step-intro">
-            <div class="sub-title">Curation Service</div>
-            <h1>오늘 당신을<br>움직일 문장은?</h1>
-            <button class="start-btn" onclick="goToStep(1)">테스트 시작하기</button>
+            <div class="sub-title">Discovery</div>
+            <h1>감각을 깨우는<br>인사이트 문장 찾기</h1>
+            <button class="start-btn" onclick="goToStep(1)">TEST START</button>
         </div>
 
         <div class="step" id="step-1">
-            <div class="sub-title">Step 01 / 10</div>
-            <h1>요즘 당신의<br>관심사는?</h1>
+            <div class="sub-title">01 / 03 (Sample)</div>
+            <h1>지금 당신이<br>가장 갈구하는 것은?</h1>
             <div class="options">
-                <button class="option-btn" onclick="select('growth', 2)">성장과 자기계발</button>
-                <button class="option-btn" onclick="select('balance', 2)">워라밸과 행복</button>
+                <button class="option-btn" onclick="select(2)">폭발적인 성장</button>
+                <button class="option-btn" onclick="select(2)">마음의 평온</button>
             </div>
         </div>
 
         <div class="step" id="step-2">
-            <div class="sub-title">Step 02 / 10</div>
-            <h1>새로운 아이디어는<br>어디서 얻나요?</h1>
+            <div class="sub-title">02 / 03</div>
+            <h1>어떤 가치에 더<br>설레나요?</h1>
             <div class="options">
-                <button class="option-btn" onclick="select('observation', 3)">일상의 세밀한 관찰</button>
-                <button class="option-btn" onclick="select('trend', 3)">업계 리더들의 트렌드 분석</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-3">
-            <div class="sub-title">Step 03 / 10</div>
-            <h1>의사결정 시, <br>가장 중요한 것은?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('logic', 4)">객관적 데이터와 논리</button>
-                <button class="option-btn" onclick="select('intuition', 4)">직관과 경험</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-4">
-            <div class="sub-title">Step 04 / 10</div>
-            <h1>일을 시작할 때<br>어떤 것에 집중하나요?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('planning', 5)">꼼꼼한 계획 수립</button>
-                <button class="option-btn" onclick="select('action', 5)">빠른 실행과 피드백</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-5">
-            <div class="sub-title">Step 05 / 10</div>
-            <h1>성공이란 무엇에<br>가깝다고 생각하나요?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('achievement', 6)">눈에 보이는 성과</button>
-                <button class="option-btn" onclick="select('process', 6)">도전과 과정 자체</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-6">
-            <div class="sub-title">Step 06 / 10</div>
-            <h1>정보를 얻는 방식은?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('curation', 7)">선별된 전문가의 큐레이션</button>
-                <button class="option-btn" onclick="select('discovery', 7)">직접 발굴하는 재미</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-7">
-            <div class="sub-title">Step 07 / 10</div>
-            <h1>당신이 생각하는<br>좋은 팀이란?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('harmony', 8)">협업과 조화</button>
-                <button class="option-btn" onclick="select('autonomy', 8)">개인의 자율성과 책임</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-8">
-            <div class="sub-title">Step 08 / 10</div>
-            <h1>새로운 것을 배울 때<br>어떤 스타일인가요?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('deep_dive', 9)">하나를 깊이 파고듦</button>
-                <button class="option-btn" onclick="select('broad_explore', 9)">다양하게 탐색</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-9">
-            <div class="sub-title">Step 09 / 10</div>
-            <h1>스트레스 해소법은?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('reflection', 10)">조용한 사색과 정리</button>
-                <button class="option-btn" onclick="select('active_release', 10)">활동적인 움직임</button>
-            </div>
-        </div>
-
-        <div class="step" id="step-10">
-            <div class="sub-title">Step 10 / 10</div>
-            <h1>당신이 추구하는<br>궁극적인 가치는?</h1>
-            <div class="options">
-                <button class="option-btn" onclick="select('meaning', 'result')">삶의 의미와 목적</button>
-                <button class="option-btn" onclick="select('innovation', 'result')">세상을 변화시키는 혁신</button>
+                <button class="option-btn" onclick="select('result')">날카로운 안목</button>
+                <button class="option-btn" onclick="select('result')">따뜻한 위로</button>
             </div>
         </div>
 
         <div class="step" id="step-result">
-            <div class="sub-title">YOUR INSIGHT</div>
+            <div class="sub-title">RESULT</div>
             <div class="result-image-wrapper">
-                <img id="result-thumbnail" class="result-thumbnail" src="https://via.placeholder.com/600x400?text=LongBlack+Insight" alt="Thumbnail">
+                <img id="res-img" class="result-thumbnail" src="">
             </div>
             <div id="res-quote" class="result-quote"></div>
             <div id="res-source" class="result-source"></div>
-            <button class="option-btn" style="text-align:center" onclick="location.reload()">다시 테스트하기</button>
+            <button class="option-btn" style="margin-top:30px; text-align:center;" onclick="location.reload()">RE-TEST</button>
         </div>
     </div>
 
     <script>
-        // GSAP TextPlugin 등록
-        gsap.registerPlugin(TextPlugin);
-
-        // --- 임시 noteData 배열 (notedata.csv 대체) ---
-        // notedata.csv 파일의 내용을 여기에 JavaScript 배열 형태로 넣어주세요.
-        // 예시 데이터:
-        const noteData = [
-            { id: 1, text: "미래는 예측하는 것이 아니라, 창조하는 것이다. 당신의 작은 시도가 세상을 바꿀 씨앗이 된다.", source: "알 수 없는 작가", thumbnail: "https://images.unsplash.com/photo-1517457210943-7f724734563a?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDh8fGNyZWF0aXZlJTIwaWRlYXxlbnwwfHx8fDE2NzcxNDQ3MDc" },
-            { id: 2, text: "진정한 성장은 불편함에서 시작된다. 익숙한 것을 벗어나 새로운 도전으로 당신을 밀어붙여라.", source: "롱블랙 노트 #234", thumbnail: "https://images.unsplash.com/photo-1543269865-fbd484433b1e?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDV8fGNob2ljZSUyMHBhdGhwfGVufDB8fHx8MTY3NzE0NDcwNw" },
-            { id: 3, text: "모든 위대한 생각은 처음에는 터무니없게 들린다. 당신의 독창성을 믿고 끝까지 밀고 나가라.", source: "롱블랙 노트 #188", thumbnail: "https://images.unsplash.com/photo-1549490349-41a4a4d61c1e?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDJ8fGxpZ2h0JTIwYm9sdCxlbnwwfHx8fDE2NzcxNDQ3MDc" },
-            { id: 4, text: "일의 본질에 집중하면 가짜 바쁨에서 벗어날 수 있다. 당신의 시간을 어디에 쓸 것인가?", source: "롱블랙 노트 #099", thumbnail: "https://images.unsplash.com/photo-1550987483-e18e6c4e0f11?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDExfHxtaW5pbWFsaXNtJTIwb3JnYW5pemF0aW9ufGVufDB8fHx8MTY3NzE0NDcwNw" },
-            { id: 5, text: "안목은 지식의 축적만큼이나 '선택'의 반복에서 길러진다. 무엇을 버릴지 아는 것이 중요하다.", source: "롱블랙 노트 #055", thumbnail: "https://images.unsplash.com/photo-1542478330962-d205081297e5?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDl8fGJpZ3xlbnwwfHx8fDE2NzcxNDQ3MDc" },
-            { id: 6, text: "행복은 목적지가 아니라 여정이다. 작은 순간들에서 의미를 발견하고 즐기는 법을 배워라.", source: "롱블랙 노트 #301", thumbnail: "https://images.unsplash.com/photo-1516592233816-c73e34b1c7c9?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDEzfHxoYXBweW5lc3N8ZW58MHx8fHwxNjc3MTQ0NzE1" },
-            { id: 7, text: "당신이 머무는 곳이 당신을 만든다. 의도적으로 좋은 환경과 사람들을 가까이 하라.", source: "롱블랙 노트 #121", thumbnail: "https://images.unsplash.com/photo-1506765576722-e4e7e6f6a7d8?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDN8fGVudmlyb25tZW50fGVufDB8fHx8MTY3NzE0NDc3NA" },
-            { id: 8, text: "변화의 속도는 누구도 막을 수 없다. 가장 빠른 학습자가 가장 먼저 기회를 잡는다.", source: "롱블랙 노트 #078", thumbnail: "https://images.unsplash.com/photo-1516035069371-bd98f88566b6?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDQ2fHxmYXN0JTIwdHJhbnNpdGlvbnxlbnwwfHx8fDE2NzcxNDQ3NzQ" },
-            { id: 9, text: "성공은 혼자 오지 않는다. 당신의 동료와 커뮤니티가 가진 잠재력을 활용하라.", source: "롱블랙 노트 #280", thumbnail: "https://images.unsplash.com/photo-1533107873295-827b59e35b7e?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDU3fHxjby13b3JraW5nfGVufDB8fHx8MTY3NzE0NDc3NA" },
-            { id: 10, text: "혁신은 불가능을 상상하는 용기에서 시작된다. 당신의 대담한 아이디어를 세상에 보여줘라.", source: "롱블랙 노트 #012", thumbnail: "https://images.unsplash.com/photo-1518770660434-fc0b8a6a2c38?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=600&h=400&fit=crop&ixid=MnwzNTkyMHwxfDB8c2VhcmNofDl8fGlubm92YXRpb258ZW58MHx8fHwxNjc3MTQ0Nzk4" }
-        ];
-
-        let userChoices = []; // 사용자 선택 저장
-        const totalQuestions = 10;
-
-        // 질문 텍스트 스플릿 애니메이션 함수
-        function animateQuestionText(element) {
-            const text = element.innerHTML;
-            const lines = text.split('<br>').map(line => `<span class="question-line">${line}</span>`).join('');
-            element.innerHTML = lines;
-
-            gsap.fromTo(element.children, 
-                { y: "100%", opacity: 0, skewY: 10 }, 
-                { y: "0%", opacity: 1, skewY: 0, duration: 0.8, ease: "power3.out", stagger: 0.1 }
-            );
-        }
-
-        // 버튼 웨이브 애니메이션 함수
-        function animateOptionButtons(element) {
-            gsap.fromTo(element.children, 
-                { opacity: 0, y: 20 }, 
-                { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.7)", stagger: 0.08, delay: 0.3 }
-            );
-        }
-
-        // 단계 전환 함수
+        // 애니메이션 함수 (GSAP 로드 여부 확인)
         function goToStep(stepId) {
             const current = document.querySelector('.step.active');
             const next = document.getElementById(stepId === 'result' ? 'step-result' : 'step-' + stepId);
             
-            // Progress Bar 업데이트
-            const percent = stepId === 'result' ? 100 : (stepId / totalQuestions) * 100;
-            gsap.to("#progress-bar", { width: percent + '%', duration: 0.6, ease: "power2.out" });
+            if(!current || !next) return;
 
-            gsap.to(current, { opacity: 0, x: -30, duration: 0.4, onComplete: () => {
+            gsap.to(current, { opacity: 0, x: -20, duration: 0.4, onComplete: () => {
+                current.style.display = 'none';
                 current.classList.remove('active');
+                next.style.display = 'flex';
                 next.classList.add('active');
-                gsap.fromTo(next, { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: "power4.out", 
-                    onComplete: () => {
-                        // 질문과 버튼 애니메이션
-                        if (stepId !== 'intro' && stepId !== 'result') {
-                            const questionH1 = next.querySelector('h1');
-                            const optionsDiv = next.querySelector('.options');
-                            if (questionH1) animateQuestionText(questionH1);
-                            if (optionsDiv) animateOptionButtons(optionsDiv);
-                        } else if (stepId === 'result') {
-                            // 결과 화면 텍스트도 애니메이션 적용
-                            gsap.fromTo("#res-quote", { opacity:0, y:20 }, { opacity:1, y:0, duration:0.6, delay:0.2 });
-                            gsap.fromTo("#res-source", { opacity:0, y:20 }, { opacity:1, y:0, duration:0.6, delay:0.3 });
-                        }
-                    }
-                });
+                gsap.fromTo(next, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.5 });
+                
+                // 진행바 업데이트
+                const progress = stepId === 'result' ? 100 : (stepId / 3) * 100;
+                gsap.to("#progress-bar", { width: progress + "%" });
             }});
         }
 
-        // 답변 선택 함수
-        function select(val, nextStepId) {
-            userChoices.push(val);
-            if(nextStepId === 'result') {
-                showResult();
-            } else {
-                goToStep(nextStepId);
-            }
+        function select(next) {
+            if(next === 'result') showResult();
+            else goToStep(next);
         }
 
-        // 결과 도출 로직 (임시: 랜덤 + 가중치)
         function showResult() {
-            // 사용자 선택을 기반으로 점수화하거나 특정 결과로 매핑할 수 있음
-            // 여기서는 간단히 랜덤으로 noteData에서 하나를 가져옵니다.
-            const randomIndex = Math.floor(Math.random() * noteData.length);
-            const finalData = noteData[randomIndex];
-
-            document.getElementById('result-thumbnail').src = finalData.thumbnail;
-            document.getElementById('res-quote').innerText = finalData.text;
-            document.getElementById('res-source').innerText = finalData.source;
-
+            const pick = noteData[Math.floor(Math.random() * noteData.length)];
+            document.getElementById('res-img').src = pick.thumbnail;
+            document.getElementById('res-quote').innerText = pick.text;
+            document.getElementById('res-source').innerText = pick.source;
             goToStep('result');
         }
 
-        // 초기 진입 애니메이션
         window.onload = () => {
-            gsap.fromTo("#step-intro h1", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.5 });
-            gsap.fromTo("#step-intro p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.7 });
-            gsap.fromTo("#step-intro .start-btn", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.9 });
+            console.log("System Ready");
+            gsap.from(".active", { opacity: 0, y: 20, duration: 1 });
         };
     </script>
 </body>
