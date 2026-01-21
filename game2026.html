@@ -3,46 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack | Insight Discovery</title>
+    <title>LongBlack | 나의 인사이트 유형 테스트</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Gasoek+One&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #FF4B22; --bg: #000; --text: #fff; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; overflow: hidden; }
+        :root { 
+            --accent: #FF6B3D; /* 통통 튀는 주황 */
+            --bg: #1A1A1A; /* 진한 회색 배경 */
+            --text: #FFF; 
+            --light-bg: #333; /* 버튼 배경 등 */
+            --btn-hover: #FFEECC; /* 연한 노랑 */
+            --btn-text-hover: #333;
+        }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Montserrat', sans-serif; 
+            overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; /* 중앙 정렬 */
+        }
         
-        /* 진행바 */
-        #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.1); z-index: 1000; }
-        #progress-bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.3s; }
+        /* 백그라운드 패턴 (예시) */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(255,107,61,0.05) 0%, transparent 70%);
+            animation: bgPulse 10s infinite alternate;
+            z-index: -1;
+        }
 
-        .container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        @keyframes bgPulse {
+            from { transform: scale(1); opacity: 0.8; }
+            to { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* 진행바 */
+        #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 8px; background: rgba(255,255,255,0.1); z-index: 1000; }
+        #progress-bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* 통통 튀는 트랜지션 */ }
+
+        .container { 
+            position: relative; width: 100%; max-width: 550px; min-height: 400px;
+            padding: 30px; box-sizing: border-box;
+            background: var(--light-bg); border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
 
         /* 단계별 레이아웃 */
-        .step { position: absolute; width: 100%; max-width: 500px; padding: 0 30px; box-sizing: border-box; display: none; flex-direction: column; opacity: 0; }
+        .step { 
+            position: absolute; width: 100%; max-width: 450px; /* 내부 여백 고려 */
+            padding: 0 20px; box-sizing: border-box; 
+            display: none; flex-direction: column; align-items: center; text-align: center;
+            opacity: 0; transform: scale(0.8); /* 팝업 애니메이션 기본값 */
+        }
         .step.active { display: flex; }
 
         /* 타이포그래피 */
-        .sub-title { font-size: 0.8rem; font-weight: 300; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 15px; text-transform: uppercase; }
-        h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); font-weight: 800; line-height: 1.3; margin: 0 0 40px 0; word-break: keep-all; }
+        .sub-title { 
+            font-family: 'Montserrat', sans-serif; font-size: 0.9rem; font-weight: 700; 
+            letter-spacing: 0.2em; color: var(--accent); margin-bottom: 25px; 
+            text-transform: uppercase;
+        }
+        h1 { 
+            font-family: 'Gasoek One', sans-serif; /* 통통 튀는 폰트 */
+            font-size: clamp(2.2rem, 7vw, 3.5rem); line-height: 1.2; 
+            margin: 0 0 50px 0; word-break: keep-all; 
+            color: var(--text);
+        }
+        h1 span { /* 이모지 스타일 */
+            font-size: 1.2em; vertical-align: middle; margin: 0 5px;
+        }
         
         /* 버튼 스타일 */
-        .options { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        .options { display: flex; flex-direction: column; gap: 15px; width: 100%; }
         .option-btn { 
-            padding: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff;
-            text-align: left; font-size: 1rem; cursor: pointer; transition: 0.3s;
+            padding: 22px; border: none; background: rgba(255,255,255,0.1); color: var(--text);
+            font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 700; 
+            cursor: pointer; border-radius: 12px; transition: all 0.2s ease-out;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .option-btn:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+        .option-btn:hover { 
+            background: var(--btn-hover); color: var(--btn-text-hover); 
+            transform: translateY(-5px) scale(1.02); 
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
         .start-btn { 
-            align-self: flex-start; padding: 18px 50px; background: var(--accent); color: #fff; 
-            border: none; font-weight: 800; cursor: pointer; font-size: 1rem;
+            padding: 18px 60px; background: var(--accent); color: var(--text); 
+            border: none; font-family: 'Gasoek One', sans-serif; font-size: 1.5rem; 
+            cursor: pointer; border-radius: 12px; transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255,107,61,0.4);
         }
+        .start-btn:hover { transform: translateY(-3px) scale(1.03); background: #FF8A61; }
 
         /* 결과 이미지/텍스트 */
-        .result-image-wrapper { width: 100%; height: 220px; background: #222; margin-bottom: 30px; overflow: hidden; }
+        .result-image-wrapper { 
+            width: 100%; max-width: 300px; height: 200px; 
+            background: #222; margin-bottom: 30px; border-radius: 15px; 
+            overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
         .result-thumbnail { width: 100%; height: 100%; object-fit: cover; }
-        .result-quote { font-size: 1.5rem; font-weight: 600; line-height: 1.5; margin-bottom: 15px; }
-        .result-source { font-size: 0.9rem; opacity: 0.5; border-left: 2px solid var(--accent); padding-left: 15px; }
+        .result-quote { 
+            font-family: 'Montserrat', sans-serif; font-size: clamp(1.2rem, 4vw, 1.6rem); font-weight: 700; 
+            line-height: 1.4; margin-bottom: 15px; text-align: center;
+        }
+        .result-source { 
+            font-family: 'Montserrat', sans-serif; font-size: 0.9rem; opacity: 0.7; 
+            margin-bottom: 40px; color: var(--accent); text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -51,70 +121,163 @@
 
     <div class="container">
         <div class="step active" id="step-0">
-            <div class="sub-title">Curation</div>
-            <h1>당신의 감각을 깨울<br>10번의 질문</h1>
-            <button class="start-btn" onclick="goToStep(1)">START</button>
+            <div class="sub-title">WHAT'S YOUR INSIGHT TYPE?</div>
+            <h1>나의 인사이트 DNA는?<span role="img" aria-label="dna">🧬</span></h1>
+            <button class="start-btn" onclick="goToStep(1)">테스트 시작하기! <span role="img" aria-label="sparkles">✨</span></button>
         </div>
 
         <div class="step" id="step-1">
-            <div class="sub-title">01 / 10</div>
-            <h1>오늘 당신의 기분은<br>어느 쪽인가요?</h1>
+            <div class="sub-title">QUESTION 01</div>
+            <h1>새로운 시작 앞에서 당신의 심장은<span role="img" aria-label="heart-exclamation">❤️‍🔥</span>?</h1>
             <div class="options">
-                <button class="option-btn" onclick="goToStep(2)">차분하고 정적인 시간</button>
-                <button class="option-btn" onclick="goToStep(2)">활기차고 동적인 에너지</button>
+                <button class="option-btn" onclick="goToStep(2)">두근두근! 설렘 가득!</button>
+                <button class="option-btn" onclick="goToStep(2)">침착하게 계획부터!</button>
             </div>
         </div>
 
         <div class="step" id="step-2">
-            <div class="sub-title">02 / 10</div>
-            <h1>주로 어떤 정보를<br>찾고 있나요?</h1>
+            <div class="sub-title">QUESTION 02</div>
+            <h1>어떤 종류의 정보에<br>귀가 더 솔깃한가요<span role="img" aria-label="ear">👂</span>?</h1>
             <div class="options">
-                <button class="option-btn" onclick="goToStep(3)">깊이 있는 철학</button>
-                <button class="option-btn" onclick="selectResult()">트렌디한 비즈니스</button>
+                <button class="option-btn" onclick="goToStep(3)">세상에 없던 이야기 (혁신)</button>
+                <button class="option-btn" onclick="goToStep(3)">오래된 것의 지혜 (본질)</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-3">
+            <div class="sub-title">QUESTION 03</div>
+            <h1>당신을 움직이는 원동력은<span role="img" aria-label="rocket">🚀</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="goToStep(4)">끝없는 호기심!</button>
+                <button class="option-btn" onclick="goToStep(4)">확실한 목표 설정!</button>
+            </div>
+        </div>
+        
+        <div class="step" id="step-4">
+            <div class="sub-title">QUESTION 04</div>
+            <h1>휴식 시간, 당신의 선택은<span role="img" aria-label="coffee-or-running">☕️🏃‍♀️</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="goToStep(5)">조용히 생각 정리</button>
+                <button class="option-btn" onclick="goToStep(5)">새로운 곳 탐험</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-5">
+            <div class="sub-title">QUESTION 05</div>
+            <h1>팀 프로젝트에서 당신의 역할은<span role="img" aria-label="teamwork">🤝</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="goToStep(6)">아이디어 뱅크</button>
+                <button class="option-btn" onclick="goToStep(6)">꼼꼼한 실행가</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-6">
+            <div class="sub-title">QUESTION 06</div>
+            <h1>어떤 유형의 스토리에 더 몰입하나요<span role="img" aria-label="book-or-movie">📚🎬</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="goToStep(7)">인생의 전환점 이야기</button>
+                <button class="option-btn" onclick="goToStep(7)">성공을 향한 고군분투</button>
+            </div>
+        </div>
+        
+        <div class="step" id="step-7">
+            <div class="sub-title">QUESTION 07</div>
+            <h1>새로운 것을 배울 때, 당신의 스타일은<span role="img" aria-label="brain">🧠</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="goToStep(8)">전체를 파악 후 세부!</button>
+                <button class="option-btn" onclick="goToStep(8)">작은 것부터 차근차근!</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-8">
+            <div class="sub-title">QUESTION 08</div>
+            <h1>갈등 상황에서 당신의 태도는<span role="img" aria-label="crossed-swords">⚔️</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="goToStep(9)">직접 부딪혀 해결!</button>
+                <button class="option-btn" onclick="goToStep(9)">조용히 상황 분석!</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-9">
+            <div class="sub-title">QUESTION 09</div>
+            <h1>미래를 상상할 때, 당신의 시선은<span role="img" aria-label="crystal-ball">🔮</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="goToStep(10)">과감한 변화와 혁신</button>
+                <button class="option-btn" onclick="goToStep(10)">지속 가능한 안정성</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-10">
+            <div class="sub-title">QUESTION 10</div>
+            <h1>당신이 가장 중요하게 생각하는 것은<span role="img" aria-label="sparkles-heart">✨❤️</span>?</h1>
+            <div class="options">
+                <button class="option-btn" onclick="selectResult()">개인의 독창성</button>
+                <button class="option-btn" onclick="selectResult()">사회적 영향력</button>
             </div>
         </div>
 
         <div class="step" id="step-result">
-            <div class="sub-title">YOUR INSIGHT</div>
+            <div class="sub-title">당신을 위한 인사이트</div>
             <div class="result-image-wrapper">
-                <img id="res-img" class="result-thumbnail" src="https://images.unsplash.com/photo-1543269865-fbd484433b1e?w=600">
+                <img id="res-img" class="result-thumbnail" src="https://images.unsplash.com/photo-1543269865-fbd484433b1e?w=600&h=400&fit=crop" alt="Result Thumbnail">
             </div>
-            <div id="res-quote" class="result-quote">"인사이트는 관찰의 축적에서 나옵니다."</div>
-            <div id="res-source" class="result-source">롱블랙 노트 #042</div>
-            <button class="option-btn" style="margin-top:40px; text-align:center;" onclick="location.reload()">RE-TEST</button>
+            <div id="res-quote" class="result-quote">"당신은 미래를 만드는 탐험가 타입!"</div>
+            <div id="res-source" class="result-source">이 문장이 당신의 하루를 밝혀주기를.</div>
+            <button class="option-btn" style="margin-top:40px; text-align:center;" onclick="location.reload()">다시 테스트하기! <span role="img" aria-label="repeat">🔁</span></button>
         </div>
     </div>
 
     <script>
         // 내부 데이터 (파일 로드 없이 바로 사용)
-        const sampleData = [
-            { t: "익숙함에서 낯선 것을 발견하는 것이 안목입니다.", s: "롱블랙 #120", img: "https://images.unsplash.com/photo-1517457210943-7f724734563a?w=600" },
-            { t: "본질은 변하지 않습니다. 변하는 것은 현상뿐입니다.", s: "롱블랙 #088", img: "https://images.unsplash.com/photo-1550987483-e18e6c4e0f11?w=600" }
+        const noteData = [
+            { t: "익숙함에서 낯선 것을 발견하는 것이 안목입니다. 🕵️‍♀️", s: "롱블랙 #120", img: "https://images.unsplash.com/photo-1517457210943-7f724734563a?w=600&h=400&fit=crop" },
+            { t: "본질은 변하지 않습니다. 변하는 것은 현상뿐이죠. ✨", s: "롱블랙 #088", img: "https://images.unsplash.com/photo-1550987483-e18e6c4e0f11?w=600&h=400&fit=crop" },
+            { t: "미래는 예측하는 것이 아니라 창조하는 것입니다. 🚀", s: "롱블랙 #212", img: "https://images.unsplash.com/photo-1517457210943-7f724734563a?w=600&h=400&fit=crop" },
+            { t: "성장은 불편함 속에서 시작됩니다. 💪", s: "롱블랙 #102", img: "https://images.unsplash.com/photo-1543269865-fbd484433b1e?w=600&h=400&fit=crop" },
+            { t: "작은 질문이 큰 변화를 만듭니다. ❓", s: "롱블랙 #060", img: "https://images.unsplash.com/photo-1563299799-a1d2e1f2e1a8?w=600&h=400&fit=crop" },
+            { t: "당신의 이야기가 누군가에게 영감이 됩니다. 📖", s: "롱블랙 #150", img: "https://images.unsplash.com/photo-1544716278-ca5e3f14fc78?w=600&h=400&fit=crop" },
+            { t: "때로는 멈춤이 더 빠른 길일 수 있습니다. 🧘‍♀️", s: "롱블랙 #033", img: "https://images.unsplash.com/photo-1506765576722-e4e7e6f6a7d8?w=600&h=400&fit=crop" }
         ];
+
+        const totalQuestions = 10; // 전체 질문 수
 
         function goToStep(stepId) {
             const current = document.querySelector('.step.active');
             const next = document.getElementById('step-' + stepId);
             
-            if (!next) return;
+            if (!next) {
+                console.error("다음 스텝 ID를 찾을 수 없습니다:", 'step-' + stepId);
+                return;
+            }
 
-            // GSAP 애니메이션
-            gsap.to(current, { opacity: 0, x: -30, duration: 0.4, onComplete: () => {
-                current.style.display = 'none';
-                current.classList.remove('active');
-                
-                next.style.display = 'flex';
-                next.classList.add('active');
-                gsap.fromTo(next, { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5 });
-                
-                // 진행바
-                const total = 10;
-                document.getElementById('progress-bar').style.width = (stepId / total * 100) + "%";
-            }});
+            // 진행바 업데이트
+            const progressPercent = (stepId / totalQuestions) * 100;
+            gsap.to("#progress-bar", { width: progressPercent + "%" });
+
+            // 현재 스텝 애니메이션
+            gsap.to(current, { 
+                opacity: 0, 
+                scale: 0.8, 
+                rotation: -5, // 살짝 회전하며 사라짐
+                duration: 0.3, 
+                ease: "back.in(1.7)",
+                onComplete: () => {
+                    current.classList.remove('active');
+                    current.style.display = 'none'; // DOM에서 숨기기
+
+                    // 다음 스텝 애니메이션
+                    next.classList.add('active');
+                    next.style.display = 'flex'; // DOM에 보이기
+                    gsap.fromTo(next, 
+                        { opacity: 0, scale: 0.8, rotation: 5 }, // 반대 방향에서 나타남
+                        { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "back.out(1.7)" }
+                    );
+                }
+            });
         }
 
         function selectResult() {
-            const pick = sampleData[Math.floor(Math.random() * sampleData.length)];
+            const pick = noteData[Math.floor(Math.random() * noteData.length)];
             document.getElementById('res-img').src = pick.img;
             document.getElementById('res-quote').innerText = pick.t;
             document.getElementById('res-source').innerText = pick.s;
@@ -122,10 +285,13 @@
         }
 
         window.onload = () => {
-            // 시작 시 첫 화면 표시
-            const intro = document.getElementById('step-0');
-            intro.style.display = 'flex';
-            gsap.to(intro, { opacity: 1, duration: 0.8 });
+            // 초기 로딩 애니메이션 (인트로 스텝)
+            gsap.fromTo("#step-0", 
+                { opacity: 0, scale: 0.8 }, 
+                { opacity: 1, scale: 1, duration: 0.8, ease: "elastic.out(1, 0.5)", delay: 0.2 }
+            );
+            gsap.fromTo("#step-0 h1", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, delay: 0.5, ease: "back.out(1.7)" });
+            gsap.fromTo("#step-0 .start-btn", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, delay: 0.7, ease: "back.out(1.7)" });
         };
     </script>
 </body>
