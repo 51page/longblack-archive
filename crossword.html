@@ -11,23 +11,66 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-        body { background-color: #f4f1ea; font-family: 'Pretendard', sans-serif; color: #1a1a1a; }
-        .grid-cell { 
-            width: 40px; height: 40px; border: 1px solid #000; 
-            text-align: center; font-weight: 700; font-size: 1.1rem; 
-            border-radius: 0; outline: none; transition: all 0.2s;
-        }
-        .grid-cell:focus { background-color: #fff9e6; box-shadow: inset 0 0 0 2px #b1967a; z-index: 10; }
-        .empty-cell { background-color: #1a1a1a; border: 1px solid #1a1a1a; }
-        .number-label { position: absolute; font-size: 9px; font-weight: 600; left: 3px; top: 2px; color: #1a1a1a; pointer-events: none; z-index: 20; }
         
+        /* 롱블랙 키컬러 변수 */
+        :root {
+            --lb-black: #1A1A1A;
+            --lb-bg: #F4F1EA;
+            --lb-point: #B1967A;
+            --lb-white: #FFFFFF;
+        }
+
+        body { 
+            background-color: var(--lb-bg); 
+            font-family: 'Pretendard', sans-serif; 
+            color: var(--lb-black); 
+        }
+
+        /* 퍼즐 셀 디자인 */
+        .grid-cell { 
+            width: 42px; height: 42px; 
+            border: 1px solid var(--lb-black); 
+            text-align: center; font-weight: 700; font-size: 1.15rem; 
+            border-radius: 0; outline: none; transition: all 0.2s;
+            background-color: var(--lb-white);
+        }
+        .grid-cell:focus { 
+            background-color: #FFFDF9; 
+            box-shadow: inset 0 0 0 2px var(--lb-point); 
+            z-index: 10; 
+        }
+        .empty-cell { background-color: var(--lb-black); border: 1px solid var(--lb-black); }
+        
+        /* 숫자 라벨 */
+        .number-label { 
+            position: absolute; font-size: 10px; font-weight: 800; 
+            left: 4px; top: 2px; color: var(--lb-black); 
+            pointer-events: none; z-index: 20; 
+        }
+        
+        /* 애니메이션 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
         }
-        .shake { animation: shake 0.2s ease-in-out 0s 2; border: 2px solid #e53e3e !important; }
-        .preview-mode { color: #b1967a !important; opacity: 0.6; }
+        .shake-effect { animation: shake 0.2s ease-in-out 0s 2; }
+        .preview-text { color: var(--lb-point) !important; opacity: 0.7; }
+
+        /* 버튼 스타일 */
+        .lb-btn-primary {
+            background-color: var(--lb-black);
+            color: var(--lb-white);
+            transition: all 0.3s ease;
+        }
+        .lb-btn-primary:hover { background-color: #333333; transform: translateY(-1px); }
+        
+        .lb-btn-outline {
+            border: 2px solid var(--lb-black);
+            color: var(--lb-black);
+            background-color: transparent;
+        }
+        .lb-btn-outline:hover { background-color: rgba(26, 26, 26, 0.05); }
     </style>
 </head>
 <body>
@@ -37,6 +80,7 @@
         const { useState } = React;
 
         function CrosswordGame() {
+            // 정답 데이터
             const solution = [
                 ['문', '해', '력', -1, -1, -1, -1, -1, -1, -1],
                 ['학', -1, -1, -1, '설', -1, -1, -1, -1, -1],
@@ -66,9 +110,9 @@
             const checkAnswer = () => {
                 const isCorrect = JSON.stringify(grid) === JSON.stringify(solution);
                 if (isCorrect) {
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#B1967A', '#1A1A1A', '#F4F1EA'] });
                     setTimeout(() => {
-                        if(confirm("🎉 완벽합니다! 롱블랙 원문을 보러 가시겠습니까?")) {
+                        if(confirm("🎉 축하합니다! 롱블랙의 문장을 완성하셨습니다. 원문을 확인하시겠습니까?")) {
                             window.open("https://www.longblack.co", "_blank");
                         }
                     }, 500);
@@ -79,22 +123,27 @@
             };
 
             return (
-                <div className="flex flex-col items-center p-6">
-                    <header className="w-full max-w-4xl border-b-4 border-black pb-4 mb-8">
-                        <h1 className="text-4xl font-black tracking-tighter uppercase italic">LongBlack Insight Puzzle</h1>
+                <div className="flex flex-col items-center min-h-screen p-4 md:p-12">
+                    <header className="w-full max-w-4xl border-b-[3px] border-[#1A1A1A] pb-6 mb-12 text-center md:text-left">
+                        <h1 className="text-5xl font-black tracking-tighter mb-2 italic">LONGBLACK</h1>
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-2">
+                            <p className="text-xl font-medium tracking-tight text-gray-700">Daily Sentence Puzzle : 생각의 근육을 기르는 시간</p>
+                            <span className="bg-[#1A1A1A] text-white px-3 py-1 text-xs font-bold tracking-widest uppercase">Issue No. 01</span>
+                        </div>
                     </header>
 
-                    <div className="flex flex-col lg:flex-row gap-8 w-full max-w-5xl">
-                        <div className="flex flex-col gap-4 mx-auto">
-                            <div className={`grid grid-cols-10 gap-0 border-2 border-black transition-all ${isError ? 'shake' : ''}`}>
+                    <div className="flex flex-col lg:flex-row gap-12 w-full max-w-6xl justify-center items-start">
+                        {/* 퍼즐 그리드 */}
+                        <div className="flex flex-col gap-6 mx-auto lg:mx-0">
+                            <div className={`grid grid-cols-10 gap-0 border-[1.5px] border-[#1A1A1A] bg-[#1A1A1A] shadow-xl transition-transform ${isError ? 'shake-effect' : ''}`}>
                                 {grid.map((row, rIdx) => row.map((cell, cIdx) => (
-                                    <div key={`${rIdx}-${cIdx}`} className="relative bg-white h-[40px] w-[40px]">
+                                    <div key={`${rIdx}-${cIdx}`} className="relative bg-white h-[42px] w-[42px]">
                                         {labels[`${rIdx}-${cIdx}`] && <span className="number-label">{labels[`${rIdx}-${cIdx}`]}</span>}
                                         {cell === -1 ? (
-                                            <div className="grid-cell empty-cell h-full w-full" />
+                                            <div className="empty-cell h-full w-full" />
                                         ) : (
                                             <input
-                                                className={`grid-cell h-full w-full ${isPreviewing && cell === "" ? "preview-mode" : ""}`}
+                                                className={`grid-cell h-full w-full ${isPreviewing && cell === "" ? "preview-text" : ""}`}
                                                 value={isPreviewing && cell === "" ? solution[rIdx][cIdx] : cell}
                                                 onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
                                                 readOnly={isPreviewing}
@@ -107,32 +156,44 @@
                                 onMouseDown={() => setIsPreviewing(true)}
                                 onMouseUp={() => setIsPreviewing(false)}
                                 onMouseLeave={() => setIsPreviewing(false)}
-                                className="w-full py-3 bg-white border-2 border-black font-bold active:bg-gray-100 select-none transition"
+                                onTouchStart={() => setIsPreviewing(true)}
+                                onTouchEnd={() => setIsPreviewing(false)}
+                                className="lb-btn-outline w-full py-3 font-bold text-sm select-none uppercase tracking-widest"
                             >
-                                💡 누르고 있으면 정답 미리보기
+                                Hold to Peek (정답 보기)
                             </button>
                         </div>
 
-                        <div className="flex-1 bg-white p-6 border border-gray-300 shadow-inner">
-                            <h3 className="font-black border-b-2 border-black mb-4 pb-1 tracking-widest text-lg">HINTS</h3>
-                            <div className="space-y-4 text-sm leading-relaxed text-gray-800">
-                                <p><strong>가로 1:</strong> 글의 맥락을 장악하고 생각의 수준을 결정하는 힘 </p>
-                                <p><strong>가로 3:</strong> 1인용 맑은 국물로 재기획된 후덕죽 셰프의 보양식 </p>
-                               <p><strong>가로 5:</strong> 사람을 관리할 '자원'으로만 보는 시각에 대한 경계 </p>
-                               <p><strong>가로 7:</strong> "너는 우리 집의 OO" - 상담가 이호선이 배운 자아 해석법 [cite: 643]</p>
-                               <p><strong>가로 9:</strong> 웅크린 채 고민에 빠진 거인의 찰나를 포착한 조각 [cite: 317, 324]</p>
-                                <hr className="border-gray-200"/>
-                               <p><strong>세로 1:</strong> 타인을 함부로 혐오하지 않기 위해 읽어야 할 '불편한 진실' [cite: 72, 80]</p>
-                               <p><strong>세로 2:</strong> 58년 경력 요리사에게 기술보다 중요한 마음가짐 [cite: 198]</p>
-                                <p><strong>세로 4:</strong> 복잡한 맥락을 파악하여 생각의 뼈대를 짜는 힘 </p>
-                                <p><strong>세로 6:</strong> 인연을 잘라내는 지독한 결정과 그에 따르는 상처 </p>
-                                <p><strong>세로 8:</strong> 진짜 사람처럼 정교하지만 은둔을 즐기는 예술가 [cite: 276, 281]</p>
+                        {/* 힌트 섹션 */}
+                        <div className="flex-1 w-full bg-white p-8 border border-gray-200 shadow-sm rounded-sm min-h-[500px]">
+                            <h3 className="text-2xl font-black border-b-2 border-[#1A1A1A] mb-6 pb-2 tracking-tighter">HINTS</h3>
+                            <div className="space-y-6 text-[0.95rem] leading-relaxed">
+                                <section>
+                                    <h4 className="font-bold text-[#B1967A] mb-3 uppercase tracking-wider text-xs underline underline-offset-4">Across (가로)</h4>
+                                    <ul className="space-y-3">
+                                        [cite_start]<li><strong>1.</strong> 글의 맥락을 장악하고 생각의 수준을 결정하는 힘 [cite: 27]</li>
+                                        [cite_start]<li><strong>3.</strong> 1인용 맑은 국물로 재기획된 후덕죽 셰프의 시그니처 [cite: 215]</li>
+                                        [cite_start]<li><strong>5.</strong> 사람을 관리할 '자원'으로만 보는 시각에 대한 경계 [cite: 524]</li>
+                                        [cite_start]<li><strong>7.</strong> "너는 우리 집의 OO" - 상담가 이호선이 배운 자아 해석법 [cite: 643]</li>
+                                        [cite_start]<li><strong>9.</strong> 고민에 빠진 거인의 찰나를 포착한 론 뮤익의 대표작 [cite: 317]</li>
+                                    </ul>
+                                </section>
+                                <section>
+                                    <h4 className="font-bold text-[#B1967A] mb-3 uppercase tracking-wider text-xs underline underline-offset-4">Down (세로)</h4>
+                                    <ul className="space-y-3">
+                                        [cite_start]<li><strong>1.</strong> 타인을 이해하기 위해 읽어야 할 시대의 진실 [cite: 71, 72]</li>
+                                        [cite_start]<li><strong>2.</strong> 58년 경력 요리사에게 기술보다 중요한 정성의 마음 [cite: 198]</li>
+                                        [cite_start]<li><strong>4.</strong> 복잡한 맥락을 파악하여 생각의 뼈대를 짜는 힘 [cite: 14]</li>
+                                        [cite_start]<li><strong>6.</strong> 인연을 잘라내는 지독한 결정과 그에 따르는 상처 [cite: 629]</li>
+                                        [cite_start]<li><strong>8.</strong> 진짜 사람처럼 정교하지만 은둔을 즐기는 예술가 [cite: 275, 281]</li>
+                                    </ul>
+                                </section>
                             </div>
                             <button 
                                 onClick={checkAnswer}
-                                className="w-full mt-10 py-4 bg-black text-white font-bold text-lg hover:shadow-2xl active:scale-95 transition-all"
+                                className="lb-btn-primary w-full mt-12 py-5 font-black text-xl tracking-widest uppercase"
                             >
-                                정답 제출하기
+                                Submit Answer
                             </button>
                         </div>
                     </div>
