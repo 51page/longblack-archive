@@ -3,74 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LongBlack Insight Puzzle</title>
+    <title>LongBlack | Daily Puzzle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Noto+Serif+KR:wght@400;700&display=swap');
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-        
-        /* 롱블랙 키컬러 변수 */
+
         :root {
             --lb-black: #1A1A1A;
             --lb-bg: #F4F1EA;
             --lb-point: #B1967A;
-            --lb-white: #FFFFFF;
+            --lb-line: #D1D1D1;
         }
 
         body { 
             background-color: var(--lb-bg); 
-            font-family: 'Pretendard', sans-serif; 
+            font-family: 'Pretendard', -apple-system, sans-serif; 
             color: var(--lb-black); 
+            letter-spacing: -0.02em;
         }
 
-        /* 퍼즐 셀 디자인 */
+        .serif { font-family: 'Playfair Display', 'Noto Serif KR', serif; }
+
+        /* NYT 스타일 퍼즐 격자 */
+        .grid-container {
+            border: 2px solid var(--lb-black);
+            background-color: var(--lb-black);
+        }
+        
         .grid-cell { 
-            width: 42px; height: 42px; 
-            border: 1px solid var(--lb-black); 
-            text-align: center; font-weight: 700; font-size: 1.15rem; 
-            border-radius: 0; outline: none; transition: all 0.2s;
-            background-color: var(--lb-white);
+            width: 44px; height: 44px; 
+            text-align: center; font-weight: 700; font-size: 1.2rem; 
+            border: none; outline: none; transition: background-color 0.1s;
+            background-color: #FFFFFF;
         }
-        .grid-cell:focus { 
-            background-color: #FFFDF9; 
-            box-shadow: inset 0 0 0 2px var(--lb-point); 
-            z-index: 10; 
-        }
-        .empty-cell { background-color: var(--lb-black); border: 1px solid var(--lb-black); }
+
+        .grid-cell:focus { background-color: #E8E5DF; }
+        .empty-cell { background-color: var(--lb-black); }
         
-        /* 숫자 라벨 */
         .number-label { 
-            position: absolute; font-size: 10px; font-weight: 800; 
+            position: absolute; font-size: 10px; font-weight: 700; 
             left: 4px; top: 2px; color: var(--lb-black); 
-            pointer-events: none; z-index: 20; 
+            pointer-events: none; z-index: 10; font-family: sans-serif;
         }
-        
+
+        /* 세련된 구분선 */
+        .hairline { border-top: 1px solid var(--lb-black); width: 100%; height: 1px; margin: 4px 0; }
+        .double-line { border-top: 3px solid var(--lb-black); border-bottom: 1px solid var(--lb-black); height: 8px; margin: 20px 0; }
+
         /* 애니메이션 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
+            20% { transform: translateX(-4px); }
+            60% { transform: translateX(4px); }
         }
-        .shake-effect { animation: shake 0.2s ease-in-out 0s 2; }
-        .preview-text { color: var(--lb-point) !important; opacity: 0.7; }
+        .shake { animation: shake 0.2s ease-in-out infinite; }
+        .preview-text { color: var(--lb-point) !important; opacity: 0.6; }
 
-        /* 버튼 스타일 */
-        .lb-btn-primary {
+        /* 모노클 스타일 버튼 */
+        .lb-btn {
             background-color: var(--lb-black);
-            color: var(--lb-white);
-            transition: all 0.3s ease;
+            color: #FFFFFF;
+            padding: 16px 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.75rem;
+            transition: all 0.2s;
         }
-        .lb-btn-primary:hover { background-color: #333333; transform: translateY(-1px); }
-        
-        .lb-btn-outline {
-            border: 2px solid var(--lb-black);
-            color: var(--lb-black);
-            background-color: transparent;
-        }
-        .lb-btn-outline:hover { background-color: rgba(26, 26, 26, 0.05); }
+        .lb-btn:hover { opacity: 0.9; transform: translateY(-1px); }
     </style>
 </head>
 <body>
@@ -80,7 +85,6 @@
         const { useState } = React;
 
         function CrosswordGame() {
-            // 정답 데이터
             const solution = [
                 ['문', '해', '력', -1, -1, -1, -1, -1, -1, -1],
                 ['학', -1, -1, -1, '설', -1, -1, -1, -1, -1],
@@ -110,34 +114,39 @@
             const checkAnswer = () => {
                 const isCorrect = JSON.stringify(grid) === JSON.stringify(solution);
                 if (isCorrect) {
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#B1967A', '#1A1A1A', '#F4F1EA'] });
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#1A1A1A', '#B1967A'] });
                     setTimeout(() => {
-                        if(confirm("🎉 축하합니다! 롱블랙의 문장을 완성하셨습니다. 원문을 확인하시겠습니까?")) {
+                        if(confirm("🎉 축하합니다! 롱블랙의 지적인 세계를 완성하셨습니다. 원문을 확인하시겠습니까?")) {
                             window.open("https://www.longblack.co", "_blank");
                         }
                     }, 500);
                 } else {
                     setIsError(true);
-                    setTimeout(() => setIsError(false), 500);
+                    setTimeout(() => setIsError(false), 400);
                 }
             };
 
             return (
-                <div className="flex flex-col items-center min-h-screen p-4 md:p-12">
-                    <header className="w-full max-w-4xl border-b-[3px] border-[#1A1A1A] pb-6 mb-12 text-center md:text-left">
-                        <h1 className="text-5xl font-black tracking-tighter mb-2 italic">LONGBLACK</h1>
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-2">
-                            <p className="text-xl font-medium tracking-tight text-gray-700">Daily Sentence Puzzle : 생각의 근육을 기르는 시간</p>
-                            <span className="bg-[#1A1A1A] text-white px-3 py-1 text-xs font-bold tracking-widest uppercase">Issue No. 01</span>
+                <div className="max-w-6xl mx-auto px-6 py-12">
+                    {/* Header: NYT Newspaper Style */}
+                    <div className="text-center mb-12">
+                        <div className="flex justify-between items-end text-[10px] font-bold border-b border-black pb-1 mb-1">
+                            <span>VOL. 01 NO. 23</span>
+                            <span>JANUARY 23, 2026</span>
+                            <span>PRICE ₩0</span>
                         </div>
-                    </header>
+                        <h1 className="serif text-[80px] leading-none tracking-tighter mb-2">LONGBLACK</h1>
+                        <div className="hairline"></div>
+                        <div className="hairline"></div>
+                        <p className="serif italic text-xl mt-4">“읽는 인간만이 질문한다” : DAILY SENTENCE PUZZLE</p>
+                    </div>
 
-                    <div className="flex flex-col lg:flex-row gap-12 w-full max-w-6xl justify-center items-start">
-                        {/* 퍼즐 그리드 */}
-                        <div className="flex flex-col gap-6 mx-auto lg:mx-0">
-                            <div className={`grid grid-cols-10 gap-0 border-[1.5px] border-[#1A1A1A] bg-[#1A1A1A] shadow-xl transition-transform ${isError ? 'shake-effect' : ''}`}>
+                    <div className="flex flex-col lg:flex-row gap-16 items-start">
+                        {/* Puzzle Area */}
+                        <div className="mx-auto lg:mx-0">
+                            <div className={`grid-container grid grid-cols-10 gap-[1px] shadow-sm ${isError ? 'shake' : ''}`}>
                                 {grid.map((row, rIdx) => row.map((cell, cIdx) => (
-                                    <div key={`${rIdx}-${cIdx}`} className="relative bg-white h-[42px] w-[42px]">
+                                    <div key={`${rIdx}-${cIdx}`} className="relative h-[44px] w-[44px] bg-white">
                                         {labels[`${rIdx}-${cIdx}`] && <span className="number-label">{labels[`${rIdx}-${cIdx}`]}</span>}
                                         {cell === -1 ? (
                                             <div className="empty-cell h-full w-full" />
@@ -155,46 +164,39 @@
                             <button 
                                 onMouseDown={() => setIsPreviewing(true)}
                                 onMouseUp={() => setIsPreviewing(false)}
-                                onMouseLeave={() => setIsPreviewing(false)}
-                                onTouchStart={() => setIsPreviewing(true)}
-                                onTouchEnd={() => setIsPreviewing(false)}
-                                className="lb-btn-outline w-full py-3 font-bold text-sm select-none uppercase tracking-widest"
+                                className="mt-8 text-[11px] font-bold border-b border-black tracking-widest uppercase hover:text-gray-500 transition-colors"
                             >
-                                Hold to Peek (정답 보기)
+                                Hold to reveal answer
                             </button>
                         </div>
 
-                        {/* 힌트 섹션 */}
-                        <div className="flex-1 w-full bg-white p-8 border border-gray-200 shadow-sm rounded-sm min-h-[500px]">
-                            <h3 className="text-2xl font-black border-b-2 border-[#1A1A1A] mb-6 pb-2 tracking-tighter">HINTS</h3>
-                            <div className="space-y-6 text-[0.95rem] leading-relaxed">
+                        {/* Hint Area: Monocle Style Sidebar */}
+                        <div className="flex-1 border-l border-black pl-12 h-full">
+                            <h2 className="serif text-3xl font-black mb-8 italic">Clues</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-10">
                                 <section>
-                                    <h4 className="font-bold text-[#B1967A] mb-3 uppercase tracking-wider text-xs underline underline-offset-4">Across (가로)</h4>
-                                    <ul className="space-y-3">
-                                        [cite_start]<li><strong>1.</strong> 글의 맥락을 장악하고 생각의 수준을 결정하는 힘 [cite: 27]</li>
-                                        [cite_start]<li><strong>3.</strong> 1인용 맑은 국물로 재기획된 후덕죽 셰프의 시그니처 [cite: 215]</li>
-                                        [cite_start]<li><strong>5.</strong> 사람을 관리할 '자원'으로만 보는 시각에 대한 경계 [cite: 524]</li>
-                                        [cite_start]<li><strong>7.</strong> "너는 우리 집의 OO" - 상담가 이호선이 배운 자아 해석법 [cite: 643]</li>
-                                        [cite_start]<li><strong>9.</strong> 고민에 빠진 거인의 찰나를 포착한 론 뮤익의 대표작 [cite: 317]</li>
-                                    </ul>
+                                    <h3 className="font-bold border-b border-black text-[11px] tracking-widest uppercase mb-4">Across</h3>
+                                    <div className="space-y-4 text-[14px] leading-snug">
+                                        [cite_start]<p><strong>1.</strong> 글의 맥락을 장악하고 생각의 수준을 결정하는 힘 [cite: 27]</p>
+                                        [cite_start]<p><strong>3.</strong> 비즈니스맨의 해장을 위해 1인용 맑은 국물로 재기획된 보양식 [cite: 215, 216]</p>
+                                        [cite_start]<p><strong>5.</strong> 사람을 관리할 '자원'으로만 보는 시각에 대한 경계 [cite: 412, 524, 525]</p>
+                                        [cite_start]<p><strong>7.</strong> "너는 우리 집의 OO" - 이호선 교수가 배운 자아 해석의 뿌리 [cite: 643]</p>
+                                        [cite_start]<p><strong>9.</strong> 웅크린 채 고민에 빠진 거인의 찰나를 포착한 론 뮤익의 조각 [cite: 317, 324]</p>
+                                    </div>
                                 </section>
                                 <section>
-                                    <h4 className="font-bold text-[#B1967A] mb-3 uppercase tracking-wider text-xs underline underline-offset-4">Down (세로)</h4>
-                                    <ul className="space-y-3">
-                                        [cite_start]<li><strong>1.</strong> 타인을 이해하기 위해 읽어야 할 시대의 진실 [cite: 71, 72]</li>
-                                        [cite_start]<li><strong>2.</strong> 58년 경력 요리사에게 기술보다 중요한 정성의 마음 [cite: 198]</li>
-                                        [cite_start]<li><strong>4.</strong> 복잡한 맥락을 파악하여 생각의 뼈대를 짜는 힘 [cite: 14]</li>
-                                        [cite_start]<li><strong>6.</strong> 인연을 잘라내는 지독한 결정과 그에 따르는 상처 [cite: 629]</li>
-                                        [cite_start]<li><strong>8.</strong> 진짜 사람처럼 정교하지만 은둔을 즐기는 예술가 [cite: 275, 281]</li>
-                                    </ul>
+                                    <h3 className="font-bold border-b border-black text-[11px] tracking-widest uppercase mb-4">Down</h3>
+                                    <div className="space-y-4 text-[14px] leading-snug">
+                                        [cite_start]<p><strong>1.</strong> 타인을 이해하기 위해 읽어야 할 '문제적 진실' [cite: 71, 72]</p>
+                                        [cite_start]<p><strong>2.</strong> 58년 경력 요리사에게 기술보다 중요한 정성 [cite: 198]</p>
+                                        [cite_start]<p><strong>4.</strong> 복잡한 맥락을 파악하여 생각의 뼈대를 짜는 설계도 [cite: 14, 61]</p>
+                                        [cite_start]<p><strong>6.</strong> 인연을 잘라내는 지독한 결정과 그에 따르는 상처 [cite: 629, 636]</p>
+                                        [cite_start]<p><strong>8.</strong> 진짜 사람처럼 정교하지만 은둔을 즐기는 예술가 [cite: 275, 281]</p>
+                                    </div>
                                 </section>
                             </div>
-                            <button 
-                                onClick={checkAnswer}
-                                className="lb-btn-primary w-full mt-12 py-5 font-black text-xl tracking-widest uppercase"
-                            >
-                                Submit Answer
-                            </button>
+                            <div className="double-line"></div>
+                            <button onClick={checkAnswer} className="lb-btn w-full">Submit Puzzle</button>
                         </div>
                     </div>
                 </div>
