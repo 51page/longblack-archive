@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LongBlack 10x10 Puzzle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { background-color: #f4f1ea; font-family: 'Pretendard', sans-serif; color: #1a1a1a; }
+        .grid-cell { 
+            width: 40px; height: 40px; border: 1px solid #000; 
+            text-align: center; font-weight: 700; font-size: 1.1rem; 
+            border-radius: 0; outline: none; transition: background-color 0.2s;
+        }
+        .grid-cell:focus { background-color: #fff9e6; box-shadow: inset 0 0 0 2px #b1967a; z-index: 10; }
+        .empty-cell { background-color: #1a1a1a; border: 1px solid #1a1a1a; }
+        .number-label { 
+            position: absolute; font-size: 9px; font-weight: 600;
+            left: 3px; top: 2px; color: #1a1a1a; pointer-events: none; z-index: 20;
+        }
+        .hint-section { max-height: 550px; overflow-y: auto; }
+        /* 미리보기 시 텍스트 스타일 */
+        .preview-mode { color: #b1967a !important; opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function CrosswordGame() {
+            const solution = [
+                ['문', '해', '력', -1, -1, -1, -1, -1, -1, -1],
+                ['학', -1, -1, -1, '설', -1, -1, -1, -1, -1],
+                [-1, -1, '불', '도', '장', -1, -1, '손', -1, -1],
+                [-1, -1, -1, -1, '계', -1, -1, '절', -1, -1],
+                [-1, '정', -1, -1, '도', -1, -1, -1, -1, '론'],
+                ['인', '적', '자', '원', -1, -1, -1, -1, -1, '뮤'],
+                [-1, '성', -1, -1, -1, -1, -1, -1, -1, '익'],
+                [-1, -1, -1, -1, '복', '덩', '이', -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, '거', '인', -1, -1, -1, -1, -1, -1]
+            ];
+
+            const labels = { "0-0": 1, "0-4": 4, "2-2": 3, "2-7": 6, "4-1": 2, "4-9": 8, "5-0": 5, "7-4": 7, "9-2": 9 };
+
+            const [grid, setGrid] = useState(solution.map(row => row.map(cell => (cell === -1 ? -1 : ""))));
+            const [isPreviewing, setIsPreviewing] = useState(false);
+
+            const handleChange = (row, col, value) => {
+                const newGrid = [...grid];
+                newGrid[row][col] = value.slice(-1);
+                setGrid(newGrid);
+            };
+
+            return (
+                <div className="flex flex-col items-center p-6">
+                    <header className="w-full max-w-4xl border-b-4 border-black pb-4 mb-8">
+                        <h1 className="text-4xl font-black tracking-tighter">LONGBLACK PUZZLE</h1>
+                    </header>
+
+                    <div className="flex flex-col lg:flex-row gap-8 w-full max-w-5xl">
+                        <div className="flex flex-col gap-4 mx-auto">
+                            <div className="grid grid-cols-10 gap-0 border-2 border-black">
+                                {grid.map((row, rIdx) => row.map((cell, cIdx) => (
+                                    <div key={`${rIdx}-${cIdx}`} className="relative bg-white h-[40px] w-[40px]">
+                                        {labels[`${rIdx}-${cIdx}`] && <span className="number-label">{labels[`${rIdx}-${cIdx}`]}</span>}
+                                        {cell === -1 ? (
+                                            <div className="grid-cell empty-cell h-full w-full" />
+                                        ) : (
+                                            <input
+                                                className={`grid-cell h-full w-full ${isPreviewing && cell === "" ? "preview-mode" : ""}`}
+                                                value={isPreviewing && cell === "" ? solution[rIdx][cIdx] : cell}
+                                                onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
+                                                readOnly={isPreviewing}
+                                            />
+                                        )}
+                                    </div>
+                                )))}
+                            </div>
+                            <button 
+                                onMouseDown={() => setIsPreviewing(true)}
+                                onMouseUp={() => setIsPreviewing(false)}
+                                onMouseLeave={() => setIsPreviewing(false)}
+                                className="w-full py-3 bg-white border-2 border-black font-bold active:bg-gray-100 transition select-none"
+                            >
+                                💡 누르고 있으면 정답 미리보기
+                            </button>
+                        </div>
+
+                        <div className="flex-1 bg-white p-6 border border-gray-300 hint-section">
+                            <h3 className="font-black border-b-2 border-black mb-4 pb-1">HINTS</h3>
+                            <div className="space-y-4 text-sm leading-relaxed">
+                                <p><strong>가로 1:</strong> 글의 맥락을 장악하는 힘이자 사고력 그 자체</p>
+                                <p><strong>가로 3:</strong> 스님이 냄새에 이끌려 절 담을 뛰어넘었다는 보양식</p>
+                                <p><strong>가로 5:</strong> 사람은 관리할 자원이 아니라 그 이상의 존재라는 철학</p>
+                                <p><strong>가로 7:</strong> 이호선 교수의 어머니가 자녀들에게 붙여준 애칭</p>
+                                <p><strong>가로 9:</strong> 웅크린 채 고민에 빠진 거대한 남성 조각품</p>
+                                <hr/>
+                                <p><strong>세로 1:</strong> 타인의 고통을 이해하기 위해 읽어야 할 서사</p>
+                                <p><strong>세로 2:</strong> 기술보다 중요한 요리사의 마음가짐</p>
+                                <p><strong>세로 4:</strong> 복잡한 맥락을 파악하고 생각의 뼈대를 짜는 힘</p>
+                                <p><strong>세로 6:</strong> 인연을 잘라내는 지독한 결정과 그에 따르는 상처</p>
+                                <p><strong>세로 8:</strong> 진짜 사람처럼 정교한 조각을 만드는 은둔의 작가</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CrosswordGame />);
+    </script>
+</body>
+</html>
