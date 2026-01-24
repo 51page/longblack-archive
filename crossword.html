@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LongBlack | Daily Puzzle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -17,65 +17,60 @@
             --lb-black: #1A1A1A;
             --lb-bg: #F4F1EA;
             --lb-point: #B1967A;
-            --lb-line: #D1D1D1;
         }
 
         body { 
             background-color: var(--lb-bg); 
-            font-family: 'Pretendard', -apple-system, sans-serif; 
+            font-family: 'Pretendard', sans-serif; 
             color: var(--lb-black); 
-            letter-spacing: -0.02em;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .serif { font-family: 'Playfair Display', 'Noto Serif KR', serif; }
 
-        /* NYT 스타일 퍼즐 격자 */
+        /* 모바일 대응 그리드 사이즈 조정 */
         .grid-container {
-            border: 2px solid var(--lb-black);
+            display: grid;
+            grid-template-cols: repeat(10, 1fr);
+            width: 100%;
+            max-width: 400px; /* 모바일 폭 최적화 */
+            margin: 0 auto;
+            border: 1.5px solid var(--lb-black);
             background-color: var(--lb-black);
+            gap: 1px;
         }
         
-        .grid-cell { 
-            width: 44px; height: 44px; 
-            text-align: center; font-weight: 700; font-size: 1.2rem; 
-            border: none; outline: none; transition: background-color 0.1s;
+        .cell-wrapper {
+            aspect-ratio: 1 / 1;
+            position: relative;
             background-color: #FFFFFF;
         }
 
+        .grid-cell { 
+            width: 100%; height: 100%; 
+            text-align: center; font-weight: 700; font-size: clamp(0.9rem, 4vw, 1.2rem); 
+            border: none; outline: none; transition: background-color 0.1s;
+            display: flex; align-items: center; justify-content: center;
+        }
+
         .grid-cell:focus { background-color: #E8E5DF; }
-        .empty-cell { background-color: var(--lb-black); }
+        .empty-cell { background-color: var(--lb-black); width: 100%; height: 100%; }
         
         .number-label { 
-            position: absolute; font-size: 10px; font-weight: 700; 
-            left: 4px; top: 2px; color: var(--lb-black); 
-            pointer-events: none; z-index: 10; font-family: sans-serif;
+            position: absolute; font-size: clamp(7px, 2vw, 9px); font-weight: 800; 
+            left: 2px; top: 1px; color: var(--lb-black); 
+            pointer-events: none; z-index: 10;
         }
 
-        /* 세련된 구분선 */
-        .hairline { border-top: 1px solid var(--lb-black); width: 100%; height: 1px; margin: 4px 0; }
-        .double-line { border-top: 3px solid var(--lb-black); border-bottom: 1px solid var(--lb-black); height: 8px; margin: 20px 0; }
-
-        /* 애니메이션 */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-4px); }
-            60% { transform: translateX(4px); }
-        }
-        .shake { animation: shake 0.2s ease-in-out infinite; }
+        .hairline { border-top: 1px solid var(--lb-black); width: 100%; margin: 2px 0; }
         .preview-text { color: var(--lb-point) !important; opacity: 0.6; }
 
-        /* 모노클 스타일 버튼 */
-        .lb-btn {
-            background-color: var(--lb-black);
-            color: #FFFFFF;
-            padding: 16px 24px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-size: 0.75rem;
-            transition: all 0.2s;
+        /* 하단 고정형 버튼 (모바일 사용성) */
+        .mobile-action-bar {
+            position: sticky; bottom: 0; background: var(--lb-bg);
+            border-top: 1px solid var(--lb-black); padding: 12px;
+            display: flex; gap: 8px; width: 100%; z-index: 50;
         }
-        .lb-btn:hover { opacity: 0.9; transform: translateY(-1px); }
     </style>
 </head>
 <body>
@@ -101,103 +96,105 @@
             const labels = { "0-0": 1, "0-4": 4, "2-2": 3, "2-7": 6, "4-1": 2, "4-9": 8, "5-0": 5, "7-4": 7, "9-2": 9 };
             const [grid, setGrid] = useState(solution.map(row => row.map(cell => (cell === -1 ? -1 : ""))));
             const [isPreviewing, setIsPreviewing] = useState(false);
-            const [isError, setIsError] = useState(false);
 
             const handleChange = (row, col, value) => {
                 const newGrid = [...grid];
                 newGrid[row] = [...newGrid[row]];
                 newGrid[row][col] = value.slice(-1);
                 setGrid(newGrid);
-                setIsError(false);
             };
 
             const checkAnswer = () => {
                 const isCorrect = JSON.stringify(grid) === JSON.stringify(solution);
                 if (isCorrect) {
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#1A1A1A', '#B1967A'] });
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
                     setTimeout(() => {
-                        if(confirm("🎉 축하합니다! 롱블랙의 지적인 세계를 완성하셨습니다. 원문을 확인하시겠습니까?")) {
+                        if(confirm("🎉 완벽합니다! 롱블랙 원문을 보러 가시겠습니까?")) {
                             window.open("https://www.longblack.co", "_blank");
                         }
                     }, 500);
                 } else {
-                    setIsError(true);
-                    setTimeout(() => setIsError(false), 400);
+                    alert("틀린 칸이 있습니다. 힌트를 다시 읽어보세요.");
                 }
             };
 
             return (
-                <div className="max-w-6xl mx-auto px-6 py-12">
-                    {/* Header: NYT Newspaper Style */}
-                    <div className="text-center mb-12">
-                        <div className="flex justify-between items-end text-[10px] font-bold border-b border-black pb-1 mb-1">
-                            <span>VOL. 01 NO. 23</span>
-                            <span>JANUARY 23, 2026</span>
-                            <span>PRICE ₩0</span>
+                <div className="flex flex-col min-h-screen">
+                    <div className="p-4 flex-1">
+                        <header className="text-center mb-8">
+                            <div className="flex justify-between text-[8px] font-bold border-b border-black mb-1">
+                                <span>ISSUE NO. 01</span>
+                                <span>JAN. 24, 2026</span>
+                            </div>
+                            <h1 className="serif text-4xl tracking-tighter">LONGBLACK</h1>
+                            <div className="hairline"></div>
+                            <p className="text-[10px] mt-2 font-bold uppercase tracking-widest italic">Daily Sentence Puzzle</p>
+                        </header>
+
+                        {/* 퍼즐 그리드: 모바일 중앙 정렬 */}
+                        <div className="grid-container mb-8">
+                            {grid.map((row, rIdx) => row.map((cell, cIdx) => (
+                                <div key={`${rIdx}-${cIdx}`} className="cell-wrapper">
+                                    {labels[`${rIdx}-${cIdx}`] && <span className="number-label">{labels[`${rIdx}-${cIdx}`]}</span>}
+                                    {cell === -1 ? (
+                                        <div className="empty-cell" />
+                                    ) : (
+                                        <input
+                                            className={`grid-cell ${isPreviewing && cell === "" ? "preview-text" : ""}`}
+                                            value={isPreviewing && cell === "" ? solution[rIdx][cIdx] : cell}
+                                            onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
+                                            readOnly={isPreviewing}
+                                            inputMode="text"
+                                        />
+                                    )}
+                                </div>
+                            )))}
                         </div>
-                        <h1 className="serif text-[80px] leading-none tracking-tighter mb-2">LONGBLACK</h1>
-                        <div className="hairline"></div>
-                        <div className="hairline"></div>
-                        <p className="serif italic text-xl mt-4">“읽는 인간만이 질문한다” : DAILY SENTENCE PUZZLE</p>
+
+                        {/* 힌트 영역 */}
+                        <div className="space-y-6 pb-20">
+                            <h2 className="serif text-2xl italic border-b border-black pb-2">Clues</h2>
+                            <div>
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3 text-[#B1967A]">Across</h3>
+                                <ul className="text-xs space-y-3 leading-snug">
+                                    [cite_start]<li><strong>1.</strong> 글의 맥락을 장악하는 힘 </li>
+                                    [cite_start]<li><strong>3.</strong> 1인용 맑은 국물 보양식 </li>
+                                    [cite_start]<li><strong>5.</strong> 사람을 자원으로만 보는 시각 [cite: 524]</li>
+                                    [cite_start]<li><strong>7.</strong> "너는 우리 집의 OO" </li>
+                                    [cite_start]<li><strong>9.</strong> 웅크린 채 고민에 빠진 거인 </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3 text-[#B1967A]">Down</h3>
+                                <ul className="text-xs space-y-3 leading-snug">
+                                    [cite_start]<li><strong>1.</strong> 읽어야 할 불편한 진실 [cite: 72]</li>
+                                    [cite_start]<li><strong>2.</strong> 요리사에게 중요한 정성 [cite: 198]</li>
+                                    [cite_start]<li><strong>4.</strong> 생각의 뼈대인 설계도 [cite: 14]</li>
+                                    [cite_start]<li><strong>6.</strong> 인연을 끊는 지독한 결정 [cite: 629]</li>
+                                    [cite_start]<li><strong>8.</strong> 정교한 조각을 하는 은둔 작가 [cite: 282]</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row gap-16 items-start">
-                        {/* Puzzle Area */}
-                        <div className="mx-auto lg:mx-0">
-                            <div className={`grid-container grid grid-cols-10 gap-[1px] shadow-sm ${isError ? 'shake' : ''}`}>
-                                {grid.map((row, rIdx) => row.map((cell, cIdx) => (
-                                    <div key={`${rIdx}-${cIdx}`} className="relative h-[44px] w-[44px] bg-white">
-                                        {labels[`${rIdx}-${cIdx}`] && <span className="number-label">{labels[`${rIdx}-${cIdx}`]}</span>}
-                                        {cell === -1 ? (
-                                            <div className="empty-cell h-full w-full" />
-                                        ) : (
-                                            <input
-                                                className={`grid-cell h-full w-full ${isPreviewing && cell === "" ? "preview-text" : ""}`}
-                                                value={isPreviewing && cell === "" ? solution[rIdx][cIdx] : cell}
-                                                onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
-                                                readOnly={isPreviewing}
-                                            />
-                                        )}
-                                    </div>
-                                )))}
-                            </div>
-                            <button 
-                                onMouseDown={() => setIsPreviewing(true)}
-                                onMouseUp={() => setIsPreviewing(false)}
-                                className="mt-8 text-[11px] font-bold border-b border-black tracking-widest uppercase hover:text-gray-500 transition-colors"
-                            >
-                                Hold to reveal answer
-                            </button>
-                        </div>
-
-                        {/* Hint Area: Monocle Style Sidebar */}
-                        <div className="flex-1 border-l border-black pl-12 h-full">
-                            <h2 className="serif text-3xl font-black mb-8 italic">Clues</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-10">
-                                <section>
-                                    <h3 className="font-bold border-b border-black text-[11px] tracking-widest uppercase mb-4">Across</h3>
-                                    <div className="space-y-4 text-[14px] leading-snug">
-                                        [cite_start]<p><strong>1.</strong> 글의 맥락을 장악하고 생각의 수준을 결정하는 힘 [cite: 27]</p>
-                                        [cite_start]<p><strong>3.</strong> 비즈니스맨의 해장을 위해 1인용 맑은 국물로 재기획된 보양식 [cite: 215, 216]</p>
-                                        [cite_start]<p><strong>5.</strong> 사람을 관리할 '자원'으로만 보는 시각에 대한 경계 [cite: 412, 524, 525]</p>
-                                        [cite_start]<p><strong>7.</strong> "너는 우리 집의 OO" - 이호선 교수가 배운 자아 해석의 뿌리 [cite: 643]</p>
-                                        [cite_start]<p><strong>9.</strong> 웅크린 채 고민에 빠진 거인의 찰나를 포착한 론 뮤익의 조각 [cite: 317, 324]</p>
-                                    </div>
-                                </section>
-                                <section>
-                                    <h3 className="font-bold border-b border-black text-[11px] tracking-widest uppercase mb-4">Down</h3>
-                                    <div className="space-y-4 text-[14px] leading-snug">
-                                        [cite_start]<p><strong>1.</strong> 타인을 이해하기 위해 읽어야 할 '문제적 진실' [cite: 71, 72]</p>
-                                        [cite_start]<p><strong>2.</strong> 58년 경력 요리사에게 기술보다 중요한 정성 [cite: 198]</p>
-                                        [cite_start]<p><strong>4.</strong> 복잡한 맥락을 파악하여 생각의 뼈대를 짜는 설계도 [cite: 14, 61]</p>
-                                        [cite_start]<p><strong>6.</strong> 인연을 잘라내는 지독한 결정과 그에 따르는 상처 [cite: 629, 636]</p>
-                                        [cite_start]<p><strong>8.</strong> 진짜 사람처럼 정교하지만 은둔을 즐기는 예술가 [cite: 275, 281]</p>
-                                    </div>
-                                </section>
-                            </div>
-                            <div className="double-line"></div>
-                            <button onClick={checkAnswer} className="lb-btn w-full">Submit Puzzle</button>
-                        </div>
+                    {/* 모바일 액션 바: 정답 보기와 제출 버튼 */}
+                    <div className="mobile-action-bar">
+                        <button 
+                            onContextMenu={(e) => e.preventDefault()}
+                            onTouchStart={() => setIsPreviewing(true)}
+                            onTouchEnd={() => setIsPreviewing(false)}
+                            onMouseDown={() => setIsPreviewing(true)}
+                            onMouseUp={() => setIsPreviewing(false)}
+                            className="flex-1 py-4 border border-black font-bold text-[10px] uppercase tracking-widest active:bg-gray-200 transition select-none"
+                        >
+                            Peek (정답 보기)
+                        </button>
+                        <button 
+                            onClick={checkAnswer}
+                            className="flex-[1.5] py-4 bg-black text-white font-bold text-[10px] uppercase tracking-widest"
+                        >
+                            Submit Answer
+                        </button>
                     </div>
                 </div>
             );
