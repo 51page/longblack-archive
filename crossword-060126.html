@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack | Insight Quiz Dark</title>
+    <title>LongBlack | Insight Quiz Helvetica</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Noto+Serif+KR:wght@400;700&display=swap');
+        /* 헬베티카와 유사한 프리텐다드 및 구글 폰트 적용 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Serif+KR:wght@400;700&display=swap');
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
         :root {
-            --lb-black: #1A1A1A; /* 짙은 검정 */
-            --lb-dark-grey: #262626; /* 카드 배경 */
-            --lb-orange: #F26522; /* 롱블랙 포인트 오렌지 */
+            --lb-black: #1A1A1A;
+            --lb-dark-grey: #262626;
+            --lb-orange: #F26522;
             --lb-white: #FFFFFF;
         }
 
@@ -28,33 +29,37 @@
             user-select: none;
         }
 
-        .serif { font-family: 'Playfair Display', 'Noto Serif KR', serif; }
+        /* 헬베티카 느낌의 로고 폰트 (Inter 900) */
+        .helvetica-logo { 
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+        }
 
-        /* 빈칸 인풋 디자인 */
+        .serif-italic { font-family: 'Noto Serif KR', serif; font-style: italic; }
+
         .input-blank {
             background-color: transparent;
             border-bottom: 2px solid var(--lb-white);
             text-align: center;
             font-weight: 700;
             outline: none;
-            color: var(--lb-orange); /* 주황색 텍스트 */
+            color: var(--lb-orange);
             transition: all 0.3s;
             padding: 0 4px;
         }
 
         .input-blank:focus { border-bottom-color: var(--lb-orange); }
         .input-blank::placeholder { color: #555; font-weight: 400; }
-        .input-blank.preview { opacity: 0.7; }
 
-        /* 카드 디자인 */
         .card {
             background-color: var(--lb-dark-grey);
             border: 1px solid #333;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 35px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         }
 
-        .hairline { border-top: 1px solid var(--lb-white); width: 100%; margin: 8px 0; }
+        .hairline { border-top: 1px solid rgba(255,255,255,0.2); width: 100%; margin: 12px 0; }
         
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -63,18 +68,20 @@
         }
         .shake { animation: shake 0.2s ease-in-out 0s 2; }
 
-        /* 버튼 디자인 */
         .btn-peek {
             border: 1px solid #444;
-            color: #888;
+            color: #777;
             background: transparent;
+            font-size: 10px;
+            letter-spacing: 0.2em;
         }
-        .btn-peek:active { background: #333; color: var(--lb-orange); border-color: var(--lb-orange); }
+        .btn-peek:active { color: var(--lb-orange); border-color: var(--lb-orange); }
 
         .btn-submit {
             background-color: var(--lb-orange);
             color: var(--lb-white);
             font-weight: 900;
+            letter-spacing: 0.3em;
         }
     </style>
 </head>
@@ -89,7 +96,6 @@
             const [status, setStatus] = useState("idle");
             const [isPreviewing, setIsPreviewing] = useState(false);
 
-            // 정답 키워드 (이호선 원고 기반)
             const correctAnswers = { q1: "안전의 역설", q2: "이를 악물고" };
 
             const checkAnswers = () => {
@@ -103,7 +109,7 @@
                         particleCount: 150, 
                         spread: 70, 
                         origin: { y: 0.6 }, 
-                        colors: ['#F26522', '#FFFFFF', '#1A1A1A'] 
+                        colors: ['#F26522', '#FFFFFF'] 
                     });
                 } else {
                     setStatus("error");
@@ -111,76 +117,74 @@
                 }
             };
 
-            const togglePreview = (val) => setIsPreviewing(val);
-
             return (
-                <div className="max-w-2xl mx-auto px-6 py-12 md:py-20">
-                    <header className="text-center mb-16">
-                        <div className="flex justify-between text-[10px] font-bold border-b border-white/20 pb-1 mb-1 uppercase tracking-[0.3em]">
-                            <span className="text-white/50">Human Relationship</span>
-                            <span className="text-white/50">Quiz No. 05</span>
+                <div className="max-w-2xl mx-auto px-6 py-12 md:py-24">
+                    <header className="text-center mb-20">
+                        <div className="flex justify-between text-[10px] font-bold border-b border-white/10 pb-2 mb-2 uppercase tracking-[0.4em]">
+                            <span className="text-white/40">Relationship Wisdom</span>
+                            <span className="text-white/40">Quiz 05</span>
                         </div>
-                        <h1 className="serif text-6xl md:text-8xl tracking-tighter uppercase font-black text-white">LongBlack</h1>
+                        <h1 className="helvetica-logo text-6xl md:text-8xl tracking-tighter uppercase text-white">LongBlack</h1>
                         <div className="hairline"></div>
-                        <p className="serif italic text-lg mt-4 text-white/70">이호선 : 가장 가까운 사람을 미워하는 이유</p>
+                        <p className="serif-italic text-lg md:text-xl mt-6 text-white/60">
+                            이호선 : 가까운 관계를 지키는 두 가지 근육
+                        </p>
                     </header>
 
-                    <div className={`space-y-8 ${status === 'error' ? 'shake' : ''}`}>
-                        [cite_start]{/* Question 01: 안전의 역설  */}
+                    <div className={`space-y-10 ${status === 'error' ? 'shake' : ''}`}>
                         <div className="card">
-                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4 text-[#F26522]">Insight 01</h3>
-                            <p className="text-lg leading-relaxed md:text-2xl font-light">
-                                "집 밖에서는 너무나 친절한 이가 집안에서 공격적으로 변하는 현상을 이호선 교수는 
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] mb-6 text-[#F26522]">Insight 01</h3>
+                            <p className="text-xl leading-relaxed md:text-2xl font-light">
+                                "집 밖에서는 친절하지만 집에선 공격적으로 변하는 현상을 이호선 교수는 
                                 <input 
-                                    className={`input-blank w-[140px] md:w-[180px] ${isPreviewing && !answers.q1 ? 'preview' : ''}`} 
-                                    placeholder="5글자 입력"
+                                    className={`input-blank w-[140px] md:w-[180px] ${isPreviewing && !answers.q1 ? 'opacity-50' : ''}`} 
+                                    placeholder="5글자"
                                     value={isPreviewing && !answers.q1 ? correctAnswers.q1 : answers.q1}
                                     onChange={(e) => setAnswers({...answers, q1: e.target.value})}
                                 /> 
-                                이라고 정의합니다. 가깝고 오래된 관계이기에 나타나는 위험한 기대입니다."
+                                [cite_start]이라고 정의합니다. [cite_start]이는 가족이 나를 무조건 이해해 줄 것이라는 기대에서 비롯됩니다."
                             </p>
                         </div>
 
-                        [cite_start]{/* Question 02: 이를 악물고  */}
                         <div className="card">
-                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4 text-[#F26522]">Insight 02</h3>
-                            <p className="text-lg leading-relaxed md:text-2xl font-light">
-                                "관계를 다정하게 만들고 싶다면 감정에만 맡기지 말고 
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] mb-6 text-[#F26522]">Insight 02</h3>
+                            <p className="text-xl leading-relaxed md:text-2xl font-light">
+                                "관계를 다정하게 만들고 싶다면 감정에만 의존하지 말고 
                                 <input 
-                                    className={`input-blank w-[140px] md:w-[180px] ${isPreviewing && !answers.q2 ? 'preview' : ''}`} 
-                                    placeholder="5글자 입력"
+                                    className={`input-blank w-[140px] md:w-[180px] ${isPreviewing && !answers.q2 ? 'opacity-50' : ''}`} 
+                                    placeholder="5글자"
                                     value={isPreviewing && !answers.q2 ? correctAnswers.q2 : answers.q2}
                                     onChange={(e) => setAnswers({...answers, q2: e.target.value})}
                                 /> 
-                                표현해야 합니다. 첫 문턱을 넘는 용기가 관계의 온도를 바꿉니다."
+                                [cite_start]표현해야 합니다. [cite_start]용기를 내어 첫 문턱을 넘는 것이 관계의 명약이 됩니다."
                             </p>
                         </div>
                     </div>
 
-                    <div className="mt-16 flex flex-col gap-4">
+                    <div className="mt-20 flex flex-col gap-5">
                         <button 
-                            onMouseDown={() => togglePreview(true)}
-                            onMouseUp={() => togglePreview(false)}
-                            onMouseLeave={() => togglePreview(false)}
-                            onTouchStart={(e) => { e.preventDefault(); togglePreview(true); }}
-                            onTouchEnd={(e) => { e.preventDefault(); togglePreview(false); }}
-                            className="btn-peek w-full py-4 font-bold text-[11px] uppercase tracking-widest transition select-none"
+                            onMouseDown={() => setIsPreviewing(true)}
+                            onMouseUp={() => setIsPreviewing(false)}
+                            onMouseLeave={() => setIsPreviewing(false)}
+                            onTouchStart={(e) => { e.preventDefault(); setIsPreviewing(true); }}
+                            onTouchEnd={(e) => { e.preventDefault(); setIsPreviewing(false); }}
+                            className="btn-peek w-full py-5 uppercase font-bold select-none transition-all active:scale-95"
                         >
-                            Hold to Peek (답안 엿보기)
+                            Hold to Peek
                         </button>
 
                         <button 
                             onClick={checkAnswers}
-                            className="btn-submit w-full py-5 font-black text-sm uppercase tracking-[0.4em] transition-transform active:scale-[0.98]"
+                            className="btn-submit w-full py-6 text-sm transition-transform active:scale-[0.97] shadow-lg"
                         >
-                            {status === 'success' ? "Insights Completed" : "Submit Answer"}
+                            {status === 'success' ? "WELL DONE" : "SUBMIT INSIGHT"}
                         </button>
                     </div>
 
                     {status === 'success' && (
-                        <div className="mt-12 text-center">
-                            <p className="serif italic text-2xl text-[#F26522] animate-pulse">
-                                "표현하지 않아도 아는 마음은 없습니다."
+                        <div className="mt-16 text-center animate-pulse">
+                            <p className="serif-italic text-2xl text-[#F26522]">
+                                [cite_start]"표현은 관계를 살리는 가장 강력한 기술입니다."
                             </p>
                         </div>
                     )}
