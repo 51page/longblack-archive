@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LongBlack | Insight Quiz Helvetica</title>
+    <title>LongBlack | 오늘의 노트 빈칸 채우기</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* 헬베티카와 유사한 프리텐다드 및 구글 폰트 적용 */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Serif+KR:wght@400;700&display=swap');
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
         :root {
@@ -23,21 +20,19 @@
 
         body { 
             background-color: var(--lb-black); 
-            font-family: 'Pretendard', sans-serif; 
+            font-family: 'Helvetica', 'Arial', 'Pretendard', sans-serif; 
             color: var(--lb-white);
             word-break: keep-all;
-            user-select: none;
         }
 
-        /* 헬베티카 느낌의 로고 폰트 (Inter 900) */
-        .helvetica-logo { 
-            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-weight: 900;
-            letter-spacing: -0.05em;
+        /* 헬베티카 타이틀 */
+        .helvetica-title { 
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
 
-        .serif-italic { font-family: 'Noto Serif KR', serif; font-style: italic; }
-
+        /* 빈칸 입력창 */
         .input-blank {
             background-color: transparent;
             border-bottom: 2px solid var(--lb-white);
@@ -52,36 +47,31 @@
         .input-blank:focus { border-bottom-color: var(--lb-orange); }
         .input-blank::placeholder { color: #555; font-weight: 400; }
 
+        /* 정보 입력창 디자인 */
+        .contact-input {
+            background-color: #333;
+            border: 1px solid #444;
+            color: white;
+            padding: 12px;
+            width: 100%;
+            margin-top: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+        .contact-input:focus { border-color: var(--lb-orange); }
+
         .card {
             background-color: var(--lb-dark-grey);
             border: 1px solid #333;
-            padding: 35px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            padding: 30px;
+            border-radius: 2px;
         }
-
-        .hairline { border-top: 1px solid rgba(255,255,255,0.2); width: 100%; margin: 12px 0; }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .shake { animation: shake 0.2s ease-in-out 0s 2; }
-
-        .btn-peek {
-            border: 1px solid #444;
-            color: #777;
-            background: transparent;
-            font-size: 10px;
-            letter-spacing: 0.2em;
-        }
-        .btn-peek:active { color: var(--lb-orange); border-color: var(--lb-orange); }
 
         .btn-submit {
             background-color: var(--lb-orange);
             color: var(--lb-white);
             font-weight: 900;
-            letter-spacing: 0.3em;
+            letter-spacing: 0.1em;
         }
     </style>
 </head>
@@ -91,109 +81,114 @@
     <script type="text/babel">
         const { useState } = React;
 
-        function InsightQuiz() {
-            const [answers, setAnswers] = useState({ q1: "", q2: "" });
-            const [status, setStatus] = useState("idle");
-            const [isPreviewing, setIsPreviewing] = useState(false);
+        function EventQuiz() {
+            const [answer, setAnswer] = useState("");
+            const [isSuccess, setIsSuccess] = useState(false);
+            const [contactInfo, setContactInfo] = useState({ email: "", phone: "" });
 
-            const correctAnswers = { q1: "안전의 역설", q2: "이를 악물고" };
+            const correctAnswer = "안전의 역설";
 
-            const checkAnswers = () => {
-                const a1 = answers.q1.replace(/\s/g, "");
-                const a2 = answers.q2.replace(/\s/g, "");
-                
-                if (a1 === correctAnswers.q1.replace(/\s/g, "") && 
-                    a2 === correctAnswers.q2.replace(/\s/g, "")) {
-                    setStatus("success");
-                    confetti({ 
-                        particleCount: 150, 
-                        spread: 70, 
-                        origin: { y: 0.6 }, 
-                        colors: ['#F26522', '#FFFFFF'] 
-                    });
+            const handleSubmit = () => {
+                if (answer.replace(/\s/g, "") === correctAnswer.replace(/\s/g, "")) {
+                    alert("축하합니다! 오늘 노트를 열심히 읽으셨네요!");
+                    setIsSuccess(true);
                 } else {
-                    setStatus("error");
-                    setTimeout(() => setStatus("idle"), 500);
+                    alert("아 아쉽네요! 다시 한번 도전해보세요");
+                    setAnswer("");
                 }
             };
 
+            const handleFinalSubmit = () => {
+                alert("정보가 성공적으로 제출되었습니다. 당첨 결과를 기다려주세요!");
+                // 여기에 실제 데이터 저장 로직을 연결할 수 있습니다.
+                location.reload(); 
+            };
+
             return (
-                <div className="max-w-2xl mx-auto px-6 py-12 md:py-24">
-                    <header className="text-center mb-20">
-                        <div className="flex justify-between text-[10px] font-bold border-b border-white/10 pb-2 mb-2 uppercase tracking-[0.4em]">
-                            <span className="text-white/40">Relationship Wisdom</span>
-                            <span className="text-white/40">Quiz 05</span>
+                <div className="max-w-xl mx-auto px-6 py-12">
+                    {/* Logo & Header */}
+                    <header className="text-center mb-10">
+                        <img 
+                            src="https://www.brandb.net/_next/image?url=https%3A%2F%2Fapi.brandb.net%2Fapi%2Fv2%2Fcommon%2Fimage%3FfileId%3D13053&w=1920&q=75" 
+                            alt="LongBlack Logo" 
+                            className="h-6 mx-auto mb-6 grayscale invert"
+                        />
+                        <h1 className="helvetica-title text-3xl md:text-4xl mb-8">오늘의 노트 빈칸 채우기</h1>
+                        
+                        <div className="text-sm leading-relaxed text-gray-300 space-y-4">
+                            <p className="font-bold text-white">[상담가 이호선 : 우리는 왜 가장 가까운 사람을, 가장 미워하게 될까]</p>
+                            <p>오늘의 노트를 잘 읽으셨나요? 아래 퀴즈를 가볍게 풀어보세요!</p>
+                            <p>정답자 중 1명을 추첨해 <span className="text-white font-bold">'롱블랙 필사 노트'</span>를 선물로 보내드립니다.</p>
                         </div>
-                        <h1 className="helvetica-logo text-6xl md:text-8xl tracking-tighter uppercase text-white">LongBlack</h1>
-                        <div className="hairline"></div>
-                        <p className="serif-italic text-lg md:text-xl mt-6 text-white/60">
-                            이호선 : 가까운 관계를 지키는 두 가지 근육
-                        </p>
                     </header>
 
-                    <div className={`space-y-10 ${status === 'error' ? 'shake' : ''}`}>
-                        <div className="card">
-                            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] mb-6 text-[#F26522]">Insight 01</h3>
-                            <p className="text-xl leading-relaxed md:text-2xl font-light">
-                                "집 밖에서는 친절하지만 집에선 공격적으로 변하는 현상을 이호선 교수는 
+                    {!isSuccess ? (
+                        /* 퀴즈 섹션 */
+                        <div className="card animate-fade-in">
+                            <p className="text-lg md:text-xl leading-relaxed">
+                                "집 밖에서는 너무나 친절한 사람이 집에 오면 오히려 날카로워지는 현상. 
+                                이호선 교수는 가족이 나를 무조건 이해해 줄 것이라는 위험한 기대에서 비롯된 이 문제를 
                                 <input 
-                                    className={`input-blank w-[140px] md:w-[180px] ${isPreviewing && !answers.q1 ? 'opacity-50' : ''}`} 
-                                    placeholder="5글자"
-                                    value={isPreviewing && !answers.q1 ? correctAnswers.q1 : answers.q1}
-                                    onChange={(e) => setAnswers({...answers, q1: e.target.value})}
+                                    className="input-blank w-[140px] md:w-[160px] mx-2" 
+                                    placeholder="5글자 입력"
+                                    value={answer}
+                                    onChange={(e) => setAnswer(e.target.value)}
                                 /> 
-                                이라고 정의합니다. 이는 가족이 나를 무조건 이해해 줄 것이라는 기대에서 비롯됩니다."
+                                이라고 정의합니다."
                             </p>
+                            <button 
+                                onClick={handleSubmit}
+                                className="btn-submit w-full mt-10 py-5 text-sm uppercase transition-transform active:scale-[0.98]"
+                            >
+                                정답 제출하기
+                            </button>
                         </div>
-
-                        <div className="card">
-                            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] mb-6 text-[#F26522]">Insight 02</h3>
-                            <p className="text-xl leading-relaxed md:text-2xl font-light">
-                                "관계를 다정하게 만들고 싶다면 감정에만 의존하지 말고 
-                                <input 
-                                    className={`input-blank w-[140px] md:w-[180px] ${isPreviewing && !answers.q2 ? 'opacity-50' : ''}`} 
-                                    placeholder="5글자"
-                                    value={isPreviewing && !answers.q2 ? correctAnswers.q2 : answers.q2}
-                                    onChange={(e) => setAnswers({...answers, q2: e.target.value})}
-                                /> 
-                                표현해야 합니다. 용기를 내어 첫 문턱을 넘는 것이 관계의 명약이 됩니다."
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="mt-20 flex flex-col gap-5">
-                        <button 
-                            onMouseDown={() => setIsPreviewing(true)}
-                            onMouseUp={() => setIsPreviewing(false)}
-                            onMouseLeave={() => setIsPreviewing(false)}
-                            onTouchStart={(e) => { e.preventDefault(); setIsPreviewing(true); }}
-                            onTouchEnd={(e) => { e.preventDefault(); setIsPreviewing(false); }}
-                            className="btn-peek w-full py-5 uppercase font-bold select-none transition-all active:scale-95"
-                        >
-                            Hold to Peek
-                        </button>
-
-                        <button 
-                            onClick={checkAnswers}
-                            className="btn-submit w-full py-6 text-sm transition-transform active:scale-[0.97] shadow-lg"
-                        >
-                            {status === 'success' ? "WELL DONE" : "SUBMIT INSIGHT"}
-                        </button>
-                    </div>
-
-                    {status === 'success' && (
-                        <div className="mt-16 text-center animate-pulse">
-                            <p className="serif-italic text-2xl text-[#F26522]">
-                                "표현은 관계를 살리는 가장 강력한 기술입니다."
-                            </p>
+                    ) : (
+                        /* 정보 입력 섹션 */
+                        <div className="card animate-fade-in border-[#F26522]">
+                            <h3 className="text-lg font-bold mb-2">아래 정보를 입력해주시면 당첨자 선정에 참고하겠습니다</h3>
+                            <p className="text-sm text-gray-400 mb-6 italic">필사 노트 증정 이벤트 참여</p>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs text-gray-400 uppercase">Email Address</label>
+                                    <input 
+                                        type="email" 
+                                        className="contact-input" 
+                                        placeholder="example@longblack.co"
+                                        value={contactInfo.email}
+                                        onChange={(e) => setContactInfo({...contactInfo, email: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-400 uppercase">Phone Number</label>
+                                    <input 
+                                        type="tel" 
+                                        className="contact-input" 
+                                        placeholder="010-0000-0000"
+                                        value={contactInfo.phone}
+                                        onChange={(e) => setContactInfo({...contactInfo, phone: e.target.value})}
+                                    />
+                                </div>
+                                <button 
+                                    onClick={handleFinalSubmit}
+                                    className="btn-submit w-full mt-6 py-5 text-sm uppercase transition-all"
+                                >
+                                    이벤트 참여 완료
+                                </button>
+                            </div>
                         </div>
                     )}
+
+                    <footer className="mt-16 text-center text-[10px] text-gray-600 tracking-widest uppercase">
+                        © LongBlack Insight Quiz Service
+                    </footer>
                 </div>
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<InsightQuiz />);
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<EventQuiz />);
     </script>
 </body>
 </html>
